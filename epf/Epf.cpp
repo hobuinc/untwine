@@ -163,6 +163,7 @@ void Epf::run(const std::vector<std::string>& options)
 
 // Enable this when the sampler supports the output.
 /**
+**/
     // Wait for  all the processors to finish and restart.
     m_pool.cycle();
 
@@ -190,7 +191,6 @@ void Epf::run(const std::vector<std::string>& options)
             });
         }
     }
-**/
     m_pool.stop();
     m_writer->stop();
 

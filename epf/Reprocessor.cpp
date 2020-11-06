@@ -36,7 +36,6 @@ Reprocessor::Reprocessor(const VoxelKey& k, int numPoints, int pointSize,
     //  =>
     // log2(numPoints / MaxPointsPerNode) = 2n
 
-    std::cerr << "Num points = " << numPoints << "!\n";
     m_levels = std::ceil(log2((double)numPoints / MaxPointsPerNode) / 2);
 
     // We're going to steal points from the leaf nodes for sampling, so unless the

@@ -62,6 +62,11 @@ public:
             std::to_string(m_y) + '-' + std::to_string(m_z);
     }
 
+    operator bool ()
+    {
+        return m_x || m_y || m_z || m_level;
+    }
+
 private:
     int m_x;
     int m_y;

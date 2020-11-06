@@ -14,6 +14,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "PyramidManager.hpp"
@@ -47,7 +48,7 @@ private:
 
     PyramidManager m_manager;
     BaseInfo m_b;
-    std::vector<FileInfo> m_allFiles;
+    std::unordered_map<VoxelKey, FileInfo> m_allFiles;
 };
 
 } // namespace bu

@@ -1,18 +1,5 @@
-/*****************************************************************************
- *   Copyright (c) 2020, Hobu, Inc. (info@hobu.co)                           *
- *                                                                           *
- *   All rights reserved.                                                    *
- *                                                                           *
- *   This program is free software; you can redistribute it and/or modify    *
- *   it under the terms of the GNU General Public License as published by    *
- *   the Free Software Foundation; either version 3 of the License, or       *
- *   (at your option) any later version.                                     *
- *                                                                           *
- ****************************************************************************/
-
-
-
 #include <regex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -174,9 +161,15 @@ void BuPyramid::getInputFiles()
 {
     auto matches = [](const std::string& f)
     {
-        std::regex check("[0-9]+-[0-9]+-[0-9]+-[0-9]+\\.bin");
-        std::cmatch m;
-        return std::regex_match(f.c_str(), m, check);
+        std::regex check("([0-9]+)-([0-9]+)-([0-9]+)-([0-9]+)\\.bin");
+        std::smatch m;
+        if (!std::regex_match(f, m, check))
+            return VoxelKey(0, 0, 0, 0);
+        int level = std::stoi(m[1].str());
+        int x = std::stoi(m[2].str());
+        int y = std::stoi(m[3].str());
+        int z = std::stoi(m[4].str());
+        return VoxelKey(x, y, z, level);
     };
 
     std::vector<std::string> files = pdal::FileUtils::directoryList(m_b.inputDir);
@@ -185,17 +178,65 @@ void BuPyramid::getInputFiles()
     {
         uintmax_t size = pdal::FileUtils::fileSize(file);
         file = pdal::FileUtils::getFilename(file);
-        if (matches(file))
-            m_allFiles.emplace_back(file, size / m_b.pointSize);
+        VoxelKey key = matches(file);
+        if (key)
+            m_allFiles.emplace(key, FileInfo(file, size / m_b.pointSize));
     }
 }
 
 
 void BuPyramid::queueWork()
 {
-    int voxelWidth = std::pow(2, m_b.maxLevel);
+    std::set<VoxelKey> needed;
+    std::vector<OctantInfo> have;
+    const VoxelKey root;
 
-    VoxelKey kt(0, 0, 0, m_b.maxLevel);
+    for (auto& afi : m_allFiles)
+    {
+        VoxelKey k = afi.first;
+        FileInfo& f = afi.second;
+
+        // Stick an OctantInfo for this file in the 'have' list.
+        OctantInfo o(k);
+        o.appendFileInfo(f);
+        have.push_back(o);
+
+        // Walk up the tree and make sure that we're populated for all children necessary
+        // to process to the top level.
+        while (k != root)
+        {
+            k = k.parent();
+            for (int i = 0; i < 8; ++i)
+                needed.insert(k.child(i));
+        }
+    }
+
+    // Now remove entries for the files we have and their parents.
+    for (const OctantInfo& o : have)
+    {
+        VoxelKey k = o.key();
+        while (k != root)
+        {
+            needed.erase(k);
+            k = k.parent();
+        }
+    }
+
+    // Queue what we have and what's left that's needed.
+    for (const OctantInfo& o : have)
+        m_manager.queue(o);
+    for (const VoxelKey& k : needed)
+{
+if (k.level() != 4)
+std::cerr << "Needed = " << k << "!\n";
+        m_manager.queue(OctantInfo(k));
+}
+}
+
+/**
+void BuPyramid::queueWork()
+{
+    int voxelWidth = std::pow(2, m_b.maxLevel);
 
     // Loop through the of each octet of voxels in the max level.
     for (int x = 0; x <= voxelWidth; x++)
@@ -216,6 +257,7 @@ void BuPyramid::queueWork()
         m_manager.queue(o);
     }
 }
+**/
 
 } // namespace bu
 } // namespace ept2

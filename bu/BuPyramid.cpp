@@ -111,6 +111,7 @@ void BuPyramid::readBaseInfo()
 
 void BuPyramid::createDirs()
 {
+    pdal::FileUtils::createDirectory(m_b.outputDir);
     pdal::FileUtils::deleteFile(m_b.outputDir + "/ept.json");
     pdal::FileUtils::deleteDirectory(m_b.outputDir + "/ept-data");
     pdal::FileUtils::deleteDirectory(m_b.outputDir + "/ept-hierarchy");
@@ -174,13 +175,26 @@ void BuPyramid::getInputFiles()
 
     std::vector<std::string> files = pdal::FileUtils::directoryList(m_b.inputDir);
 
+    VoxelKey root;
     for (std::string file : files)
     {
         uintmax_t size = pdal::FileUtils::fileSize(file);
         file = pdal::FileUtils::getFilename(file);
         VoxelKey key = matches(file);
-        if (key)
+        if (key != root)
             m_allFiles.emplace(key, FileInfo(file, size / m_b.pointSize));
+    }
+
+    // Remove any files that are hangers-on from a previous run - those that are parents
+    // of other input.
+    for (auto it = m_allFiles.begin(); it != m_allFiles.end(); ++it)
+    {
+        VoxelKey k = it->first;
+        while (k != root)
+        {
+            k = k.parent();
+            m_allFiles.erase(k);
+        };
     }
 }
 

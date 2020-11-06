@@ -41,7 +41,7 @@ public:
 
     VoxelKey parent() const
     {
-        return VoxelKey(m_x >> 1, m_y >> 1, m_z >> 1, m_level - 1);
+        return VoxelKey(m_x >> 1, m_y >> 1, m_z >> 1, (std::max)(m_level - 1, 0));
     }
 
     int x() const
@@ -60,11 +60,6 @@ public:
     {
         return std::to_string(m_level) + '-' + std::to_string(m_x) + '-' +
             std::to_string(m_y) + '-' + std::to_string(m_z);
-    }
-
-    operator bool ()
-    {
-        return m_x || m_y || m_z || m_level;
     }
 
 private:

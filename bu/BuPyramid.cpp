@@ -80,32 +80,64 @@ void BuPyramid::run(const std::vector<std::string>& options)
 
 void BuPyramid::readBaseInfo()
 {
-    std::string baseFilename = m_b.inputDir + "/info.txt";
+    auto nextblock = [](std::istream& in)
+    {
+        std::string s;
+        bool firstnl = false;
 
+        while (in)
+        {
+            char c;
+            in.get(c);
+            if (c == '\n')
+            {
+                if (firstnl)
+                    return s;
+                else
+                    firstnl = true;
+            }
+            else
+                firstnl = false;
+            s += c;
+        }
+        return s;
+    };
+
+    std::string baseFilename = m_b.inputDir + "/info2.txt";
     std::ifstream in(baseFilename);
+
     if (!in)
-        throw Error("Can't open 'info.txt' in directory '" + m_b.inputDir + "'.");
+        throw Error("Can't open 'info2.txt' in directory '" + m_b.inputDir + "'.");
 
-    in >> m_b.maxLevel;
+    std::stringstream ss(nextblock(in));
+    ss >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
+    ss >> m_b.bounds.maxx >> m_b.bounds.maxy >> m_b.bounds.maxz;
 
-    in >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
-    in >> m_b.bounds.maxx >> m_b.bounds.maxy >> m_b.bounds.maxz;
+    ss.str(nextblock(in));
+    ss >> m_b.trueBounds.minx >> m_b.trueBounds.miny >> m_b.trueBounds.minz;
+    ss >> m_b.trueBounds.maxx >> m_b.trueBounds.maxy >> m_b.trueBounds.maxz;
+
+    ss.str(nextblock(in));
+    ss >> m_b.srs;
+    std::cerr << "SRS = " << m_b.srs << "!\n";
 
     if (!in)
         throw "Couldn't read info file.";
 
+    ss.str(nextblock(in));
     m_b.pointSize = 0;
     while (true)
     {
         FileDimInfo fdi;
-        in >> fdi;
-        if (!in)
+        ss >> fdi;
+        if (!ss)
             break;
         if (fdi.name.empty())
             throw Error("Invalid dimension in info.txt.");
         m_b.pointSize += pdal::Dimension::size(fdi.type);
         m_b.dimInfo.push_back(fdi);
     }
+    std::cerr << "Point size = " << m_b.pointSize << "!\n";
 }
 
 

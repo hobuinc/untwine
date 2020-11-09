@@ -15,6 +15,7 @@
 
 #include <stdexcept>
 
+#include <pdal/SpatialReference.hpp>
 #include <pdal/util/Bounds.hpp>
 
 #include "../common/FileDimInfo.hpp"
@@ -39,11 +40,13 @@ enum class Status
 struct BaseInfo
 {
     pdal::BOX3D bounds;
+    pdal::BOX3D trueBounds;
     size_t pointSize;
     std::string inputDir;
     std::string outputDir;
     int maxLevel;
     DimInfoList dimInfo;
+    pdal::SpatialReference srs;
 };
 
 } // namespace bu

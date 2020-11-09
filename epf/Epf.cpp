@@ -60,14 +60,19 @@ namespace epf
 void writeMetadata(const std::string& outputDir, const Grid& grid,
     const pdal::PointLayoutPtr& layout)
 {
-    std::ofstream out(outputDir + "/info.txt");
-    out << grid.maxLevel() << "\n";
-    out << "\n";
-
+    std::ofstream out(outputDir + "/info2.txt");
     pdal::BOX3D b = grid.processingBounds();
     out.precision(10);
     out << b.minx << " " << b.miny << " " << b.minz << "\n";
     out << b.maxx << " " << b.maxy << " " << b.maxz << "\n";
+    out << "\n";
+
+    b = grid.conformingBounds();
+    out << b.minx << " " << b.miny << " " << b.minz << "\n";
+    out << b.maxx << " " << b.maxy << " " << b.maxz << "\n";
+    out << "\n";
+
+    out << "EPSG:4326" << "\n";
     out << "\n";
 
     for (Dimension::Id id : layout->dims())

@@ -64,7 +64,7 @@ void writeMetadata(const std::string& outputDir, const Grid& grid,
     out << grid.maxLevel() << "\n";
     out << "\n";
 
-    pdal::BOX3D b = grid.bounds();
+    pdal::BOX3D b = grid.processingBounds();
     out.precision(10);
     out << b.minx << " " << b.miny << " " << b.minz << "\n";
     out << b.maxx << " " << b.maxy << " " << b.maxz << "\n";

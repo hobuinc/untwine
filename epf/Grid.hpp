@@ -31,8 +31,13 @@ public:
     int calcLevel();
     void resetLevel(int level);
     VoxelKey key(double x, double y, double z);
-    pdal::BOX3D bounds() const
+    pdal::BOX3D processingBounds() const
         { return m_cubic ? m_cubicBounds : m_bounds; }
+    pdal::BOX3D cubicBounds() const
+        { return m_cubicBounds; }
+    pdal::BOX3D conformingBounds() const
+        { return m_bounds; }
+
     int maxLevel() const
         { return m_maxLevel; }
     void setCubic(bool cubic)

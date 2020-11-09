@@ -86,6 +86,7 @@ void Epf::addArgs(ProgramArgs& programArgs)
     programArgs.add("files", "Files to preflight", m_files).setPositional();
     programArgs.add("file_limit", "Max number of files to process", m_fileLimit, (size_t)10000000);
     programArgs.add("level", "Set the actual level to use, rather than guess.", m_level, -1);
+    programArgs.add("cube", "Make a cube, rather than a rectangular solid.", m_doCube, true);
 }
 
 void Epf::run(const std::vector<std::string>& options)
@@ -105,6 +106,7 @@ void Epf::run(const std::vector<std::string>& options)
         return;
     }
 
+    m_grid.setCubic(m_doCube);
     std::vector<FileInfo> fileInfos = createFileInfo();
     if (m_level != -1)
         m_grid.resetLevel(m_level);

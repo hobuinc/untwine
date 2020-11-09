@@ -22,7 +22,7 @@ namespace epf
 
 Reprocessor::Reprocessor(const VoxelKey& k, int numPoints, int pointSize,
         const std::string& outputDir, Grid grid, Writer *writer) :
-    m_pointSize(pointSize), m_numPoints(numPoints), m_fileSize(pointSize * numPoints),
+    m_pointSize(pointSize), m_numPoints(numPoints), m_fileSize(pointSize * (size_t)numPoints),
     m_grid(grid), m_mgr(pointSize, writer)
 {
     // We make an assumption that at most twice the number of points will be in a cell

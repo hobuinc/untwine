@@ -55,6 +55,7 @@ private:
     pdal::ThreadPool m_pool;
     size_t m_fileLimit;
     int m_level;
+    bool m_doCube;
 };
 
 } // namespace epf

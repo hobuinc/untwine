@@ -35,29 +35,34 @@ public:
     // of our lookups will fail.
     using Grid = std::unordered_map<GridKey, int>;
 
-    VoxelInfo(const pdal::BOX3D& fullBounds, const VoxelKey& k) :
-        m_fullBounds(fullBounds), m_octant(k)
+    VoxelInfo(const pdal::BOX3D& fullBounds, const VoxelKey& key) :
+        m_fullBounds(fullBounds), m_octant(key)
     {
         //ABELL - This shouldn't be necessary. The key should be in the children
         //  when they're pulled out of the queue.
         for (int i = 0; i < 8; ++i)
-            m_children[i].setKey(k.child(i));
+            m_children[i].setKey(key.child(i));
 
-        int cells = std::pow(2, key().level());
+        int cells = std::pow(2, key.level());
         m_xWidth = (fullBounds.maxx - fullBounds.minx) / cells;
         m_yWidth = (fullBounds.maxy - fullBounds.miny) / cells;
         m_zWidth = (fullBounds.maxz - fullBounds.minz) / cells;
         // Calculate the bounds of this voxel.
-        m_bounds.minx = fullBounds.minx + (k.x() * m_xWidth);
+        m_bounds.minx = fullBounds.minx + (key.x() * m_xWidth);
         m_bounds.maxx = m_bounds.minx + m_xWidth;
-        m_bounds.miny = fullBounds.miny + (k.y() * m_yWidth);
+        m_bounds.miny = fullBounds.miny + (key.y() * m_yWidth);
         m_bounds.maxy = m_bounds.miny + m_yWidth;
-        m_bounds.minz = fullBounds.minz + (k.z() * m_zWidth);
+        m_bounds.minz = fullBounds.minz + (key.z() * m_zWidth);
         m_bounds.maxz = m_bounds.minz + m_zWidth;
 
         // Determine spacing between points.
 //        m_spacing = minWidth() / 128.0;
         m_spacing = maxWidth() / 128.0;
+
+        // Make the spacing smaller than what we expect as the final spacing since we're
+        // going to select points from the grid for the parent.
+        if (key != VoxelKey(0, 0, 0, 0))
+            m_spacing *= 1.5;
         m_squareSpacing = m_spacing * m_spacing;
 
         static const double sqrt3 = std::sqrt(3);

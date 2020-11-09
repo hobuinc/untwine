@@ -36,7 +36,7 @@ public:
 
 private:
     int m_pointSize;
-    int m_numPoints;
+    uint64_t m_numPoints;
     uint64_t m_fileSize;
     Grid m_grid;
     int m_levels;

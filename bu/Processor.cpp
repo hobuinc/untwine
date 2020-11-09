@@ -62,9 +62,6 @@ void Processor::operator()()
     if (m_vi.octant().fileInfos().size() != totalFileInfos)
         sample(accepted, rejected);
 
-/**
-std::cerr << m_vi.key() << " Total/Accepted/rejected size = " << totalPoints << "/" << accepted.size() << "/" << rejected.size() << "!\n";
-**/
     write(accepted, rejected);
 
     m_manager.queue(m_vi.octant());
@@ -126,6 +123,7 @@ void Processor::write(Index& accepted, Index& rejected)
 {
 std::cerr << m_vi.key() << " Accepted/Rejected/num points = " <<
     accepted.size() << "/" << rejected.size() << "/" << m_vi.numPoints() << "!\n";
+
     // If this is the final key, append any remaining file infos as accepted points and
     // write the accepted points as binary.
     if (m_vi.key() == VoxelKey(0, 0, 0, 0))

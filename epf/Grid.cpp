@@ -27,15 +27,47 @@ namespace epf
 void Grid::expand(const BOX3D& bounds, size_t points)
 {
     m_bounds.grow(bounds);
+    double xside = m_bounds.maxx - m_bounds.minx;
+    double yside = m_bounds.maxy - m_bounds.miny;
+    double zside = m_bounds.maxz - m_bounds.minz;
+    double side = (std::max)(xside, (std::max)(yside, zside));
+    m_cubicBounds = BOX3D(m_bounds.minx, m_bounds.miny, m_bounds.minz,
+        m_bounds.minx + side, m_bounds.miny + side, m_bounds.minz + side);
     m_millionPoints += (points / 1000000.0);
 
-    //ABELL - Fix this for small point clouds.
-    if (m_millionPoints >= 2000)
-        resetLevel(6);
-    else if (m_millionPoints >= 100)
-        resetLevel(5);
-    else
-        resetLevel(4);
+    resetLevel(calcLevel());
+}
+
+int Grid::calcLevel()
+{
+    int level = 0;
+    double mp = m_millionPoints;
+    double limit = (MaxPointsPerNode / 1000000.0);
+
+    double xside = m_bounds.maxx - m_bounds.minx;
+    double yside = m_bounds.maxy - m_bounds.miny;
+    double zside = m_bounds.maxz - m_bounds.minz;
+
+    double side = (std::max)(xside, (std::max)(yside, zside));
+
+    while (mp > MaxPointsPerNode / 1000000.0)
+    {
+        if (m_cubic)
+        {
+            if (xside >= side)
+                mp /= 2;
+            if (yside >= side)
+                mp /= 2;
+            if (zside >= side)
+                mp /= 2;
+        }
+        else
+            mp /= 8;
+        side /= 2;
+        level++;
+    }
+
+    return level;
 }
 
 void Grid::resetLevel(int level)
@@ -43,9 +75,18 @@ void Grid::resetLevel(int level)
     m_maxLevel = level;
     m_gridSize = std::pow(2, level);
 
-    m_xsize = (m_bounds.maxx - m_bounds.minx) / m_gridSize;
-    m_ysize = (m_bounds.maxy - m_bounds.miny) / m_gridSize;
-    m_zsize = (m_bounds.maxz - m_bounds.minz) / m_gridSize;
+    if (m_cubic)
+    {
+        m_xsize = (m_cubicBounds.maxx - m_cubicBounds.minx) / m_gridSize;
+        m_ysize = m_xsize;
+        m_zsize = m_xsize;
+    }
+    else
+    {
+        m_xsize = (m_bounds.maxx - m_bounds.minx) / m_gridSize;
+        m_ysize = (m_bounds.maxy - m_bounds.miny) / m_gridSize;
+        m_zsize = (m_bounds.maxz - m_bounds.minz) / m_gridSize;
+    }
 }
 
 VoxelKey Grid::key(double x, double y, double z)

@@ -240,11 +240,7 @@ void BuPyramid::queueWork()
     for (const OctantInfo& o : have)
         m_manager.queue(o);
     for (const VoxelKey& k : needed)
-{
-if (k.level() != 4)
-std::cerr << "Needed = " << k << "!\n";
         m_manager.queue(OctantInfo(k));
-}
 }
 
 /**

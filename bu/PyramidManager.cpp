@@ -28,7 +28,9 @@ namespace ept2
 namespace bu
 {
 
-PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(6), m_totalPoints(0)
+//PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(6), m_totalPoints(0)
+//PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(8), m_totalPoints(0)
+PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(10), m_totalPoints(0)
 {}
 
 

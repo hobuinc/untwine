@@ -31,11 +31,23 @@ public:
     uint8_t *data()
         { return m_data; }
     double x() const
-        { return *ddata(); }
+        {
+            double d;
+            memcpy(&d, ddata(), sizeof(d));
+            return d;
+        }
     double y() const
-        { return *(ddata() + 1); }
+        {
+            double d;
+            memcpy(&d, ddata() + 1, sizeof(d));
+            return d;
+        }
     double z() const
-        { return *(ddata() + 2); }
+        {
+            double d;
+            memcpy(&d, ddata() + 2, sizeof(d));
+            return d;
+        }
 
     char *cdata() const
         { return reinterpret_cast<char *>(m_data); }

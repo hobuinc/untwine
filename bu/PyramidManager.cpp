@@ -85,27 +85,12 @@ void PyramidManager::process(const OctantInfo& o)
         queue(vi.octant());
     else
     {
-        std::unique_ptr<Processor> p(new Processor(*this, vi, m_b));
-        std::function<void()> f = std::bind(&Processor::operator(), p.get());
-        m_pool.add(f);
+        m_pool.add([vi, this]()
         {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            m_processors.push_back(std::move(p));
-        }
+            Processor p(*this, vi, m_b);
+            p.run();
+        });
     }
-}
-
-
-void PyramidManager::destroy(Processor *p)
-{
-    std::lock_guard<std::mutex> lock(m_mutex);
-
-    for (auto pi = m_processors.begin(); pi != m_processors.end(); ++pi)
-        if (pi->get() == p)
-        {
-            m_processors.erase(pi);
-            break;
-        }
 }
 
 

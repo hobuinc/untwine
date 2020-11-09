@@ -36,7 +36,7 @@ class Processor
 public:
     Processor(PyramidManager& manager, const VoxelInfo&, const BaseInfo& b);
 
-    void operator()();
+    void run();
 
 private:
     using Index = std::deque<int>;

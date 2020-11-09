@@ -35,7 +35,7 @@ Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo
 {}
 
 
-void Processor::operator()()
+void Processor::run()
 {
     size_t totalPoints = 0;
     size_t totalFileInfos = 0;
@@ -65,9 +65,6 @@ void Processor::operator()()
     write(accepted, rejected);
 
     m_manager.queue(m_vi.octant());
-    //ABELL - Could probably do this without messing with the manager. Would allow
-    //  elimination of PyramidManager::m_processors.  Just "delete this;"
-    m_manager.destroy(this);
 }
 
 

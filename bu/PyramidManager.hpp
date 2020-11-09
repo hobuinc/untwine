@@ -39,7 +39,6 @@ public:
     ~PyramidManager();
 
     void queue(const OctantInfo& o);
-    void destroy(Processor *p);
     void run();
     void logOctant(const VoxelKey& k, int cnt);
     uint64_t totalPoints() const
@@ -51,7 +50,6 @@ private:
     const BaseInfo& m_b;
     std::mutex m_mutex;
     std::condition_variable m_cv;
-    std::vector<std::unique_ptr<Processor>> m_processors;
     std::unordered_map<VoxelKey, OctantInfo> m_completes;
     std::queue<OctantInfo> m_queue;
     pdal::ThreadPool m_pool;

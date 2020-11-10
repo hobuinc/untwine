@@ -175,6 +175,23 @@ void BuPyramid::writeInfo()
         return out;
     };
 
+    auto typeString = [](pdal::Dimension::BaseType b)
+    {
+        using namespace pdal::Dimension;
+
+        switch (b)
+        {
+        case BaseType::Signed:
+            return "signed";
+        case BaseType::Unsigned:
+            return "unsigned";
+        case BaseType::Floating:
+            return "float";
+        default:
+            return "";
+        }
+    };
+
     std::ofstream out(m_b.outputDir + "/ept.json");
 
     out << "{\n";
@@ -201,8 +218,7 @@ void BuPyramid::writeInfo()
 
         out << "\t{";
             out << "\"name\": \"" << fdi.name << "\", ";
-            out << "\"type\": \"" <<
-                pdal::Dimension::toName(pdal::Dimension::base(fdi.type)) << "\", ";
+            out << "\"type\": \"" << typeString(pdal::Dimension::base(fdi.type)) << "\", ";
             if (fdi.name == "X" || fdi.name == "Y" || fdi.name == "Z")
                 out << "\"scale\": .01, \"offset\": 0, ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type) << " ";
@@ -261,6 +277,15 @@ void BuPyramid::getInputFiles()
             m_allFiles.erase(k);
         };
     }
+
+    size_t sum = 0;
+    for (auto p : m_allFiles)
+    {
+        FileInfo& fi = p.second;
+        sum += fi.numPoints();
+        std::cerr << fi.filename() << "\t\t" << fi.numPoints() << "\t\t" << sum << "!\n";
+    }
+    exit(0);
 }
 
 

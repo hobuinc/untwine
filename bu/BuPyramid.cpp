@@ -92,7 +92,11 @@ void BuPyramid::readBaseInfo()
             if (c == '\n')
             {
                 if (firstnl)
+                {
+                    // Remove trailing newline.
+                    s.resize(s.size() - 1);
                     return s;
+                }
                 else
                     firstnl = true;
             }
@@ -114,17 +118,19 @@ void BuPyramid::readBaseInfo()
     ss >> m_b.bounds.maxx >> m_b.bounds.maxy >> m_b.bounds.maxz;
 
     ss.str(nextblock(in));
+    ss.clear();
     ss >> m_b.trueBounds.minx >> m_b.trueBounds.miny >> m_b.trueBounds.minz;
     ss >> m_b.trueBounds.maxx >> m_b.trueBounds.maxy >> m_b.trueBounds.maxz;
 
-    ss.str(nextblock(in));
-    ss >> m_b.srs;
-    std::cerr << "SRS = " << m_b.srs << "!\n";
+    std::string srs = nextblock(in);
+    if (srs != "NONE")
+        m_b.srs.set(srs);
 
     if (!in)
         throw "Couldn't read info file.";
 
     ss.str(nextblock(in));
+    ss.clear();
     m_b.pointSize = 0;
     while (true)
     {
@@ -137,7 +143,8 @@ void BuPyramid::readBaseInfo()
         m_b.pointSize += pdal::Dimension::size(fdi.type);
         m_b.dimInfo.push_back(fdi);
     }
-    std::cerr << "Point size = " << m_b.pointSize << "!\n";
+    if (m_b.pointSize == 0)
+        throw "Couldn't read info file.";
 }
 
 
@@ -154,16 +161,34 @@ void BuPyramid::createDirs()
 
 void BuPyramid::writeInfo()
 {
+    auto escapeQuotes = [](const std::string& in)
+    {
+        std::string out;
+        for (std::size_t i(0); i < in.size(); ++i)
+        {
+            if (in[i] == '"' && ((i && in[i - 1] != '\\') || !i))
+            {
+                out.push_back('\\');
+            }
+            out.push_back(in[i]);
+        }
+        return out;
+    };
+
     std::ofstream out(m_b.outputDir + "/ept.json");
 
     out << "{\n";
 
+    pdal::BOX3D& b = m_b.bounds;
     out << "\"bounds\": [" <<
-        m_b.bounds.minx << ", " << m_b.bounds.miny << ", " << m_b.bounds.minz << ", " <<
-        m_b.bounds.maxx << ", " << m_b.bounds.maxy << ", " << m_b.bounds.maxz << "],\n";
+        b.minx << ", " << b.miny << ", " << b.minz << ", " <<
+        b.maxx << ", " << b.maxy << ", " << b.maxz << "],\n";
+
+    pdal::BOX3D& tb = m_b.trueBounds;
     out << "\"boundsConforming\": [" <<
-        m_b.bounds.minx << ", " << m_b.bounds.miny << ", " << m_b.bounds.minz << ", " <<
-        m_b.bounds.maxx << ", " << m_b.bounds.maxy << ", " << m_b.bounds.maxz << "],\n";
+        tb.minx << ", " << tb.miny << ", " << tb.minz << ", " <<
+        tb.maxx << ", " << tb.maxy << ", " << tb.maxz << "],\n";
+
     out << "\"dataType\": \"laszip\",\n";
     out << "\"hierarchyType\": \"json\",\n";
     out << "\"points\": " << m_manager.totalPoints() << ",\n";
@@ -178,6 +203,8 @@ void BuPyramid::writeInfo()
             out << "\"name\": \"" << fdi.name << "\", ";
             out << "\"type\": \"" <<
                 pdal::Dimension::toName(pdal::Dimension::base(fdi.type)) << "\", ";
+            if (fdi.name == "X" || fdi.name == "Y" || fdi.name == "Z")
+                out << "\"scale\": .01, \"offset\": 0, ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type) << " ";
         out << "}";
         if (di + 1 != m_b.dimInfo.end())
@@ -185,7 +212,13 @@ void BuPyramid::writeInfo()
         out << "\n";
     }
     out << "],\n";
-    out << "\"srs\": {}\n";
+    out << "\"srs\": {\n";
+        if (m_b.srs.valid())
+        {
+            out << "\"" << pdal::Utils::escapeJSON(escapeQuotes(m_b.srs.getWKT())) << "\"\n";
+        }
+    out << "}\n";
+
     out << "}\n";
 }
 

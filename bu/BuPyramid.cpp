@@ -154,6 +154,23 @@ void BuPyramid::createDirs()
 
 void BuPyramid::writeInfo()
 {
+    auto typeString = [](pdal::Dimension::BaseType b)
+    {
+        using namespace pdal::Dimension;
+
+        switch (b)
+        {
+        case BaseType::Signed:
+            return "signed";
+        case BaseType::Unsigned:
+            return "unsigned";
+        case BaseType::Floating:
+            return "float";
+        default:
+            return "";
+        }
+    };
+
     std::ofstream out(m_b.outputDir + "/ept.json");
 
     out << "{\n";
@@ -176,8 +193,7 @@ void BuPyramid::writeInfo()
 
         out << "\t{";
             out << "\"name\": \"" << fdi.name << "\", ";
-            out << "\"type\": \"" <<
-                pdal::Dimension::toName(pdal::Dimension::base(fdi.type)) << "\", ";
+            out << "\"type\": \"" << typeString(pdal::Dimension::base(fdi.type)) << "\", ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type) << " ";
         out << "}";
         if (di + 1 != m_b.dimInfo.end())

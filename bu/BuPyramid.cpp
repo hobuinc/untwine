@@ -278,6 +278,7 @@ void BuPyramid::getInputFiles()
         };
     }
 
+    /**
     size_t sum = 0;
     for (auto p : m_allFiles)
     {
@@ -286,6 +287,7 @@ void BuPyramid::getInputFiles()
         std::cerr << fi.filename() << "\t\t" << fi.numPoints() << "\t\t" << sum << "!\n";
     }
     exit(0);
+    **/
 }
 
 

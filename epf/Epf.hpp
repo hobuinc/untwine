@@ -57,7 +57,7 @@ private:
     size_t m_fileLimit;
     int m_level;
     bool m_doCube;
-    FileInfo *m_srsFileInfo;
+    FileInfo m_srsFileInfo;
 };
 
 } // namespace epf

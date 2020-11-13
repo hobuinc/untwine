@@ -83,7 +83,7 @@ void writeMetadata(const std::string& outputDir, const Grid& grid,
 
 /// Epf
 
-Epf::Epf() : m_pool(8), m_srsFileInfo(nullptr)
+Epf::Epf() : m_pool(8)
 {}
 
 void Epf::addArgs(ProgramArgs& programArgs)
@@ -208,7 +208,7 @@ void Epf::run(const std::vector<std::string>& options)
     m_writer->stop();
 
     writeMetadata(m_outputDir, m_grid,
-        m_srsFileInfo ? m_srsFileInfo->srs.getWKT() : "NONE", layout);
+        m_srsFileInfo.valid() ? m_srsFileInfo.srs.getWKT() : "NONE", layout);
 }
 
 void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
@@ -255,15 +255,18 @@ void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
         fi.filename = filename;
         fi.driver = driver;
 
-        if (m_srsFileInfo && m_srsFileInfo->srs != qi.m_srs)
+        if (m_srsFileInfo.valid() && m_srsFileInfo.srs != qi.m_srs)
         {
             std::cerr << "Files have mismatched SRS values. Using SRS from '" <<
-                m_srsFileInfo->filename << "'.\n";
+                m_srsFileInfo.filename << "'.\n";
         }
         fi.srs = qi.m_srs;
         fileInfos.push_back(fi);
-        if (!m_srsFileInfo && qi.m_srs.valid())
-            m_srsFileInfo = &fileInfos.back();
+        if (!m_srsFileInfo.valid() && qi.m_srs.valid())
+        {
+            m_srsFileInfo = fi;
+            std::cerr << "Set SRS file info fo " << m_srsFileInfo.filename << "!\n";
+        }
 
         m_grid.expand(qi.m_bounds, qi.m_pointCount);
     }

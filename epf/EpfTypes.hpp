@@ -49,6 +49,9 @@ struct FileInfo
     uint64_t numPoints;
     pdal::BOX3D bounds;
     pdal::SpatialReference srs;
+
+    bool valid() const
+    { return filename.size(); }
 };
 
 } // namespace epf

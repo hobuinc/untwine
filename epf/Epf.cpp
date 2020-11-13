@@ -59,7 +59,7 @@ namespace epf
 {
 
 void writeMetadata(const std::string& outputDir, const Grid& grid,
-    const pdal::PointLayoutPtr& layout)
+    const std::string& srs, const pdal::PointLayoutPtr& layout)
 {
     std::ofstream out(outputDir + "/" + MetadataFilename);
     pdal::BOX3D b = grid.processingBounds();
@@ -73,7 +73,7 @@ void writeMetadata(const std::string& outputDir, const Grid& grid,
     out << b.maxx << " " << b.maxy << " " << b.maxz << "\n";
     out << "\n";
 
-    out << "EPSG:4326" << "\n";
+    out << srs << "\n";
     out << "\n";
 
     for (Dimension::Id id : layout->dims())
@@ -83,7 +83,7 @@ void writeMetadata(const std::string& outputDir, const Grid& grid,
 
 /// Epf
 
-Epf::Epf() : m_pool(8)
+Epf::Epf() : m_pool(8), m_srsFileInfo(nullptr)
 {}
 
 void Epf::addArgs(ProgramArgs& programArgs)
@@ -115,7 +115,10 @@ void Epf::run(const std::vector<std::string>& options)
         throw Error("Output directory already contains EPT data.");
 
     m_grid.setCubic(m_doCube);
-    std::vector<FileInfo> fileInfos = createFileInfo();
+
+    std::vector<FileInfo> fileInfos;
+    createFileInfo(fileInfos);
+
     if (m_level != -1)
         m_grid.resetLevel(m_level);
 
@@ -204,12 +207,12 @@ void Epf::run(const std::vector<std::string>& options)
     m_pool.stop();
     m_writer->stop();
 
-    writeMetadata(m_outputDir, m_grid, layout);
+    writeMetadata(m_outputDir, m_grid,
+        m_srsFileInfo ? m_srsFileInfo->srs.getWKT() : "NONE", layout);
 }
 
-std::vector<FileInfo> Epf::createFileInfo()
+void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
 {
-    std::vector<FileInfo> fileInfos;
     std::vector<std::string> filenames;
 
     // If any of the specified input files is a directory, get the names of the files
@@ -251,11 +254,19 @@ std::vector<FileInfo> Epf::createFileInfo()
             fi.dimInfo.push_back(FileDimInfo(name));
         fi.filename = filename;
         fi.driver = driver;
+
+        if (m_srsFileInfo && m_srsFileInfo->srs != qi.m_srs)
+        {
+            std::cerr << "Files have mismatched SRS values. Using SRS from '" <<
+                m_srsFileInfo->filename << "'.\n";
+        }
+        fi.srs = qi.m_srs;
         fileInfos.push_back(fi);
+        if (!m_srsFileInfo && qi.m_srs.valid())
+            m_srsFileInfo = &fileInfos.back();
 
         m_grid.expand(qi.m_bounds, qi.m_pointCount);
     }
-    return fileInfos;
 }
 
 } // namespace epf

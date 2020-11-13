@@ -115,8 +115,8 @@ namespace Untwine {
      * \param options string map defining options/flags, empty for all defaults
      */
     UNTWINE_EXPORT Feedback BottomUpIndexing(
-        const char *inputDir,
-        const char *outputDir,
+        const std::string& inputDir,
+        const std::string& outputDir,
         const std::map<std::string, std::string>& options
     );
 

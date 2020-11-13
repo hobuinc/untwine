@@ -32,7 +32,6 @@ DataVecPtr BufferCache::fetch()
         return buf;
     }
 
-    constexpr size_t BufSize = 4096 * 10;
     return DataVecPtr(new DataVec(BufSize));
 }
 
@@ -41,6 +40,8 @@ void BufferCache::replace(DataVecPtr&& buf)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    //ABELL - Fix this.
+    buf->resize(BufSize);
     m_buffers.push_back(std::move(buf));
 }
 

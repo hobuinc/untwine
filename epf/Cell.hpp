@@ -35,8 +35,6 @@ class Writer;
 class Cell
 {
 public:
-    static constexpr size_t BufSize = 4096 * 10;
-
     Cell(const VoxelKey& key, int pointSize, Writer *writer) :
         m_key(key), m_pointSize(pointSize), m_writer(writer)
     {

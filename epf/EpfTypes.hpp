@@ -34,6 +34,7 @@ using DataVec = std::vector<uint8_t>;
 using DataVecPtr = std::unique_ptr<DataVec>;
 using Totals = std::unordered_map<VoxelKey, size_t>;
 constexpr int MaxPointsPerNode = 100000;
+constexpr int BufSize = 4096 * 10;
 
 struct Error : public std::runtime_error
 {

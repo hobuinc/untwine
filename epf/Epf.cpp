@@ -174,9 +174,6 @@ void Epf::run(const std::vector<std::string>& options)
         processors.push_back(std::move(fp));
     }
 
-// Enable this when the sampler supports the output.
-/**
-**/
     // Wait for  all the processors to finish and restart.
     m_pool.cycle();
 
@@ -197,6 +194,7 @@ void Epf::run(const std::vector<std::string>& options)
         if (numPoints > MaxPointsPerNode)
         {
             int pointSize = layout->pointSize();
+
             m_pool.add([key, numPoints, pointSize, this]()
             {
                 Reprocessor r(key, numPoints, pointSize, m_outputDir, m_grid, m_writer.get());

@@ -69,6 +69,8 @@ void PyramidManager::run()
 }
 
 
+// Take the item off the queue and stick it on the complete list. If we have all 8 octants,
+// remove the items from the complete list and queue a Processor job.
 void PyramidManager::process(const OctantInfo& o)
 {
     VoxelKey pk = o.key().parent();

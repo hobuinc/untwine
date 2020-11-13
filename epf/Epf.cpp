@@ -16,6 +16,7 @@
 #include "FileProcessor.hpp"
 #include "Reprocessor.hpp"
 #include "Writer.hpp"
+#include "../common/Common.hpp"
 
 #include <unordered_set>
 
@@ -45,7 +46,7 @@ int main(int argc, char *argv[])
     }
     catch (const ept2::epf::Error& err)
     {
-        std::cerr << err.what() << "\n";
+        std::cerr << "epf Error: " << err.what() << "\n";
         return -1;
     }
 
@@ -60,7 +61,7 @@ namespace epf
 void writeMetadata(const std::string& outputDir, const Grid& grid,
     const pdal::PointLayoutPtr& layout)
 {
-    std::ofstream out(outputDir + "/info2.txt");
+    std::ofstream out(outputDir + "/" + MetadataFilename);
     pdal::BOX3D b = grid.processingBounds();
     out.precision(10);
     out << b.minx << " " << b.miny << " " << b.minz << "\n";
@@ -110,6 +111,8 @@ void Epf::run(const std::vector<std::string>& options)
         std::cerr << err.what() << "\n";
         return;
     }
+    if (pdal::FileUtils::fileExists(m_outputDir + "/" + MetadataFilename))
+        throw Error("Output directory already contains EPT data.");
 
     m_grid.setCubic(m_doCube);
     std::vector<FileInfo> fileInfos = createFileInfo();

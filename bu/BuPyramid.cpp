@@ -5,12 +5,11 @@
 
 #include <pdal/util/ProgramArgs.hpp>
 
-#include "../common/VoxelKey.hpp"
-
 #include "BuPyramid.hpp"
 #include "BuTypes.hpp"
 #include "FileInfo.hpp"
 #include "OctantInfo.hpp"
+#include "../common/Common.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -57,7 +56,7 @@ void BuPyramid::run(const std::vector<std::string>& options)
     }
     catch (const pdal::arg_error& err)
     {
-        std::cerr << err.what() << "\n";
+        std::cerr << "bu Error: " << err.what() << "\n";
         return;
     }
 
@@ -103,7 +102,7 @@ void BuPyramid::readBaseInfo()
         return s;
     };
 
-    std::string baseFilename = m_b.inputDir + "/info2.txt";
+    std::string baseFilename = m_b.inputDir + "/" + MetadataFilename;
     std::ifstream in(baseFilename);
 
     if (!in)
@@ -213,12 +212,12 @@ void BuPyramid::getInputFiles()
         std::regex check("([0-9]+)-([0-9]+)-([0-9]+)-([0-9]+)\\.bin");
         std::smatch m;
         if (!std::regex_match(f, m, check))
-            return VoxelKey(0, 0, 0, 0);
+            return std::make_pair(false, VoxelKey(0, 0, 0, 0));
         int level = std::stoi(m[1].str());
         int x = std::stoi(m[2].str());
         int y = std::stoi(m[3].str());
         int z = std::stoi(m[4].str());
-        return VoxelKey(x, y, z, level);
+        return std::make_pair(true, VoxelKey(x, y, z, level));
     };
 
     std::vector<std::string> files = pdal::FileUtils::directoryList(m_b.inputDir);
@@ -228,8 +227,10 @@ void BuPyramid::getInputFiles()
     {
         uintmax_t size = pdal::FileUtils::fileSize(file);
         file = pdal::FileUtils::getFilename(file);
-        VoxelKey key = matches(file);
-        if (key != root)
+        auto ret = matches(file);
+        bool success = ret.first;
+        VoxelKey& key = ret.second;
+        if (success)
             m_allFiles.emplace(key, FileInfo(file, size / m_b.pointSize));
     }
 
@@ -290,32 +291,6 @@ void BuPyramid::queueWork()
     for (const VoxelKey& k : needed)
         m_manager.queue(OctantInfo(k));
 }
-
-/**
-void BuPyramid::queueWork()
-{
-    int voxelWidth = std::pow(2, m_b.maxLevel);
-
-    // Loop through the of each octet of voxels in the max level.
-    for (int x = 0; x <= voxelWidth; x++)
-    for (int y = 0; y <= voxelWidth; y++)
-    for (int z = 0; z <= voxelWidth; z++)
-    {
-        VoxelKey k(x, y, z, m_b.maxLevel);
-        OctantInfo o(k);
-
-        std::string s = k.toString() + ".bin";
-        auto fii = std::find_if(m_allFiles.begin(), m_allFiles.end(),
-            [&s](const FileInfo& fi){ return s == fi.filename(); });
-        if (fii != m_allFiles.end())
-        {
-            FileInfo& fi = *fii;
-            o.appendFileInfo(fi);
-        }
-        m_manager.queue(o);
-    }
-}
-**/
 
 } // namespace bu
 } // namespace ept2

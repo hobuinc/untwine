@@ -155,8 +155,6 @@ void Epf::run(const std::vector<std::string>& options)
     // Make a writer with 4 threads.
     m_writer.reset(new Writer(m_outputDir, 4));
 
-    std::vector<std::unique_ptr<FileProcessor>> processors;
-
     // Sort file infos so the largest files come first. This helps to make sure we don't delay
     // processing big files that take the longest (use threads more efficiently).
     std::sort(fileInfos.begin(), fileInfos.end(), [](const FileInfo& f1, const FileInfo& f2)
@@ -164,11 +162,12 @@ void Epf::run(const std::vector<std::string>& options)
     // Add the files to the processing pool
     for (const FileInfo& fi : fileInfos)
     {
-        std::unique_ptr<FileProcessor> fp(
-            new FileProcessor(fi, layout->pointSize(), m_grid, m_writer.get()));
-        std::function<void()> processor = std::bind(&FileProcessor::operator(), fp.get());
-        m_pool.add(processor);
-        processors.push_back(std::move(fp));
+        int pointSize = layout->pointSize();
+        m_pool.add([&fi, pointSize, this]()
+        {
+            FileProcessor fp(fi, pointSize, m_grid, m_writer.get());
+            fp.run();
+        });
     }
 
     // Wait for  all the processors to finish and restart.

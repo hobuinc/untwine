@@ -24,9 +24,7 @@ void Cell::initialize()
     m_buf = m_writer->bufferCache().fetch();
     m_pos = m_buf->data();
 
-    // The end position is one less than the buffer size to allow for
-    // speculative writes into the cell.  See FileProcessor for details.
-    m_endPos = m_pos + m_pointSize * ((BufSize / m_pointSize) - 1);
+    m_endPos = m_pos + m_pointSize * (BufSize / m_pointSize);
 }
 
 void Cell::write()
@@ -43,7 +41,7 @@ void Cell::write()
 void Cell::advance()
 {
     m_pos += m_pointSize;
-    if (m_pos > m_endPos)
+    if (m_pos >= m_endPos)
     {
         write();
         initialize();

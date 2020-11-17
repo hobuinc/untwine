@@ -30,7 +30,7 @@ FileProcessor::FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& g
     m_fi(fi), m_cellMgr(pointSize, writer), m_grid(grid), m_cnt(++m_totalCnt)
 {}
 
-void FileProcessor::operator()()
+void FileProcessor::run()
 {
     Options opts;
     opts.add("filename", m_fi.filename);

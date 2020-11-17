@@ -26,12 +26,6 @@ namespace ept2
 namespace epf
 {
 
-struct WriteData
-{
-    VoxelKey key;
-    DataVecPtr data;
-};
-
 Writer::Writer(const std::string& directory, int numThreads) :
     m_directory(directory), m_pool(numThreads), m_stop(false)
 {

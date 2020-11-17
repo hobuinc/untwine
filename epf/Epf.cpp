@@ -203,6 +203,7 @@ void Epf::run(const std::vector<std::string>& options)
     }
     m_pool.stop();
     m_writer->stop();
+
     writeMetadata(m_outputDir, m_grid,
         m_srsFileInfo.valid() ? m_srsFileInfo.srs.getWKT() : "NONE", layout);
 }

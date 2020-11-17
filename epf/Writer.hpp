@@ -35,7 +35,7 @@ class Writer
     struct WriteData
     {
         VoxelKey key;
-        std::unique_ptr<std::vector<uint8_t>> data;
+        DataVecPtr data;
     };
 
 public:

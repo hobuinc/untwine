@@ -29,7 +29,7 @@ public:
     FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& grid, Writer *writer);
 
     Cell *getCell(const VoxelKey& key);
-    void operator()();
+    void run();
 
 private:
     FileInfo m_fi;

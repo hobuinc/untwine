@@ -26,12 +26,6 @@ namespace ept2
 namespace epf
 {
 
-struct WriteData
-{
-    VoxelKey key;
-    DataVecPtr data;
-};
-
 Writer::Writer(const std::string& directory, int numThreads) :
     m_directory(directory), m_pool(numThreads), m_stop(false)
 {
@@ -114,6 +108,9 @@ void Writer::run()
         // Remove the key from the active key list.
         std::ofstream out(path(wd.key), std::ios::app | std::ios::binary);
         out.write(reinterpret_cast<const char *>(wd.data->data()), wd.data->size());
+        out.close();
+        if (!out)
+            throw Error("Failure writing to '" + path(wd.key) + "'.");
         m_bufferCache.replace(std::move(wd.data));
 
         std::lock_guard<std::mutex> lock(m_mutex);

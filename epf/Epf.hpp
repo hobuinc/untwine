@@ -16,6 +16,7 @@
 #include <map>
 #include <vector>
 
+#include <pdal/SpatialReference.hpp>
 #include <pdal/util/ThreadPool.hpp>
 
 #include "EpfTypes.hpp"
@@ -46,7 +47,7 @@ public:
 
 private:
     void addArgs(pdal::ProgramArgs& programArgs);
-    std::vector<FileInfo> createFileInfo();
+    void createFileInfo(std::vector<FileInfo>& fileInfos);
 
     std::vector<std::string> m_files;
     std::string m_outputDir;
@@ -56,6 +57,7 @@ private:
     size_t m_fileLimit;
     int m_level;
     bool m_doCube;
+    FileInfo m_srsFileInfo;
 };
 
 } // namespace epf

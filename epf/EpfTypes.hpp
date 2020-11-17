@@ -14,6 +14,7 @@
 #pragma once
 
 #include <pdal/Dimension.hpp>
+#include <pdal/SpatialReference.hpp>
 #include <pdal/util/Bounds.hpp>
 
 #include <cstdint>
@@ -48,6 +49,10 @@ struct FileInfo
     DimInfoList dimInfo;
     uint64_t numPoints;
     pdal::BOX3D bounds;
+    pdal::SpatialReference srs;
+
+    bool valid() const
+    { return filename.size(); }
 };
 
 } // namespace epf

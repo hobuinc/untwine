@@ -16,14 +16,13 @@ Untwine is licensed under the GPLv3. Commercial licensing is possible by contact
 untwine [options]
 ```
 
-Example:
-=======
+## Example:
 
 ```
 untwine --files=some_directory --output_dir=output_directory
+```
 
-Options
-=======
+## Options
 
 files
   Input files or directories containing input files. [Required]

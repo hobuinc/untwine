@@ -88,7 +88,7 @@ namespace Untwine {
 
         bool cancellationRequested = false;
         Status status = Ready;
-        int progress = 0; //!< 0-100
+        float progress = 0.0f; //!< 0-100
     }
 
     /**

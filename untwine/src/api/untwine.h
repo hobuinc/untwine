@@ -86,9 +86,9 @@ namespace Untwine {
             Failed // Failed to succeed (all reasons BUT cancellation by user)
         };
 
-        bool cancellationRequested = false;
-        Status status = Ready;
-        float progress = 0.0f; //!< 0-100
+        bool cancellationRequested = false; //!< QGIS sets this, UNTWINE reads it and try to cancel the job when first possible
+        Status status = Ready; //! UNTWINE sets this when the status of job is changed, QGIS reads it
+        float progress = 0.0f; //!< 0-100, UNTWINE sets this periodically as the job progress goes. QGIS reads it.
     }
 
     /**

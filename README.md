@@ -6,42 +6,46 @@ provides an alternative processing approach than the [Entwine](https://entwine.i
 software, but the output is expected to be compatible EPT.
 
 
-## License
+License
+-------
 
 Untwine is licensed under the GPLv3. Commercial licensing is possible by contacting Hobu, Inc. for pricing.
 
-## Using Untwine
+Using Untwine
+-------------
 
 ```
 untwine [options]
 ```
 
-## Example:
+Example:
+--------
 
 ```
 untwine --files=some_directory --output_dir=output_directory
 ```
 
-## Options
+Options
+-------
 
-files
+- files
   Input files or directories containing input files. [Required]
 
-output_dir
+- output_dir
   Output directory. [Required]
 
-temp_dir
+- temp_dir
   Directory in which to place tiled output. If not provided, temporary files are placed
   in 'output_dir'/temp.
 
-cube
+- cube
   Create a voxel structure where each voxel is a cube. If false, the voxel structure is
   a rectangular solid that encloses the points. [Default: true]
 
-level
+- level
   Level to use when initially tiling points.  If not provided, an initial level is
   determined from the data. [Default: none].
 
-file_limit
+- file_limit
   Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
   for debugging. [Default: no limit]

@@ -35,9 +35,6 @@ private:
     FileInfo m_fi;
     CellMgr m_cellMgr;
     Grid m_grid;
-    int m_cnt;
-
-    static int m_totalCnt;
 };
 
 } // namespace epf

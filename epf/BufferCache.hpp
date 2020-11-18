@@ -14,6 +14,8 @@
 #pragma once
 
 #include <deque>
+#include <mutex>
+#include <condition_variable>
 
 #include "EpfTypes.hpp"
 
@@ -26,11 +28,17 @@ namespace epf
 class BufferCache
 {
 public:
-    std::deque<DataVecPtr> m_buffers;
-    std::mutex m_mutex;
+    BufferCache() : m_count(0)
+    {}
 
     DataVecPtr fetch();
     void replace(DataVecPtr&& buf);
+
+private:
+    std::deque<DataVecPtr> m_buffers;
+    std::mutex m_mutex;
+    std::condition_variable m_cv;
+    int m_count;
 };
 
 } // namespace epf

@@ -28,30 +28,30 @@ untwine --files=some_directory --output_dir=output_directory
 Options
 -------
 
-files
+- files
 
   Input files or directories containing input files. [Required]
 
-output_dir
+- output_dir
 
   Output directory. [Required]
 
-temp_dir
+- temp_dir
 
   Directory in which to place tiled output. If not provided, temporary files are placed
   in 'output_dir'/temp.
 
-cube
+- cube
 
   Create a voxel structure where each voxel is a cube. If false, the voxel structure is
   a rectangular solid that encloses the points. [Default: true]
 
-level
+- level
 
   Level to use when initially tiling points.  If not provided, an initial level is
   determined from the data. [Default: none].
 
-file_limit
+- file_limit
 
   Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
   for debugging. [Default: no limit]

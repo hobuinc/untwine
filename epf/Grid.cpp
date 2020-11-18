@@ -19,7 +19,7 @@
 
 using namespace pdal;
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -103,4 +103,4 @@ VoxelKey Grid::key(double x, double y, double z)
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

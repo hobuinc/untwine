@@ -15,7 +15,7 @@
 
 #include "BufferCache.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -45,7 +45,7 @@ void BufferCache::replace(DataVecPtr&& buf)
     std::unique_lock<std::mutex> lock(m_mutex);
 
     //ABELL - Fix this.
-    buf->resize(BufSize);
+//    buf->resize(BufSize);
     m_buffers.push_back(std::move(buf));
 
     if (m_count == MaxBuffers)
@@ -56,4 +56,4 @@ void BufferCache::replace(DataVecPtr&& buf)
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

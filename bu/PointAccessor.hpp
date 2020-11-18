@@ -10,15 +10,15 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
-#include "../common/Point.hpp"
+#include "../untwine/Common.hpp"
+#include "../untwine/Point.hpp"
 
 #include "BuTypes.hpp"
 #include "FileInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -78,4 +78,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

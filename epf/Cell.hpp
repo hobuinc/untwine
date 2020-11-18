@@ -19,10 +19,10 @@
 #include <memory>
 
 #include "EpfTypes.hpp"
-#include "../common/Point.hpp"
-#include "../common/VoxelKey.hpp"
+#include "../untwine/Point.hpp"
+#include "../untwine/VoxelKey.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -76,4 +76,4 @@ private:
 
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

@@ -14,7 +14,7 @@
 #include "Cell.hpp"
 #include "Writer.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -32,10 +32,10 @@ void Cell::write()
     // Resize the buffer so the writer knows how much to write.
     size_t size = m_pos - m_buf->data();
     if (size)
-    {
-        m_buf->resize(m_pos - m_buf->data());
-        m_writer->enqueue(m_key, std::move(m_buf), (size / m_pointSize));
-    }
+//    {
+//        m_buf->resize(size);
+        m_writer->enqueue(m_key, std::move(m_buf), size);
+//    }
 }
 
 void Cell::advance()
@@ -75,4 +75,4 @@ void CellMgr::flush()
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

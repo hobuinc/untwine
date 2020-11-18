@@ -12,14 +12,37 @@ Untwine is licensed under the GPLv3. Commercial licensing is possible by contact
 
 ## Using Untwine
 
-Creation of EPT dataset is a two-step process:
+```
+untwine [options]
+```
 
-1. run `epf` tool to process the input dataset and create buckets of points:
-   ```
-   epf --files my_file.laz --output_dir /tmp/epf-output
-   ```
+Example:
+=======
 
-2. run `bu` tool to run the bottom-up indexing and produce the final EPT dataset:
-   ```
-   bu --input_dir /tmp/epf-output --output_dir /tmp/ept
-   ```
+```
+untwine --files=some_directory --output_dir=output_directory
+
+Options
+=======
+
+files
+  Input files or directories containing input files. [Required]
+
+output_dir
+  Output directory. [Required]
+
+temp_dir
+  Directory in which to place tiled output. If not provided, temporary files are placed
+  in 'output_dir'/temp.
+
+cube
+  Create a voxel structure where each voxel is a cube. If false, the voxel structure is
+  a rectangular solid that encloses the points. [Default: true]
+
+level
+  Level to use when initially tiling points.  If not provided, an initial level is
+  determined from the data. [Default: none].
+
+file_limit
+  Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
+  for debugging. [Default: no limit]

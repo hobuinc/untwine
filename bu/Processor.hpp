@@ -10,7 +10,6 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <pdal/PointTable.hpp>
@@ -20,7 +19,7 @@
 #include "PointAccessor.hpp"
 #include "VoxelInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 
 class GridKey;
@@ -63,4 +62,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

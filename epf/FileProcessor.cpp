@@ -18,7 +18,7 @@
 
 using namespace pdal;
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -92,4 +92,4 @@ void FileProcessor::run()
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

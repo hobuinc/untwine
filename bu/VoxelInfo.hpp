@@ -10,20 +10,19 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <array>
 #include <unordered_map>
 
-#include "../common/FileDimInfo.hpp"
-#include "../common/GridKey.hpp"
-#include "../common/Point.hpp"
-#include "../common/VoxelKey.hpp"
+#include "../untwine/FileDimInfo.hpp"
+#include "../untwine/GridKey.hpp"
+#include "../untwine/Point.hpp"
+#include "../untwine/VoxelKey.hpp"
 
 #include "OctantInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -160,4 +159,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

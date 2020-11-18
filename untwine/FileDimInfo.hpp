@@ -10,52 +10,38 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
-namespace ept2
+#include <pdal/Dimension.hpp>
+
+namespace untwine
 {
 
-//Utterly trivial wrapper around a pointer.
-class Point
+struct FileDimInfo
 {
-public:
-    Point() : m_data(nullptr)
+    FileDimInfo()
     {}
 
-    Point(uint8_t *data) : m_data(data)
-    {}
-    Point(char *data) : m_data(reinterpret_cast<uint8_t *>(data))
+    FileDimInfo(const std::string& name) : name(name)
     {}
 
-    uint8_t *data()
-        { return m_data; }
-    double x() const
-        {
-            double d;
-            memcpy(&d, ddata(), sizeof(d));
-            return d;
-        }
-    double y() const
-        {
-            double d;
-            memcpy(&d, ddata() + 1, sizeof(d));
-            return d;
-        }
-    double z() const
-        {
-            double d;
-            memcpy(&d, ddata() + 2, sizeof(d));
-            return d;
-        }
-
-    char *cdata() const
-        { return reinterpret_cast<char *>(m_data); }
-    double *ddata() const
-        { return reinterpret_cast<double *>(m_data); }
-
-private:
-    uint8_t *m_data;
+    std::string name;
+    pdal::Dimension::Type type;
+    int offset;
+    pdal::Dimension::Id dim;
 };
+using DimInfoList = std::vector<FileDimInfo>;
 
-} // namespace ept2
+inline std::ostream& operator<<(std::ostream& out, const FileDimInfo& fdi)
+{
+    out << fdi.name << " " << (int)fdi.type << " " << fdi.offset;
+    return out;
+}
+
+inline std::istream& operator>>(std::istream& in, FileDimInfo& fdi)
+{
+    in >> fdi.name >> (int&)fdi.type >> fdi.offset;
+    return in;
+}
+
+} // namespace untwine

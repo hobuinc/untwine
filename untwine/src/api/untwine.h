@@ -76,24 +76,19 @@ namespace Untwine {
      */
     UNTWINE_EXPORT void SetLogVerbosity( LogLevel verbosity );
 
-    UNTWINE_EXPORT class Feedback
+    UNTWINE_EXPORT struct Feedback
     {
-    public:
         enum Status {
-            Canceled = 0,
-            Running,
-            Finished, //Success
-            Failed
+            Ready = 0, // before start
+            Canceled, // user cancelled, not running
+            Running, // running (cancellation may be already requested)
+            Finished, //Success (finished)
+            Failed // Failed to succeed (all reasons BUT cancellation by user)
         };
 
-        //! Request cancellation
-        void requestCancellation();
-
-        //! Returns status of the current operation
-        Status status() const;
-
-        //! Returns progress 0-100
-        int progress() const;
+        bool cancellationRequested = false;
+        Status status = Ready;
+        int progress = 0; //!< 0-100
     }
 
     /**
@@ -101,11 +96,13 @@ namespace Untwine {
      * \param uri single point cloud file readable by PDAL
      * \param outputDir folder to write point cloud buckets
      * \param options string map defining options/flags, empty for all defaults
+     * \param feedback feedback for reporting progress, result of task and pass user request for cancellation
      */
-    UNTWINE_EXPORT Feedback PreFlightClustering(
+    UNTWINE_EXPORT void PreFlightClustering(
         const std::string& uri,
         const std::string& outputDir,
-        const std::map<std::string, std::string>& options
+        const std::map<std::string, std::string>& options,
+        Feedback& feedback
     );
 
     /**
@@ -113,11 +110,13 @@ namespace Untwine {
      * \param inputDir input directory from UNTWINE_PreFlight
      * \param outputDir folder to write EPT files
      * \param options string map defining options/flags, empty for all defaults
+     * \param feedback feedback for reporting progress, result of task and pass user request for cancellation
      */
-    UNTWINE_EXPORT Feedback BottomUpIndexing(
+    UNTWINE_EXPORT void BottomUpIndexing(
         const std::string& inputDir,
         const std::string& outputDir,
-        const std::map<std::string, std::string>& options
+        const std::map<std::string, std::string>& options,
+        Feedback& feedback
     );
 
 } // namespace Untwine

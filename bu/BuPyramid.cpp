@@ -219,7 +219,7 @@ void BuPyramid::writeInfo()
             out << "\"name\": \"" << fdi.name << "\", ";
             out << "\"type\": \"" << typeString(pdal::Dimension::base(fdi.type)) << "\", ";
             if (fdi.name == "X" || fdi.name == "Y" || fdi.name == "Z")
-                out << "\"scale\": .01, \"offset\": 0, ";
+                out << "\"scale\": 0.01, \"offset\": 0, ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type) << " ";
         out << "}";
         if (di + 1 != m_b.dimInfo.end())
@@ -230,7 +230,7 @@ void BuPyramid::writeInfo()
     out << "\"srs\": {\n";
         if (m_b.srs.valid())
         {
-            out << "\"" << pdal::Utils::escapeJSON(escapeQuotes(m_b.srs.getWKT())) << "\"\n";
+            out << "\"wkt\": " <<  "\"" << pdal::Utils::escapeJSON(m_b.srs.getWKT()) << "\"\n";
         }
     out << "}\n";
 

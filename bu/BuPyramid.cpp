@@ -114,20 +114,6 @@ void BuPyramid::readBaseInfo()
 
 void BuPyramid::writeInfo()
 {
-    auto escapeQuotes = [](const std::string& in)
-    {
-        std::string out;
-        for (std::size_t i(0); i < in.size(); ++i)
-        {
-            if (in[i] == '"' && ((i && in[i - 1] != '\\') || !i))
-            {
-                out.push_back('\\');
-            }
-            out.push_back(in[i]);
-        }
-        return out;
-    };
-
     auto typeString = [](pdal::Dimension::BaseType b)
     {
         using namespace pdal::Dimension;
@@ -181,11 +167,14 @@ void BuPyramid::writeInfo()
         out << "\n";
     }
     out << "],\n";
-    out << "\"srs\":\n";
+
+    out << "\"srs\": {\n";
     if (m_b.srs.valid())
-        out << "\"" << pdal::Utils::escapeJSON(escapeQuotes(m_b.srs.getWKT())) << "\"\n";
-    else
-        out << "{}\n";
+    {
+        out << "\"wkt\": " <<  "\"" << pdal::Utils::escapeJSON(m_b.srs.getWKT()) << "\"\n";
+    }
+    out << "}\n";
+
     out << "}\n";
 }
 

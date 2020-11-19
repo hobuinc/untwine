@@ -17,9 +17,7 @@
 #include "Grid.hpp"
 #include "Cell.hpp"
 
-#include <map>
-
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -45,4 +43,4 @@ private:
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

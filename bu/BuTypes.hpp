@@ -18,24 +18,12 @@
 #include <pdal/SpatialReference.hpp>
 #include <pdal/util/Bounds.hpp>
 
-#include "../common/FileDimInfo.hpp"
+#include "../untwine/FileDimInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
-
-struct Error : public std::runtime_error
-{
-    Error(const std::string& err) : std::runtime_error(err)
-    {}
-};
-
-enum class Status
-{
-    Sampled,
-    Continue
-};
 
 struct BaseInfo
 {
@@ -50,4 +38,4 @@ struct BaseInfo
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

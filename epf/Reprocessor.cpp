@@ -14,8 +14,9 @@
 #include <pdal/util/FileUtils.hpp>
 
 #include "Reprocessor.hpp"
+#include "../untwine/Common.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -68,4 +69,4 @@ void Reprocessor::run()
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

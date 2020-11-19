@@ -25,8 +25,11 @@ namespace pdal
     class ProgramArgs;
 }
 
-namespace ept2
+namespace untwine
 {
+
+class Options;
+
 namespace bu
 {
 
@@ -36,15 +39,13 @@ class BuPyramid
 {
 public:
     BuPyramid();
-    void run(const std::vector<std::string>& options);
+    void run(const Options& options);
 
 private:
-    void addArgs(pdal::ProgramArgs& programArgs);
     void getInputFiles();
     void readBaseInfo();
     void queueWork();
     void writeInfo();
-    void createDirs();
 
     PyramidManager m_manager;
     BaseInfo m_b;
@@ -52,4 +53,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

@@ -22,18 +22,13 @@
 #include "EpfTypes.hpp"
 #include "Grid.hpp"
 
-namespace pdal
+namespace untwine
 {
-    class ProgramArgs;
-}
 
-namespace ept2
-{
+struct Options;
+
 namespace epf
 {
-
-std::string indexToString(int index);
-int toIndex(int x, int y, int z);
 
 struct FileInfo;
 class Writer;
@@ -42,23 +37,19 @@ class Epf
 {
 public:
     Epf();
+    ~Epf();
 
-    void run(const std::vector<std::string>& options);
+    void run(const Options& options);
 
 private:
-    void addArgs(pdal::ProgramArgs& programArgs);
-    void createFileInfo(std::vector<FileInfo>& fileInfos);
+    void createFileInfo(const pdal::StringList& input, std::vector<FileInfo>& fileInfos);
 
-    std::vector<std::string> m_files;
-    std::string m_outputDir;
     Grid m_grid;
     std::unique_ptr<Writer> m_writer;
     pdal::ThreadPool m_pool;
     size_t m_fileLimit;
-    int m_level;
-    bool m_doCube;
     FileInfo m_srsFileInfo;
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

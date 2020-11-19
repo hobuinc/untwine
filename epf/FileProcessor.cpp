@@ -18,16 +18,15 @@
 
 using namespace pdal;
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
 
-int FileProcessor::m_totalCnt = 0;
 
 FileProcessor::FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& grid,
         Writer *writer) :
-    m_fi(fi), m_cellMgr(pointSize, writer), m_grid(grid), m_cnt(++m_totalCnt)
+    m_fi(fi), m_cellMgr(pointSize, writer), m_grid(grid)
 {}
 
 void FileProcessor::run()
@@ -35,7 +34,7 @@ void FileProcessor::run()
     Options opts;
     opts.add("filename", m_fi.filename);
 
-    std::cerr << ("Processing " + m_fi.filename + " - " + std::to_string(m_cnt) + "!\n");
+    std::cerr << ("Processing " + m_fi.filename + "!\n");
 
     StageFactory factory;
     Stage *s = factory.createStage(m_fi.driver);
@@ -84,12 +83,11 @@ void FileProcessor::run()
     f.prepare(t);
     f.execute(t);
 
-    std::cerr << ("Done " + m_fi.filename + " - " + std::to_string(m_cnt) + ": " +
-        std::to_string(count) + " points!\n");
+    std::cerr << ("Done " + m_fi.filename + " - " + std::to_string(count) + " points!\n");
 
     // Flush any data remaining in the cells.
     m_cellMgr.flush();
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

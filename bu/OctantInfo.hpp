@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include "../common/VoxelKey.hpp"
+#include "../untwine/VoxelKey.hpp"
 
 #include "FileInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -76,4 +76,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

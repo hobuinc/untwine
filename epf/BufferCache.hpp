@@ -19,7 +19,7 @@
 
 #include "EpfTypes.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -42,4 +42,4 @@ private:
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

@@ -10,20 +10,19 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #include <regex>
 #include <string>
 #include <vector>
 
 #include <pdal/util/FileUtils.hpp>
 
-#include "../common/VoxelKey.hpp"
+#include "../untwine/VoxelKey.hpp"
 
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
 #include "VoxelInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -219,4 +218,4 @@ std::deque<VoxelKey> PyramidManager::emit(const VoxelKey& p, int stopLevel, Entr
 }
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

@@ -16,7 +16,7 @@
 #include "FileProcessor.hpp"
 #include "Reprocessor.hpp"
 #include "Writer.hpp"
-#include "../common/Common.hpp"
+#include "../untwine/Common.hpp"
 
 #include <unordered_set>
 
@@ -29,39 +29,15 @@
 
 using namespace pdal;
 
-int main(int argc, char *argv[])
-{
-    std::vector<std::string> arglist;
-
-    // Skip the program name.
-    argv++;
-    argc--;
-    while (argc--)
-        arglist.push_back(*argv++);
-
-    ept2::epf::Epf preflight;
-    try
-    {
-        preflight.run(arglist);
-    }
-    catch (const ept2::epf::Error& err)
-    {
-        std::cerr << "epf Error: " << err.what() << "\n";
-        return -1;
-    }
-
-    return 0;
-}
-
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
 
-void writeMetadata(const std::string& outputDir, const Grid& grid,
+void writeMetadata(const std::string& tempDir, const Grid& grid,
     const std::string& srs, const pdal::PointLayoutPtr& layout)
 {
-    std::ofstream out(outputDir + "/" + MetadataFilename);
+    std::ofstream out(tempDir + "/" + MetadataFilename);
     pdal::BOX3D b = grid.processingBounds();
     out.precision(10);
     out << b.minx << " " << b.miny << " " << b.minz << "\n";
@@ -86,41 +62,26 @@ void writeMetadata(const std::string& outputDir, const Grid& grid,
 Epf::Epf() : m_pool(8)
 {}
 
-void Epf::addArgs(ProgramArgs& programArgs)
-{
-    programArgs.add("output_dir", "Output directory", m_outputDir).setPositional();
-    programArgs.add("files", "Files to preflight", m_files).setPositional();
-    programArgs.add("file_limit", "Max number of files to process", m_fileLimit, (size_t)10000000);
-    programArgs.add("level", "Set the actual level to use, rather than guess.", m_level, -1);
-    programArgs.add("cube", "Make a cube, rather than a rectangular solid.", m_doCube, true);
-}
 
-void Epf::run(const std::vector<std::string>& options)
+Epf::~Epf()
+{}
+
+
+void Epf::run(const Options& options)
 {
     double millionPoints = 0;
     BOX3D totalBounds;
-    ProgramArgs programArgs;
 
-    addArgs(programArgs);
-    try
-    {
-        programArgs.parse(options);
-    }
-    catch (const pdal::arg_error& err)
-    {
-        std::cerr << err.what() << "\n";
-        return;
-    }
-    if (pdal::FileUtils::fileExists(m_outputDir + "/" + MetadataFilename))
+    if (pdal::FileUtils::fileExists(options.tempDir + "/" + MetadataFilename))
         throw Error("Output directory already contains EPT data.");
 
-    m_grid.setCubic(m_doCube);
+    m_grid.setCubic(options.doCube);
 
     std::vector<FileInfo> fileInfos;
-    createFileInfo(fileInfos);
+    createFileInfo(options.inputFiles, fileInfos);
 
-    if (m_level != -1)
-        m_grid.resetLevel(m_level);
+    if (options.level != -1)
+        m_grid.resetLevel(options.level);
 
     // This is just a debug thing that will allow the number of input files to be limited.
     if (fileInfos.size() > m_fileLimit)
@@ -156,7 +117,7 @@ void Epf::run(const std::vector<std::string>& options)
     }
 
     // Make a writer with 4 threads.
-    m_writer.reset(new Writer(m_outputDir, 4));
+    m_writer.reset(new Writer(options.tempDir, 4, layout->pointSize()));
 
     // Sort file infos so the largest files come first. This helps to make sure we don't delay
     // processing big files that take the longest (use threads more efficiently).
@@ -185,7 +146,7 @@ void Epf::run(const std::vector<std::string>& options)
     Totals totals = m_writer->totals();
 
     // Make a new writer.
-    m_writer.reset(new Writer(m_outputDir, 4));
+    m_writer.reset(new Writer(options.tempDir, 4, layout->pointSize()));
     for (auto& t : totals)
     {
         VoxelKey key = t.first;
@@ -193,10 +154,10 @@ void Epf::run(const std::vector<std::string>& options)
         if (numPoints > MaxPointsPerNode)
         {
             int pointSize = layout->pointSize();
-
-            m_pool.add([key, numPoints, pointSize, this]()
+            std::string tempDir = options.tempDir;
+            m_pool.add([key, numPoints, pointSize, tempDir, this]()
             {
-                Reprocessor r(key, numPoints, pointSize, m_outputDir, m_grid, m_writer.get());
+                Reprocessor r(key, numPoints, pointSize, tempDir, m_grid, m_writer.get());
                 r.run();
             });
         }
@@ -204,17 +165,17 @@ void Epf::run(const std::vector<std::string>& options)
     m_pool.stop();
     m_writer->stop();
 
-    writeMetadata(m_outputDir, m_grid,
-        m_srsFileInfo.valid() ? m_srsFileInfo.srs.getWKT() : "NONE", layout);
+    std::string srs = m_srsFileInfo.valid() ? m_srsFileInfo.srs.getWKT() : "NONE";
+    writeMetadata(options.tempDir, m_grid, srs, layout);
 }
 
-void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
+void Epf::createFileInfo(const pdal::StringList& input, std::vector<FileInfo>& fileInfos)
 {
     std::vector<std::string> filenames;
 
     // If any of the specified input files is a directory, get the names of the files
     // in the directory and add them.
-    for (std::string& filename : m_files)
+    for (const std::string& filename : input)
     {
         if (FileUtils::isDirectory(filename))
         {
@@ -235,7 +196,7 @@ void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
         if (driver.empty())
             throw Error("Can't infer reader for '" + filename + "'.");
         Stage *s = factory.createStage(driver);
-        Options opts;
+        pdal::Options opts;
         opts.add("filename", filename);
         s->setOptions(opts);
 
@@ -270,4 +231,4 @@ void Epf::createFileInfo(std::vector<FileInfo>& fileInfos)
 }
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

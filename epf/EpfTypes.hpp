@@ -22,10 +22,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../common/FileDimInfo.hpp"
-#include "../common/VoxelKey.hpp"
+#include "../untwine/FileDimInfo.hpp"
+#include "../untwine/VoxelKey.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -36,12 +36,6 @@ using Totals = std::unordered_map<VoxelKey, size_t>;
 constexpr int MaxPointsPerNode = 100000;
 constexpr int BufSize = 4096 * 10;
 constexpr int MaxBuffers = 1000;
-
-struct Error : public std::runtime_error
-{
-    Error(const std::string& err) : std::runtime_error(err)
-    {}
-};
 
 struct FileInfo
 {
@@ -57,4 +51,4 @@ struct FileInfo
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

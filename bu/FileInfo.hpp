@@ -10,14 +10,13 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <list>
 
 #include <pdal/util/FileUtils.hpp>
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -59,4 +58,4 @@ private:
 using FileInfoList = std::list<FileInfo>;
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

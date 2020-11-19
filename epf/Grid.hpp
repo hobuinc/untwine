@@ -14,9 +14,10 @@
 #pragma once
 
 #include <pdal/util/Bounds.hpp>
-#include "../common/VoxelKey.hpp"
 
-namespace ept2
+#include "../untwine/VoxelKey.hpp"
+
+namespace untwine
 {
 namespace epf
 {
@@ -56,4 +57,4 @@ private:
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

@@ -10,7 +10,6 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <memory>
@@ -23,7 +22,7 @@
 #include "BuTypes.hpp"
 #include "OctantInfo.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -70,4 +69,4 @@ private:
 };
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

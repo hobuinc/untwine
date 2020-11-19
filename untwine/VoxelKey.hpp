@@ -13,7 +13,7 @@
 
 #pragma once
 
-namespace ept2
+namespace untwine
 {
 
 // This key supports large levels, but requires a larger key.
@@ -96,13 +96,13 @@ inline bool operator<(const VoxelKey& k1, const VoxelKey& k2)
     return k1.level() < k2.level();
 }
 
-} // namespace ept2
+} // namespace untwine
 
 namespace std
 {
-    template<> struct hash<ept2::VoxelKey>
+    template<> struct hash<untwine::VoxelKey>
     {
-        std::size_t operator()(const ept2::VoxelKey& k) const noexcept
+        std::size_t operator()(const untwine::VoxelKey& k) const noexcept
         {
             static_assert(sizeof(size_t) > sizeof(int), "wrong assumption that size_t is 64 bits");
 

@@ -14,7 +14,7 @@
 #include <numeric>
 #include <random>
 
-#include "../common/GridKey.hpp"
+#include "../untwine/GridKey.hpp"
 
 #include <pdal/StageFactory.hpp>
 #include <pdal/io/BufferReader.hpp>
@@ -22,7 +22,7 @@
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -344,7 +344,7 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
     if (table.layout()->hasDim(Dimension::Id::GpsTime))
     {
         Stage *f = factory.createStage("filters.sort");
-        Options fopts;
+        pdal::Options fopts;
         fopts.add("dimension", "gpstime");
         f->setOptions(fopts);
         f->setInput(r);
@@ -352,7 +352,7 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
     }
 
     Stage *w = factory.createStage("writers.las");
-    Options wopts;
+    pdal::Options wopts;
     wopts.add("extra_dims", "all");
     wopts.add("software_id", "Entwine 1.0");
     wopts.add("compression", "laszip");
@@ -366,4 +366,4 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
 }
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

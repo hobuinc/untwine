@@ -10,14 +10,13 @@
  *                                                                           *
  ****************************************************************************/
 
-
 #pragma once
 
 #include <cassert>
 #include <climits>
 #include <iostream>
 
-namespace ept2
+namespace untwine
 {
 
 class GridKey
@@ -58,13 +57,13 @@ inline std::ostream& operator<<(std::ostream& out, const GridKey& k)
     return out;
 }
 
-} // namespace ept2
+} // namespace untwine
 
 namespace std
 {
-    template<> struct hash<ept2::GridKey>
+    template<> struct hash<untwine::GridKey>
     {
-        std::size_t operator()(const ept2::GridKey& k) const noexcept
+        std::size_t operator()(const untwine::GridKey& k) const noexcept
         {
             return std::hash<int>()(k.key());
         }

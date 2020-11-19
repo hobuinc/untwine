@@ -9,25 +9,9 @@
 #include "BuTypes.hpp"
 #include "FileInfo.hpp"
 #include "OctantInfo.hpp"
-#include "../common/Common.hpp"
+#include "../untwine/Common.hpp"
 
-int main(int argc, char *argv[])
-{
-    std::vector<std::string> arglist;
-
-    // Skip the program name.
-    argv++;
-    argc--;
-    while (argc--)
-        arglist.push_back(*argv++);
-
-    ept2::bu::BuPyramid builder;
-    builder.run(arglist);
-
-    return 0;
-}
-
-namespace ept2
+namespace untwine
 {
 namespace bu
 {
@@ -37,35 +21,16 @@ namespace bu
 BuPyramid::BuPyramid() : m_manager(m_b)
 {}
 
-void BuPyramid::addArgs(pdal::ProgramArgs& programArgs)
+
+void BuPyramid::run(const Options& options)
 {
-
-    programArgs.add("output_dir", "Output directory", m_b.outputDir).setPositional();
-    programArgs.add("input_dir", "Input directory", m_b.inputDir).setPositional();
-}
-
-
-void BuPyramid::run(const std::vector<std::string>& options)
-{
-    pdal::ProgramArgs programArgs;
-
-    addArgs(programArgs);
-    try
-    {
-        programArgs.parse(options);
-    }
-    catch (const pdal::arg_error& err)
-    {
-        std::cerr << "bu Error: " << err.what() << "\n";
-        return;
-    }
-
+    m_b.inputDir = options.tempDir;
+    m_b.outputDir = options.outputDir;
     std::thread runner(&PyramidManager::run, &m_manager);
     try
     {
         readBaseInfo();
         getInputFiles();
-        createDirs();
         queueWork();
     }
     catch (const Error& err)
@@ -110,7 +75,7 @@ void BuPyramid::readBaseInfo()
     std::ifstream in(baseFilename);
 
     if (!in)
-        throw Error("Can't open 'info2.txt' in directory '" + m_b.inputDir + "'.");
+        throw Error("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
 
     std::stringstream ss(nextblock(in));
     ss >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
@@ -144,17 +109,6 @@ void BuPyramid::readBaseInfo()
     }
     if (m_b.pointSize == 0)
         throw "Couldn't read info file.";
-}
-
-
-void BuPyramid::createDirs()
-{
-    pdal::FileUtils::createDirectory(m_b.outputDir);
-    pdal::FileUtils::deleteFile(m_b.outputDir + "/ept.json");
-    pdal::FileUtils::deleteDirectory(m_b.outputDir + "/ept-data");
-    pdal::FileUtils::deleteDirectory(m_b.outputDir + "/ept-hierarchy");
-    pdal::FileUtils::createDirectory(m_b.outputDir + "/ept-data");
-    pdal::FileUtils::createDirectory(m_b.outputDir + "/ept-hierarchy");
 }
 
 
@@ -227,13 +181,11 @@ void BuPyramid::writeInfo()
         out << "\n";
     }
     out << "],\n";
-    out << "\"srs\": {\n";
-        if (m_b.srs.valid())
-        {
-            out << "\"wkt\": " <<  "\"" << pdal::Utils::escapeJSON(m_b.srs.getWKT()) << "\"\n";
-        }
-    out << "}\n";
-
+    out << "\"srs\":\n";
+    if (m_b.srs.valid())
+        out << "\"" << pdal::Utils::escapeJSON(escapeQuotes(m_b.srs.getWKT())) << "\"\n";
+    else
+        out << "{}\n";
     out << "}\n";
 }
 
@@ -278,17 +230,6 @@ void BuPyramid::getInputFiles()
             m_allFiles.erase(k);
         };
     }
-
-    /**
-    size_t sum = 0;
-    for (auto p : m_allFiles)
-    {
-        FileInfo& fi = p.second;
-        sum += fi.numPoints();
-        std::cerr << fi.filename() << "\t\t" << fi.numPoints() << "\t\t" << sum << "!\n";
-    }
-    exit(0);
-    **/
 }
 
 
@@ -337,4 +278,4 @@ void BuPyramid::queueWork()
 }
 
 } // namespace bu
-} // namespace ept2
+} // namespace untwine

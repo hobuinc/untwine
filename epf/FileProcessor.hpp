@@ -15,7 +15,7 @@
 #include "Grid.hpp"
 #include "Cell.hpp"
 
-namespace ept2
+namespace untwine
 {
 namespace epf
 {
@@ -35,10 +35,7 @@ private:
     FileInfo m_fi;
     CellMgr m_cellMgr;
     Grid m_grid;
-    int m_cnt;
-
-    static int m_totalCnt;
 };
 
 } // namespace epf
-} // namespace ept2
+} // namespace untwine

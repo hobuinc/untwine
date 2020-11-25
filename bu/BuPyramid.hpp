@@ -29,6 +29,7 @@ namespace untwine
 {
 
 class Options;
+class ProgressWriter;
 
 namespace bu
 {
@@ -39,12 +40,12 @@ class BuPyramid
 {
 public:
     BuPyramid();
-    void run(const Options& options);
+    void run(const Options& options, ProgressWriter& progress);
 
 private:
     void getInputFiles();
     void readBaseInfo();
-    void queueWork();
+    size_t queueWork();
     void writeInfo();
 
     PyramidManager m_manager;

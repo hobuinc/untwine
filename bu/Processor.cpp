@@ -118,8 +118,10 @@ void Processor::sample(Index& accepted, Index& rejected)
 
 void Processor::write(Index& accepted, Index& rejected)
 {
+/**
 std::cerr << m_vi.key() << " Accepted/Rejected/num points = " <<
     accepted.size() << "/" << rejected.size() << "/" << m_vi.numPoints() << "!\n";
+**/
 
     // If this is the final key, append any remaining file infos as accepted points and
     // write the accepted points as binary.

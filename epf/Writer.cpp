@@ -48,6 +48,15 @@ std::string Writer::path(const VoxelKey& key)
     return m_directory + "/" + key.toString() + ".bin";
 }
 
+Totals Writer::totals(size_t minSize)
+{
+    Totals t;
+
+    for (auto ti = m_totals.begin(); ti != m_totals.end(); ++ti)
+        if (ti->second >= minSize)
+            t.insert(*ti);
+    return t;
+}
 
 void Writer::enqueue(const VoxelKey& key, DataVecPtr data, size_t dataSize)
 {

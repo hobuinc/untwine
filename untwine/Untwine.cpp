@@ -14,6 +14,7 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include "Common.hpp"
+#include "ProgressWriter.hpp"
 
 #include "../epf/Epf.hpp"
 #include "../bu/BuPyramid.hpp"
@@ -31,6 +32,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.level, -1);
     programArgs.add("file_limit", "Only load 'file_limit' files, even if more exist",
         options.fileLimit, (size_t)10000000);
+    programArgs.add("progress_fd", "File descriptor on which to write process messages.",
+        options.progressFd);
 }
 
 void handleOptions(const pdal::StringList& arglist, Options& options)
@@ -83,11 +86,13 @@ int main(int argc, char *argv[])
         handleOptions(arglist, options);
         createDirs(options);
 
+        ProgressWriter progress(options.progressFd);
+
         epf::Epf preflight;
-        preflight.run(options);
+        preflight.run(options, progress);
 
         bu::BuPyramid builder;
-        builder.run(options);
+        builder.run(options, progress);
     }
     catch (const Error& err)
     {

@@ -19,6 +19,7 @@ struct Options
     bool doCube;
     size_t fileLimit;
     int level;
+    int progressFd;
 };
 
 const std::string MetadataFilename {"info2.txt"};

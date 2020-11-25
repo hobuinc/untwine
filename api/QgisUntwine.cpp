@@ -60,11 +60,11 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
         // Close file descriptors other than the stdin/out/err and our pipe.
         // There may be more open than FD_SETSIZE, but meh.
         for (int i = STDERR_FILENO + 1; i < FD_SETSIZE; ++i)
-            if (i != fd[0])
+            if (i != fd[1])
                 close(i);
 
         // Add the FD for the progress output
-        options.push_back({"progress_fd", std::to_string(fd[0])});
+        options.push_back({"progress_fd", std::to_string(fd[1])});
 
         for (Option& op : options)
             op.first = "--" + op.first;
@@ -84,9 +84,10 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
     else
     {
         close(fd[1]);
-        m_progressFd = fd[1];
+        m_progressFd = fd[0];
         // Don't block attempting to read progress.
         ::fcntl(m_progressFd, F_SETFL, O_NONBLOCK);
+        m_running = true;
     }
 #endif
     return true;
@@ -136,12 +137,15 @@ int readString(int fd, std::string& s)
 {
     int ssize;
 
-    // Loop reading size
+    // Loop while there's nothing to read.  Generally this shouldn't loop.
     while (true)
     {
         ssize_t numRead = read(fd, &ssize, sizeof(ssize));
+        // EOF or nothing to read.
         if (numRead == 0 || (numRead == -1 && errno != EAGAIN))
             return -1; // Shouldn't happen.
+        if (numRead > 0)
+            break;
     }
 
     // Loop reading string
@@ -171,12 +175,8 @@ void QgisUntwine::readPipe() const
     while (true)
     {
         ssize_t size = read(m_progressFd, &m_percent, sizeof(m_percent));
-        // EOF
-        if (size == 0)
-            return;
-
-        // Nothing to read.
-        else if (size == -1 && errno == EAGAIN)
+        // EOF or nothing to read.
+        if (size == 0 || (size == -1 && errno == EAGAIN))
             return;
 
         // Read the string, waiting as necessary.

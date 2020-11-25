@@ -1,5 +1,5 @@
-#include <iostream>
 #include <unistd.h>
+#include <iostream>
 
 #include "QgisUntwine.hpp"
 
@@ -12,17 +12,21 @@ int main()
     files.push_back("/Users/acbell/nyc2");
     api.start(files, "./out", options);
 
+    bool stopped = false;
     while (true)
     {
         sleep(1);
-        std::cerr << "Reading!\n";
         int percent = api.progressPercent();
         std::string s = api.progressMessage();
-        std::cerr << "Done Reading!\n\n";
-        if (!api.running())
+        std::cerr << "Percent/Msg = " << percent << " / " << s << "!\n";
+        /**
+        if (!stopped && percent >= 50)
         {
-            std::cerr << "Exited!\n";
-            break;
+            stopped = true;
+            api.stop();
         }
+        **/
+        if (!api.running())
+            break;
     }
 }

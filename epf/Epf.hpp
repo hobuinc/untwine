@@ -21,11 +21,13 @@
 
 #include "EpfTypes.hpp"
 #include "Grid.hpp"
+#include "../untwine/ProgressWriter.hpp"
 
 namespace untwine
 {
 
 struct Options;
+class ProgressWriter;
 
 namespace epf
 {
@@ -39,7 +41,7 @@ public:
     Epf();
     ~Epf();
 
-    void run(const Options& options);
+    void run(const Options& options, ProgressWriter& progress);
 
 private:
     void createFileInfo(const pdal::StringList& input, std::vector<FileInfo>& fileInfos);

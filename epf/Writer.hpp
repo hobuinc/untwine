@@ -47,6 +47,7 @@ public:
         { return m_bufferCache; }
     const Totals& totals()
         { return m_totals; }
+    Totals totals(size_t minSize);
 
 private:
     std::string path(const VoxelKey& key);

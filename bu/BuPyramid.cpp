@@ -10,6 +10,7 @@
 #include "FileInfo.hpp"
 #include "OctantInfo.hpp"
 #include "../untwine/Common.hpp"
+#include "../untwine/ProgressWriter.hpp"
 
 namespace untwine
 {
@@ -22,21 +23,25 @@ BuPyramid::BuPyramid() : m_manager(m_b)
 {}
 
 
-void BuPyramid::run(const Options& options)
+void BuPyramid::run(const Options& options, ProgressWriter& progress)
 {
+    size_t count;
     m_b.inputDir = options.tempDir;
     m_b.outputDir = options.outputDir;
-    std::thread runner(&PyramidManager::run, &m_manager);
     try
     {
         readBaseInfo();
         getInputFiles();
-        queueWork();
+        count = queueWork();
     }
     catch (const Error& err)
     {
         std::cerr << err.what() << "!\n";
     }
+    progress.setPercent(.6);
+    progress.setIncrement(.4 / count);
+    m_manager.setProgress(&progress);
+    std::thread runner(&PyramidManager::run, &m_manager);
     runner.join();
     writeInfo();
 }
@@ -222,9 +227,10 @@ void BuPyramid::getInputFiles()
 }
 
 
-void BuPyramid::queueWork()
+size_t BuPyramid::queueWork()
 {
     std::set<VoxelKey> needed;
+    std::set<VoxelKey> parentsToProcess;
     std::vector<OctantInfo> have;
     const VoxelKey root;
 
@@ -243,6 +249,7 @@ void BuPyramid::queueWork()
         while (k != root)
         {
             k = k.parent();
+            parentsToProcess.insert(k);
             for (int i = 0; i < 8; ++i)
                 needed.insert(k.child(i));
         }
@@ -264,6 +271,7 @@ void BuPyramid::queueWork()
         m_manager.queue(o);
     for (const VoxelKey& k : needed)
         m_manager.queue(OctantInfo(k));
+    return parentsToProcess.size();
 }
 
 } // namespace bu

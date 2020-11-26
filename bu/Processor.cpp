@@ -206,7 +206,7 @@ void Processor::writeBinOutput(Index& index)
     std::string fullFilename = m_b.inputDir + "/" + filename;
     std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
     if (!out)
-        throw Error("Couldn't open '" + fullFilename + "' for output.");
+        fatal("Couldn't open '" + fullFilename + "' for output.");
     for (int i = 0; i < index.size(); ++i)
         out.write(m_points[index[i]].cdata(), m_b.pointSize);
     m_vi.octant().appendFileInfo(FileInfo(filename, index.size()));

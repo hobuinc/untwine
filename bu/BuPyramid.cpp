@@ -25,19 +25,13 @@ BuPyramid::BuPyramid() : m_manager(m_b)
 
 void BuPyramid::run(const Options& options, ProgressWriter& progress)
 {
-    size_t count;
     m_b.inputDir = options.tempDir;
     m_b.outputDir = options.outputDir;
-    try
-    {
-        readBaseInfo();
-        getInputFiles();
-        count = queueWork();
-    }
-    catch (const Error& err)
-    {
-        std::cerr << err.what() << "!\n";
-    }
+
+    readBaseInfo();
+    getInputFiles();
+    size_t count = queueWork();
+    
     progress.setPercent(.6);
     progress.setIncrement(.4 / count);
     m_manager.setProgress(&progress);
@@ -80,7 +74,7 @@ void BuPyramid::readBaseInfo()
     std::ifstream in(baseFilename);
 
     if (!in)
-        throw Error("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
+        fatal("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
 
     std::stringstream ss(nextblock(in));
     ss >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
@@ -108,7 +102,7 @@ void BuPyramid::readBaseInfo()
         if (!ss)
             break;
         if (fdi.name.empty())
-            throw Error("Invalid dimension in info.txt.");
+            fatal("Invalid dimension in info.txt.");
         m_b.pointSize += pdal::Dimension::size(fdi.type);
         m_b.dimInfo.push_back(fdi);
     }

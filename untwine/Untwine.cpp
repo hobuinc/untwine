@@ -22,6 +22,13 @@
 namespace untwine
 {
 
+void fatal(const std::string& err)
+{
+    std::cerr << "untwine fatal error: " << err << "\n";
+    exit(-1);
+}
+
+
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
     programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
@@ -50,7 +57,7 @@ void handleOptions(const pdal::StringList& arglist, Options& options)
     }
     catch (const pdal::arg_error& err)
     {
-        throw Error(err.what());
+        fatal(err.what());
     }
 }
 
@@ -80,25 +87,17 @@ int main(int argc, char *argv[])
 
     using namespace untwine;
 
-    try
-    {
-        Options options;
-        handleOptions(arglist, options);
-        createDirs(options);
+    Options options;
+    handleOptions(arglist, options);
+    createDirs(options);
 
-        ProgressWriter progress(options.progressFd);
+    ProgressWriter progress(options.progressFd);
 
-        epf::Epf preflight;
-        preflight.run(options, progress);
+    epf::Epf preflight;
+    preflight.run(options, progress);
 
-        bu::BuPyramid builder;
-        builder.run(options, progress);
-    }
-    catch (const Error& err)
-    {
-        std::cerr << "untwine Error: " << err.what() << "\n";
-        return -1;
-    }
+    bu::BuPyramid builder;
+    builder.run(options, progress);
 
     return 0;
 }

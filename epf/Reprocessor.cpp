@@ -50,7 +50,10 @@ void Reprocessor::run()
 {
     auto ctx = pdal::FileUtils::mapFile(m_filename, true, 0, m_fileSize);
     if (ctx.addr() == nullptr)
-        throw Error(m_filename + ": " + ctx.what());
+    {
+        std::cerr << "FATAL: " + m_filename + ": " + ctx.what();
+        exit(-1);
+    }
 
     // Wow, this is simple. How nice. The writer should get invoked automatically.
     uint8_t *pos = reinterpret_cast<uint8_t *>(ctx.addr());

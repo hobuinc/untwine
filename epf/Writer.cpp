@@ -33,7 +33,7 @@ Writer::Writer(const std::string& directory, int numThreads, size_t pointSize) :
     if (FileUtils::fileExists(directory))
     {
         if (!FileUtils::isDirectory(directory))
-            throw Error("Specified output directory '" + directory + "' is not a directory.");
+            fatal("Specified output directory '" + directory + "' is not a directory.");
     }
     else
         FileUtils::createDirectory(directory);
@@ -122,7 +122,7 @@ void Writer::run()
         out.write(reinterpret_cast<const char *>(wd.data->data()), wd.dataSize);
         out.close();
         if (!out)
-            throw Error("Failure writing to '" + path(wd.key) + "'.");
+            fatal("Failure writing to '" + path(wd.key) + "'.");
         m_bufferCache.replace(std::move(wd.data));
 
         std::lock_guard<std::mutex> lock(m_mutex);

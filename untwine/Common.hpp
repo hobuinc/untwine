@@ -5,11 +5,7 @@
 namespace untwine
 {
 
-struct Error : public std::runtime_error
-{
-    Error(const std::string& err) : std::runtime_error(err)
-    {}
-};
+void fatal(const std::string& err);
 
 struct Options
 {

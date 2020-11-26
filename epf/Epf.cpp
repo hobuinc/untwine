@@ -73,7 +73,7 @@ void Epf::run(const Options& options, ProgressWriter& progress)
     BOX3D totalBounds;
 
     if (pdal::FileUtils::fileExists(options.tempDir + "/" + MetadataFilename))
-        throw Error("Output directory already contains EPT data.");
+        fatal("Output directory already contains EPT data.");
 
     m_grid.setCubic(options.doCube);
 
@@ -199,7 +199,7 @@ void Epf::createFileInfo(const pdal::StringList& input, std::vector<FileInfo>& f
         StageFactory factory;
         std::string driver = factory.inferReaderDriver(filename);
         if (driver.empty())
-            throw Error("Can't infer reader for '" + filename + "'.");
+            fatal("Can't infer reader for '" + filename + "'.");
         Stage *s = factory.createStage(driver);
         pdal::Options opts;
         opts.add("filename", filename);

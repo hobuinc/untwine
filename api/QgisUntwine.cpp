@@ -30,13 +30,28 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
     options.push_back({"files", s});
     options.push_back({"output_dir", outputDir});
 #ifdef _WIN32
+    PHANDLE[2] phandle;
+    SECURITY_ATTRIBUITES pipeAttr;
+    pipeAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+    pipeAttr.InheritHandle = TRUE;
+    ipipeAttr.lpSecurityDescriptor = NULL;
 
-    //ABELL - Make pipe.
+    CreatePipe(phandle[0], phandle[1], &pipeAttr, 0);
+    SetHandleInformation(*(pHandle[0]), HANDLE_FLAG_INHERIT, 0);
+
     options.push_back({"progress_fd", std::to_string(fd[0])});
     std::string cmdline;
     cmdline += m_path + " ";
     for (const Options& op : options)
         cmdline += "--" + op.first + " \"" + op.second + "\" ";
+
+    PROCESS_INFORMATION processInfo;
+    STARTUPINFO startupInfo;
+
+    ZeroMemory(&processInfo, sizeof(PROCESS_INFORMATION));
+    ZeroMemory(&startupInfo, sizeof(STARTUPINFO));
+    startupInfo.cb = sizeof(STARTUPINFO);
+
     CreateProcessA(m_path.c_str(), cmdline.c_str(),
         NULL, /* process attributes */
         NULL, /* thread attributes */
@@ -44,9 +59,14 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
         CREATE_NO_WINDOW, /* creation flags */
         NULL, /* environment */
         NULL, /* current directory */
-        startupInfo, /* startup info */
+        &startupInfo, /* startup info */
         &processInfo /* process information */
     );
+//ABELL?
+//    CloseHandle(processInfo.hProcess);
+    m_pid = processInfo.hProcess;
+//    CloseHandle(processInfo.hThread);
+    CloseHandle(*(phandle[1]));
 
 #else
     int fd[2];
@@ -99,6 +119,7 @@ bool QgisUntwine::stop()
         return false;
 #ifdef _WIN32
     TerminateProcess(m_pid, 1);
+    WaitForSingleObject(m_pid, INFINITE);
     CloseHandle(m_pid);
 #else
     ::kill(m_pid, SIGINT);
@@ -111,8 +132,13 @@ bool QgisUntwine::stop()
 
 bool QgisUntwine::running()
 {
+#ifdef _WIN32
+    if (m_running && WaitForSingleObject(m_pid, 0) != WAIT_TIMEOUT)
+        m_running = false;
+#else
     if (m_running && (::waitpid(m_pid, nullptr, WNOHANG) != 0))
         m_running = false;
+#endif
     return m_running;
 }
 

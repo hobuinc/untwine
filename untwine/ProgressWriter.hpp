@@ -20,9 +20,9 @@ public:
 
 private:
     static std::mutex s_mutex;
+    int m_progressFd;
     double m_percent; // Current percent.
     double m_increment; // Current increment.
-    int m_progressFd;
 };
 
 } //namespace untwine

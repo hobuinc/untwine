@@ -31,7 +31,7 @@ static const int MinimumPoints = 100;
 static const int MinimumTotalPoints = 1500;
 
 Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo& b) :
-    m_manager(manager), m_vi(v), m_b(b), m_points(m_b)
+    m_vi(v), m_b(b), m_manager(manager), m_points(m_b)
 {}
 
 
@@ -207,7 +207,7 @@ void Processor::writeBinOutput(Index& index)
     std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
     if (!out)
         fatal("Couldn't open '" + fullFilename + "' for output.");
-    for (int i = 0; i < index.size(); ++i)
+    for (size_t i = 0; i < index.size(); ++i)
         out.write(m_points[index[i]].cdata(), m_b.pointSize);
     m_vi.octant().appendFileInfo(FileInfo(filename, index.size()));
 }

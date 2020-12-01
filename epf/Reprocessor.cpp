@@ -57,7 +57,7 @@ void Reprocessor::run()
 
     // Wow, this is simple. How nice. The writer should get invoked automatically.
     uint8_t *pos = reinterpret_cast<uint8_t *>(ctx.addr());
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         Point p(pos);
         VoxelKey k = m_grid.key(p.x(), p.y(), p.z());

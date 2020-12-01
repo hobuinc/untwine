@@ -55,9 +55,9 @@ private:
 
     std::string m_directory;
     pdal::ThreadPool m_pool;
-    size_t m_pointSize;
     BufferCache m_bufferCache;
     bool m_stop;
+    size_t m_pointSize;
     std::list<WriteData> m_queue;
     std::list<VoxelKey> m_active;
     Totals m_totals;

@@ -28,7 +28,7 @@ namespace epf
 {
 
 Writer::Writer(const std::string& directory, int numThreads, size_t pointSize) :
-    m_directory(directory), m_pointSize(pointSize), m_pool(numThreads), m_stop(false)
+    m_directory(directory), m_pool(numThreads), m_stop(false), m_pointSize(pointSize)
 {
     if (FileUtils::fileExists(directory))
     {

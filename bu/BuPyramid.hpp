@@ -28,7 +28,7 @@ namespace pdal
 namespace untwine
 {
 
-class Options;
+struct Options;
 class ProgressWriter;
 
 namespace bu

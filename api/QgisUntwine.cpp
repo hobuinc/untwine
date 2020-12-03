@@ -3,6 +3,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/errno.h>
+#else
+#include <Windows.h>
 #endif
 
 #include "QgisUntwine.hpp"
@@ -25,24 +27,32 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
         return false;
 
     std::string s;
-    for (const std::string& t : files)
-        s += t + " ";
+    for (auto ti = files.begin(); ti != files.end(); ++ti)
+    {
+        s += *ti;
+        if (ti + 1 != files.end())
+            s += ", ";
+    }
     options.push_back({"files", s});
     options.push_back({"output_dir", outputDir});
 #ifdef _WIN32
-    PHANDLE[2] phandle;
-    SECURITY_ATTRIBUITES pipeAttr;
+    HANDLE handle[2];
+    SECURITY_ATTRIBUTES pipeAttr;
     pipeAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    pipeAttr.InheritHandle = TRUE;
-    ipipeAttr.lpSecurityDescriptor = NULL;
+    pipeAttr.bInheritHandle = TRUE;
+    pipeAttr.lpSecurityDescriptor = NULL;
 
-    CreatePipe(phandle[0], phandle[1], &pipeAttr, 0);
-    SetHandleInformation(*(pHandle[0]), HANDLE_FLAG_INHERIT, 0);
+    CreatePipe(&handle[0], &handle[1], &pipeAttr, 0);
 
-    options.push_back({"progress_fd", std::to_string(fd[0])});
+    // Set the read end to no-wait.
+    DWORD mode = PIPE_NOWAIT;
+    SetNamedPipeHandleState(handle[0], &mode, NULL, NULL);
+
+    size_t xhandle = reinterpret_cast<size_t>(handle[1]);
+    options.push_back({"progress_fd", std::to_string(xhandle)});
     std::string cmdline;
     cmdline += m_path + " ";
-    for (const Options& op : options)
+    for (const Option& op : options)
         cmdline += "--" + op.first + " \"" + op.second + "\" ";
 
     PROCESS_INFORMATION processInfo;
@@ -51,23 +61,28 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
     ZeroMemory(&processInfo, sizeof(PROCESS_INFORMATION));
     ZeroMemory(&startupInfo, sizeof(STARTUPINFO));
     startupInfo.cb = sizeof(STARTUPINFO);
+    /**
+    startupInfo.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    startupInfo.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    startupInfo.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+    startupInfo.dwFlags = STARTF_USESTDHANDLES;
+    **/
 
-    CreateProcessA(m_path.c_str(), cmdline.c_str(),
+    std::vector<char> ncCmdline(cmdline.begin(), cmdline.end());
+    ncCmdline.push_back((char)0);
+    CreateProcessA(m_path.c_str(), ncCmdline.data(),
         NULL, /* process attributes */
         NULL, /* thread attributes */
-        FALSE, /* inherit handles */
+        TRUE, /* inherit handles */
         CREATE_NO_WINDOW, /* creation flags */
         NULL, /* environment */
         NULL, /* current directory */
         &startupInfo, /* startup info */
         &processInfo /* process information */
     );
-//ABELL?
-//    CloseHandle(processInfo.hProcess);
     m_pid = processInfo.hProcess;
-//    CloseHandle(processInfo.hThread);
-    CloseHandle(*(phandle[1]));
-
+    m_progressFd = handle[0];
+    m_running = true;
 #else
     int fd[2];
     int ret = ::pipe(fd);
@@ -120,24 +135,33 @@ bool QgisUntwine::stop()
 #ifdef _WIN32
     TerminateProcess(m_pid, 1);
     WaitForSingleObject(m_pid, INFINITE);
-    CloseHandle(m_pid);
+    childStopped();
 #else
     ::kill(m_pid, SIGINT);
     (void)waitpid(m_pid, nullptr, 0);
 #endif
-    m_running = false;
     m_pid = 0;
     return true;
+}
+
+// Called when the child has stopped.
+void QgisUntwine::childStopped()
+{
+    m_running = false;
+#ifdef _WIN32
+    CloseHandle(m_progressFd);
+    CloseHandle(m_pid);
+#endif
 }
 
 bool QgisUntwine::running()
 {
 #ifdef _WIN32
     if (m_running && WaitForSingleObject(m_pid, 0) != WAIT_TIMEOUT)
-        m_running = false;
+        childStopped();
 #else
     if (m_running && (::waitpid(m_pid, nullptr, WNOHANG) != 0))
-        m_running = false;
+        childStopped();
 #endif
     return m_running;
 }
@@ -159,18 +183,19 @@ std::string QgisUntwine::progressMessage() const
 namespace
 {
 
-int readString(int fd, std::string& s)
+#ifndef _WIN32
+uint32_t readString(int fd, std::string& s)
 {
-    int ssize;
+    uint32_t ssize;
 
     // Loop while there's nothing to read.  Generally this shouldn't loop.
     while (true)
     {
         ssize_t numRead = read(fd, &ssize, sizeof(ssize));
-        // EOF or nothing to read.
-        if (numRead == 0 || (numRead == -1 && errno != EAGAIN))
+        // EOF or nothing to read or we didn't read 4 bytes.
+        if (numRead == 0 || (numRead == -1 && errno != EAGAIN) || (numRead > 0 && numRead != sizeof(ssize))
             return -1; // Shouldn't happen.
-        if (numRead > 0)
+        if (numRead == sizeof(ssize))
             break;
     }
 
@@ -192,9 +217,48 @@ int readString(int fd, std::string& s)
     s = std::move(t);
     return 0;
 }
+#else
+int readString(HANDLE h, std::string& s)
+{
+    uint32_t ssize;
+
+    // Loop while there's nothing to read.  Generally this shouldn't loop.
+    while (true)
+    {
+        DWORD numRead;
+        bool ok = ReadFile(h, &ssize, sizeof(ssize), &numRead, NULL);
+        // EOF or nothing to read.
+        if (numRead == 0 && GetLastError() == ERROR_NO_DATA)
+            continue;
+        else if (numRead == sizeof(ssize))
+            break;
+        else
+            return -1;
+    }
+
+    // Loop reading string
+    char buf[80];
+    std::string t;
+    while (ssize)
+    {
+        DWORD numRead;
+        DWORD toRead = (std::min)((size_t)ssize, sizeof(buf));
+        ReadFile(h, buf, toRead, &numRead, NULL);
+        if (numRead == 0 && GetLastError() == ERROR_NO_DATA)
+            continue;
+        if (numRead <= 0)
+            return -1;
+        ssize -= numRead;
+        t += std::string(buf, numRead);
+    }
+    s = std::move(t);
+    return 0;
+}
+#endif
 
 } // unnamed namespace
 
+#ifndef _WIN32
 void QgisUntwine::readPipe() const
 {
     // Read messages until the pipe has been drained.
@@ -210,5 +274,22 @@ void QgisUntwine::readPipe() const
             break;
     }
 }
+#else
+void QgisUntwine::readPipe() const
+{
+    // Read messages until the pipe has been drained.
+    while (true)
+    {
+        DWORD numRead;
+        ReadFile(m_progressFd, &m_percent, sizeof(m_percent), &numRead, NULL);
+        if (numRead != sizeof(m_percent))
+            return;
+
+        // Read the string, waiting as necessary.
+        if (readString(m_progressFd, m_progressMsg) != 0)
+            break;
+    }
+}
+#endif
 
 } // namespace untwine

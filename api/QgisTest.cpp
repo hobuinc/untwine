@@ -1,4 +1,7 @@
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+
 #include <iostream>
 
 #include "QgisUntwine.hpp"
@@ -7,15 +10,20 @@ int main()
 {
     untwine::QgisUntwine::StringList files;
     untwine::QgisUntwine::Options options;
-    untwine::QgisUntwine api("/Users/acbell/untwine/build/untwine");
+    untwine::QgisUntwine api("C:\\Users\\andre\\untwine\\build\\untwine.exe");
     
-    files.push_back("/Users/acbell/nyc2");
-    api.start(files, "./out", options);
+    files.push_back("C:\\Users\\andre\\nyc2");
+//    files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
+    api.start(files, ".\\out", options);
 
     bool stopped = false;
     while (true)
     {
-        sleep(1);
+#ifdef _WIN32
+    	Sleep(1000);
+#else
+        ::sleep(1);
+#endif
         int percent = api.progressPercent();
         std::string s = api.progressMessage();
         std::cerr << "Percent/Msg = " << percent << " / " << s << "!\n";

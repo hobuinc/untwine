@@ -48,7 +48,7 @@ public:
         m_fileInfos.push_back(&fi);
     }
 
-    Point operator[](int offset)
+    Point operator[](size_t offset)
     {
         for (FileInfo *fi : m_fileInfos)
             if (offset >= fi->start() && offset < fi->start() + fi->numPoints())

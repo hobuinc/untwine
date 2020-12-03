@@ -19,11 +19,6 @@ function(untwine_target_compile_settings target)
             target_compile_options(${target} PRIVATE
                 # Yes, we don't understand GCC pragmas
                 /wd4068
-                # Nitro makes use of Exception Specifications, which results in
-                # numerous warnings when compiling in MSVC. We will ignore
-                # them for now.
-                /wd4290
-                /wd4800
                 # Windows warns about integer narrowing like crazy and it's
                 # annoying.  In most cases the programmer knows what they're
                 # doing.  A good static analysis tool would be better than

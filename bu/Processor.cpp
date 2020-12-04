@@ -31,7 +31,7 @@ static const int MinimumPoints = 100;
 static const int MinimumTotalPoints = 1500;
 
 Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo& b) :
-    m_manager(manager), m_vi(v), m_b(b), m_points(m_b)
+    m_vi(v), m_b(b), m_manager(manager), m_points(m_b)
 {}
 
 
@@ -118,8 +118,10 @@ void Processor::sample(Index& accepted, Index& rejected)
 
 void Processor::write(Index& accepted, Index& rejected)
 {
+/**
 std::cerr << m_vi.key() << " Accepted/Rejected/num points = " <<
     accepted.size() << "/" << rejected.size() << "/" << m_vi.numPoints() << "!\n";
+**/
 
     // If this is the final key, append any remaining file infos as accepted points and
     // write the accepted points as binary.
@@ -204,8 +206,8 @@ void Processor::writeBinOutput(Index& index)
     std::string fullFilename = m_b.inputDir + "/" + filename;
     std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
     if (!out)
-        throw Error("Couldn't open '" + fullFilename + "' for output.");
-    for (int i = 0; i < index.size(); ++i)
+        fatal("Couldn't open '" + fullFilename + "' for output.");
+    for (size_t i = 0; i < index.size(); ++i)
         out.write(m_points[index[i]].cdata(), m_b.pointSize);
     m_vi.octant().appendFileInfo(FileInfo(filename, index.size()));
 }

@@ -42,16 +42,17 @@ public:
         std::string filename = m_b.inputDir + "/" + fi.filename();
         auto ctx = mapFile(filename, true, 0, fi.numPoints() * m_b.pointSize);
         if (ctx.m_addr == nullptr)
-            throw Error(filename + ": " + ctx.m_error);
+            fatal(filename + ": " + ctx.m_error);
         fi.setContext(ctx);
         fi.setStart(size());
         m_fileInfos.push_back(&fi);
     }
 
-    Point operator[](int offset)
+    Point operator[](size_t offset)
     {
         for (FileInfo *fi : m_fileInfos)
-            if (offset >= fi->start() && offset < fi->start() + fi->numPoints())
+            if (offset >= (size_t)fi->start() &&
+                offset < (size_t)fi->start() + fi->numPoints())
                 return Point(fi->address() + ((offset - fi->start()) * m_b.pointSize));
         return Point();
     }

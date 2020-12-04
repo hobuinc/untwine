@@ -28,12 +28,12 @@ namespace epf
 {
 
 Writer::Writer(const std::string& directory, int numThreads, size_t pointSize) :
-    m_directory(directory), m_pointSize(pointSize), m_pool(numThreads), m_stop(false)
+    m_directory(directory), m_pool(numThreads), m_stop(false), m_pointSize(pointSize)
 {
     if (FileUtils::fileExists(directory))
     {
         if (!FileUtils::isDirectory(directory))
-            throw Error("Specified output directory '" + directory + "' is not a directory.");
+            fatal("Specified output directory '" + directory + "' is not a directory.");
     }
     else
         FileUtils::createDirectory(directory);
@@ -48,6 +48,15 @@ std::string Writer::path(const VoxelKey& key)
     return m_directory + "/" + key.toString() + ".bin";
 }
 
+Totals Writer::totals(size_t minSize)
+{
+    Totals t;
+
+    for (auto ti = m_totals.begin(); ti != m_totals.end(); ++ti)
+        if (ti->second >= minSize)
+            t.insert(*ti);
+    return t;
+}
 
 void Writer::enqueue(const VoxelKey& key, DataVecPtr data, size_t dataSize)
 {
@@ -113,7 +122,7 @@ void Writer::run()
         out.write(reinterpret_cast<const char *>(wd.data->data()), wd.dataSize);
         out.close();
         if (!out)
-            throw Error("Failure writing to '" + path(wd.key) + "'.");
+            fatal("Failure writing to '" + path(wd.key) + "'.");
         m_bufferCache.replace(std::move(wd.data));
 
         std::lock_guard<std::mutex> lock(m_mutex);

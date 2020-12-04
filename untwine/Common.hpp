@@ -5,11 +5,7 @@
 namespace untwine
 {
 
-struct Error : public std::runtime_error
-{
-    Error(const std::string& err) : std::runtime_error(err)
-    {}
-};
+void fatal(const std::string& err);
 
 struct Options
 {
@@ -19,6 +15,7 @@ struct Options
     bool doCube;
     size_t fileLimit;
     int level;
+    int progressFd;
 };
 
 const std::string MetadataFilename {"info2.txt"};

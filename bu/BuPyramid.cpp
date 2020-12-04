@@ -10,6 +10,7 @@
 #include "FileInfo.hpp"
 #include "OctantInfo.hpp"
 #include "../untwine/Common.hpp"
+#include "../untwine/ProgressWriter.hpp"
 
 namespace untwine
 {
@@ -22,21 +23,19 @@ BuPyramid::BuPyramid() : m_manager(m_b)
 {}
 
 
-void BuPyramid::run(const Options& options)
+void BuPyramid::run(const Options& options, ProgressWriter& progress)
 {
     m_b.inputDir = options.tempDir;
     m_b.outputDir = options.outputDir;
+
+    readBaseInfo();
+    getInputFiles();
+    size_t count = queueWork();
+    
+    progress.setPercent(.6);
+    progress.setIncrement(.4 / count);
+    m_manager.setProgress(&progress);
     std::thread runner(&PyramidManager::run, &m_manager);
-    try
-    {
-        readBaseInfo();
-        getInputFiles();
-        queueWork();
-    }
-    catch (const Error& err)
-    {
-        std::cerr << err.what() << "!\n";
-    }
     runner.join();
     writeInfo();
 }
@@ -75,7 +74,7 @@ void BuPyramid::readBaseInfo()
     std::ifstream in(baseFilename);
 
     if (!in)
-        throw Error("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
+        fatal("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
 
     std::stringstream ss(nextblock(in));
     ss >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
@@ -103,7 +102,7 @@ void BuPyramid::readBaseInfo()
         if (!ss)
             break;
         if (fdi.name.empty())
-            throw Error("Invalid dimension in info.txt.");
+            fatal("Invalid dimension in info.txt.");
         m_b.pointSize += pdal::Dimension::size(fdi.type);
         m_b.dimInfo.push_back(fdi);
     }
@@ -222,9 +221,10 @@ void BuPyramid::getInputFiles()
 }
 
 
-void BuPyramid::queueWork()
+size_t BuPyramid::queueWork()
 {
     std::set<VoxelKey> needed;
+    std::set<VoxelKey> parentsToProcess;
     std::vector<OctantInfo> have;
     const VoxelKey root;
 
@@ -243,6 +243,7 @@ void BuPyramid::queueWork()
         while (k != root)
         {
             k = k.parent();
+            parentsToProcess.insert(k);
             for (int i = 0; i < 8; ++i)
                 needed.insert(k.child(i));
         }
@@ -264,6 +265,7 @@ void BuPyramid::queueWork()
         m_manager.queue(o);
     for (const VoxelKey& k : needed)
         m_manager.queue(OctantInfo(k));
+    return parentsToProcess.size();
 }
 
 } // namespace bu

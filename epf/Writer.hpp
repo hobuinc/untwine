@@ -47,6 +47,7 @@ public:
         { return m_bufferCache; }
     const Totals& totals()
         { return m_totals; }
+    Totals totals(size_t minSize);
 
 private:
     std::string path(const VoxelKey& key);
@@ -54,9 +55,9 @@ private:
 
     std::string m_directory;
     pdal::ThreadPool m_pool;
-    size_t m_pointSize;
     BufferCache m_bufferCache;
     bool m_stop;
+    size_t m_pointSize;
     std::list<WriteData> m_queue;
     std::list<VoxelKey> m_active;
     Totals m_totals;

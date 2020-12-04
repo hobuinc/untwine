@@ -67,13 +67,13 @@ Epf::~Epf()
 {}
 
 
-void Epf::run(const Options& options)
+void Epf::run(const Options& options, ProgressWriter& progress)
 {
     double millionPoints = 0;
     BOX3D totalBounds;
 
     if (pdal::FileUtils::fileExists(options.tempDir + "/" + MetadataFilename))
-        throw Error("Output directory already contains EPT data.");
+        fatal("Output directory already contains EPT data.");
 
     m_grid.setCubic(options.doCube);
 
@@ -123,14 +123,18 @@ void Epf::run(const Options& options)
     // processing big files that take the longest (use threads more efficiently).
     std::sort(fileInfos.begin(), fileInfos.end(), [](const FileInfo& f1, const FileInfo& f2)
         { return f1.numPoints > f2.numPoints; });
+
+    progress.setIncrement(.4 / fileInfos.size());
+
     // Add the files to the processing pool
     for (const FileInfo& fi : fileInfos)
     {
         int pointSize = layout->pointSize();
-        m_pool.add([&fi, pointSize, this]()
+        m_pool.add([&fi, &progress, pointSize, this]()
         {
             FileProcessor fp(fi, pointSize, m_grid, m_writer.get());
             fp.run();
+            progress.writeIncrement("Tiled " + fi.filename);
         });
     }
 
@@ -143,7 +147,10 @@ void Epf::run(const Options& options)
 
     // Get totals from the current writer.
     //ABELL - would be nice to avoid this copy, but it probably doesn't matter much.
-    Totals totals = m_writer->totals();
+    Totals totals = m_writer->totals(MaxPointsPerNode);
+
+    progress.setPercent(.4);
+    progress.setIncrement(.2 / totals.size());
 
     // Make a new writer.
     m_writer.reset(new Writer(options.tempDir, 4, layout->pointSize()));
@@ -151,16 +158,14 @@ void Epf::run(const Options& options)
     {
         VoxelKey key = t.first;
         int numPoints = t.second;
-        if (numPoints > MaxPointsPerNode)
+        int pointSize = layout->pointSize();
+        std::string tempDir = options.tempDir;
+        m_pool.add([&progress, key, numPoints, pointSize, tempDir, this]()
         {
-            int pointSize = layout->pointSize();
-            std::string tempDir = options.tempDir;
-            m_pool.add([key, numPoints, pointSize, tempDir, this]()
-            {
-                Reprocessor r(key, numPoints, pointSize, tempDir, m_grid, m_writer.get());
-                r.run();
-            });
-        }
+            Reprocessor r(key, numPoints, pointSize, tempDir, m_grid, m_writer.get());
+            r.run();
+            progress.writeIncrement("Reprocessed voxel " + key.toString());
+        });
     }
     m_pool.stop();
     m_writer->stop();
@@ -194,7 +199,7 @@ void Epf::createFileInfo(const pdal::StringList& input, std::vector<FileInfo>& f
         StageFactory factory;
         std::string driver = factory.inferReaderDriver(filename);
         if (driver.empty())
-            throw Error("Can't infer reader for '" + filename + "'.");
+            fatal("Can't infer reader for '" + filename + "'.");
         Stage *s = factory.createStage(driver);
         pdal::Options opts;
         opts.add("filename", filename);

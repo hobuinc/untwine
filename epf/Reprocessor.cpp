@@ -37,7 +37,7 @@ Reprocessor::Reprocessor(const VoxelKey& k, int numPoints, int pointSize,
     //  =>
     // log2(numPoints / MaxPointsPerNode) = 2n
 
-    m_levels = std::ceil(log2((double)numPoints / MaxPointsPerNode) / 2);
+    m_levels = (int)std::ceil(log2((double)numPoints / MaxPointsPerNode) / 2);
 
     // We're going to steal points from the leaf nodes for sampling, so unless the
     // spatial distribution is really off, this should be fine and pretty conservative.
@@ -50,11 +50,14 @@ void Reprocessor::run()
 {
     auto ctx = pdal::FileUtils::mapFile(m_filename, true, 0, m_fileSize);
     if (ctx.addr() == nullptr)
-        throw Error(m_filename + ": " + ctx.what());
+    {
+        std::cerr << "FATAL: " + m_filename + ": " + ctx.what();
+        exit(-1);
+    }
 
     // Wow, this is simple. How nice. The writer should get invoked automatically.
     uint8_t *pos = reinterpret_cast<uint8_t *>(ctx.addr());
-    for (int i = 0; i < m_numPoints; ++i)
+    for (size_t i = 0; i < m_numPoints; ++i)
     {
         Point p(pos);
         VoxelKey k = m_grid.key(p.x(), p.y(), p.z());

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(Untwine VERSION 1.0 LANGUAGES CXX)
 include(FeatureSummary)
+include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
 
 find_package(PDAL REQUIRED)
 if (PDAL_VERSION_MAJOR LESS 2)
@@ -22,6 +23,8 @@ file(GLOB SRCS
 
 add_executable(untwine ${SRCS})
 
+untwine_target_compile_settings(untwine)
+
 target_include_directories(untwine
     PRIVATE
         ${PDAL_INCLUDE_DIRS}
@@ -31,8 +34,5 @@ target_link_libraries(untwine
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
 )
-
-set_property(TARGET untwine PROPERTY CXX_STANDARD 11)
-set_property(TARGET untwine PROPERTY CXX_STANDARD_REQUIRED TRUE)
 
 install(TARGETS untwine DESTINATION bin)

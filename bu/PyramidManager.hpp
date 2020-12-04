@@ -24,6 +24,9 @@
 
 namespace untwine
 {
+
+class ProgressWriter;
+
 namespace bu
 {
 
@@ -37,6 +40,7 @@ public:
     PyramidManager(const BaseInfo& b);
     ~PyramidManager();
 
+    void setProgress(ProgressWriter *progress);
     void queue(const OctantInfo& o);
     void run();
     void logOctant(const VoxelKey& k, int cnt);
@@ -53,6 +57,7 @@ private:
     std::queue<OctantInfo> m_queue;
     pdal::ThreadPool m_pool;
     uint64_t m_totalPoints;
+    ProgressWriter *m_progress;
     //
     std::unordered_map<VoxelKey, int> m_written;
     std::unordered_map<VoxelKey, int> m_childCounts;

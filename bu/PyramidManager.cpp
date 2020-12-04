@@ -16,6 +16,7 @@
 
 #include <pdal/util/FileUtils.hpp>
 
+#include "../untwine/ProgressWriter.hpp"
 #include "../untwine/VoxelKey.hpp"
 
 #include "Processor.hpp"
@@ -37,6 +38,12 @@ PyramidManager::~PyramidManager()
 {}
 
 
+void PyramidManager::setProgress(ProgressWriter *progress)
+{
+    m_progress = progress;
+}
+
+
 void PyramidManager::queue(const OctantInfo& o)
 {
     {
@@ -46,6 +53,7 @@ void PyramidManager::queue(const OctantInfo& o)
     }
     m_cv.notify_one();
 }
+
 
 void PyramidManager::run()
 {
@@ -83,13 +91,17 @@ void PyramidManager::process(const OctantInfo& o)
 
     // If there are no points in this voxel, just queue it as a child.
     if (!vi.hasPoints())
+    {
         queue(vi.octant());
+        m_progress->writeIncrement("Bypass sample for " + vi.key().toString());
+    }
     else
     {
         m_pool.add([vi, this]()
         {
             Processor p(*this, vi, m_b);
             p.run();
+            m_progress->writeIncrement("Sample complete for " + vi.key().toString());
         });
     }
 }

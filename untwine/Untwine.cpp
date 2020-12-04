@@ -14,12 +14,20 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include "Common.hpp"
+#include "ProgressWriter.hpp"
 
 #include "../epf/Epf.hpp"
 #include "../bu/BuPyramid.hpp"
 
 namespace untwine
 {
+
+void fatal(const std::string& err)
+{
+    std::cerr << "untwine fatal error: " << err << "\n";
+    exit(-1);
+}
+
 
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
@@ -31,6 +39,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.level, -1);
     programArgs.add("file_limit", "Only load 'file_limit' files, even if more exist",
         options.fileLimit, (size_t)10000000);
+    programArgs.add("progress_fd", "File descriptor on which to write process messages.",
+        options.progressFd);
 }
 
 void handleOptions(const pdal::StringList& arglist, Options& options)
@@ -47,7 +57,7 @@ void handleOptions(const pdal::StringList& arglist, Options& options)
     }
     catch (const pdal::arg_error& err)
     {
-        throw Error(err.what());
+        fatal(err.what());
     }
 }
 
@@ -77,23 +87,17 @@ int main(int argc, char *argv[])
 
     using namespace untwine;
 
-    try
-    {
-        Options options;
-        handleOptions(arglist, options);
-        createDirs(options);
+    Options options;
+    handleOptions(arglist, options);
+    createDirs(options);
 
-        epf::Epf preflight;
-        preflight.run(options);
+    ProgressWriter progress(options.progressFd);
 
-        bu::BuPyramid builder;
-        builder.run(options);
-    }
-    catch (const Error& err)
-    {
-        std::cerr << "untwine Error: " << err.what() << "\n";
-        return -1;
-    }
+    epf::Epf preflight;
+    preflight.run(options, progress);
+
+    bu::BuPyramid builder;
+    builder.run(options, progress);
 
     return 0;
 }

@@ -35,3 +35,4 @@ target_link_libraries(untwine
         ${PDAL_LIBRARIES}
 )
 
+install(TARGETS untwine DESTINATION bin)

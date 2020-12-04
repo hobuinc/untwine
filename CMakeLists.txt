@@ -34,3 +34,5 @@ target_link_libraries(untwine
 
 set_property(TARGET untwine PROPERTY CXX_STANDARD 11)
 set_property(TARGET untwine PROPERTY CXX_STANDARD_REQUIRED TRUE)
+
+install(TARGETS untwine DESTINATION bin)

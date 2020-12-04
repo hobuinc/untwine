@@ -1,3 +1,4 @@
+#include <iostream>
 #ifndef _WIN32
 #include <fcntl.h>
 #include <signal.h>
@@ -70,7 +71,7 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
 
     std::vector<char> ncCmdline(cmdline.begin(), cmdline.end());
     ncCmdline.push_back((char)0);
-    CreateProcessA(m_path.c_str(), ncCmdline.data(),
+    bool ok = CreateProcessA(m_path.c_str(), ncCmdline.data(),
         NULL, /* process attributes */
         NULL, /* thread attributes */
         TRUE, /* inherit handles */
@@ -80,9 +81,13 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
         &startupInfo, /* startup info */
         &processInfo /* process information */
     );
-    m_pid = processInfo.hProcess;
-    m_progressFd = handle[0];
-    m_running = true;
+    if (ok)
+    {
+        m_pid = processInfo.hProcess;
+        m_progressFd = handle[0];
+        m_running = true;
+    }
+    return ok;
 #else
     int fd[2];
     int ret = ::pipe(fd);
@@ -112,9 +117,12 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
             argv.push_back(op.second.data());
         }
         argv.push_back(nullptr);
-        ::execv(m_path.data(), const_cast<char *const *>(argv.data()));
+        if (::execv(m_path.data(), const_cast<char *const *>(argv.data())) != 0)
+        {
+            std::cerr << "Couldn't start untwine '" << m_path << "'.\n";
+            exit(-1);
+        }
     }
-
     // Parent
     else
     {
@@ -124,8 +132,8 @@ bool QgisUntwine::start(const StringList& files, const std::string& outputDir,
         ::fcntl(m_progressFd, F_SETFL, O_NONBLOCK);
         m_running = true;
     }
-#endif
     return true;
+#endif
 }
 
 bool QgisUntwine::stop()
@@ -192,11 +200,12 @@ uint32_t readString(int fd, std::string& s)
     while (true)
     {
         ssize_t numRead = read(fd, &ssize, sizeof(ssize));
-        // EOF or nothing to read or we didn't read 4 bytes.
-        if (numRead == 0 || (numRead == -1 && errno != EAGAIN) || (numRead > 0 && numRead != sizeof(ssize))
-            return -1; // Shouldn't happen.
-        if (numRead == sizeof(ssize))
+        if (numRead == -1 && errno != EAGAIN)
+            continue;
+        else if (numRead == sizeof(ssize))
             break;
+        else
+            return -1; // Shouldn't happen.
     }
 
     // Loop reading string
@@ -265,8 +274,8 @@ void QgisUntwine::readPipe() const
     while (true)
     {
         ssize_t size = read(m_progressFd, &m_percent, sizeof(m_percent));
-        // EOF or nothing to read.
-        if (size == 0 || (size == -1 && errno == EAGAIN))
+        // If we didn't read the full size, just return.
+        if (size != sizeof(m_percent))
             return;
 
         // Read the string, waiting as necessary.

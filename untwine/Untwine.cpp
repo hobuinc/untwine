@@ -14,6 +14,7 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include "Common.hpp"
+#include "Config.hpp"
 #include "ProgressWriter.hpp"
 
 #include "../epf/Epf.hpp"
@@ -43,7 +44,7 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.progressFd);
 }
 
-void handleOptions(const pdal::StringList& arglist, Options& options)
+bool handleOptions(pdal::StringList& arglist, Options& options)
 {
     pdal::ProgramArgs programArgs;
     pdal::Arg *tempArg;
@@ -51,6 +52,22 @@ void handleOptions(const pdal::StringList& arglist, Options& options)
     addArgs(programArgs, options, tempArg);
     try
     {
+        bool version;
+        bool help;
+        programArgs.add("version", "Report the untwine version.", version);
+        programArgs.add("help", "Print some help.", help);
+
+        programArgs.parseSimple(arglist);
+        if (version)
+            std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
+        if (help)
+        {
+            std::cout << "Usage: untwine <options>\n";
+            programArgs.dump(std::cout, 2, 80);
+        }
+        if (help || version)
+            return false;
+
         programArgs.parse(arglist);
         if (!tempArg->set())
             options.tempDir = options.outputDir + "/temp";
@@ -59,6 +76,7 @@ void handleOptions(const pdal::StringList& arglist, Options& options)
     {
         fatal(err.what());
     }
+    return true;
 }
 
 void createDirs(const Options& options)
@@ -88,7 +106,8 @@ int main(int argc, char *argv[])
     using namespace untwine;
 
     Options options;
-    handleOptions(arglist, options);
+    if (!handleOptions(arglist, options))
+        return 0;
     createDirs(options);
 
     ProgressWriter progress(options.progressFd);

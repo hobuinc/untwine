@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <regex>
 #include <set>
 #include <string>
@@ -135,6 +136,7 @@ void BuPyramid::writeInfo()
     out << "{\n";
 
     pdal::BOX3D& b = m_b.bounds;
+    out << std::fixed << std::setw(12);
     out << "\"bounds\": [" <<
         b.minx << ", " << b.miny << ", " << b.minz << ", " <<
         b.maxx << ", " << b.maxy << ", " << b.maxz << "],\n";

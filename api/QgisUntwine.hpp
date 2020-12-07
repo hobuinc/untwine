@@ -40,6 +40,7 @@ private:
     HANDLE m_progressFd;
 #endif
 
+    bool start(Options& options);
     void readPipe() const;
     void childStopped();
 };

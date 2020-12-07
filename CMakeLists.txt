@@ -15,6 +15,8 @@ find_package(Threads)
 set_package_properties(Threads PROPERTIES DESCRIPTION
     "The thread library of the system" TYPE REQUIRED)
 
+configure_file(untwine/Config.hpp.in include/Config.hpp)
+
 file(GLOB SRCS
     untwine/*.cpp
     epf/*.cpp
@@ -27,6 +29,7 @@ untwine_target_compile_settings(untwine)
 
 target_include_directories(untwine
     PRIVATE
+        ${CMAKE_CURRENT_BINARY_DIR}/include
         ${PDAL_INCLUDE_DIRS}
 )
 target_link_libraries(untwine

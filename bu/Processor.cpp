@@ -311,8 +311,10 @@ flush:
     {
         flushCompressed(table, view, o);
     }
-    catch (pdal::pdal_error&)
-    {}
+    catch (pdal::pdal_error& err)
+    {
+        fatal(err.what());
+    }
 
     m_manager.logOctant(o.key(), count);
     return pos;

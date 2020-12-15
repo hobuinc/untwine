@@ -90,8 +90,10 @@ void FileProcessor::run()
         f.prepare(t);
         f.execute(t);
     }
-    catch (const pdal::pdal_error&)
-    {}
+    catch (const pdal::pdal_error& err)
+    {
+        fatal(err.what());
+    }
 
     m_progress.update(count % CountIncrement);
 }

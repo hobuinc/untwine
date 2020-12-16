@@ -4,11 +4,8 @@ include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
 
 find_package(PDAL REQUIRED)
-if (PDAL_VERSION_MAJOR LESS 2)
-  message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 2.2 or higher.")
-endif()
-if ((PDAL_VERSION_MAJOR EQUAL 2) AND (PDAL_VERSION_MINOR LESS 2))
-  message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 2.2 or higher.")
+if ((PDAL_VERSION_MAJOR EQUAL 1) AND (PDAL_VERSION_MINOR LESS 7))
+  message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 1.7 or higher.")
 endif()
 
 find_package(Threads)

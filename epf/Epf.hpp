@@ -50,7 +50,6 @@ private:
     Grid m_grid;
     std::unique_ptr<Writer> m_writer;
     ThreadPool m_pool;
-    size_t m_fileLimit;
     FileInfo m_srsFileInfo;
 };
 

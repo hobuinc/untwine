@@ -36,6 +36,11 @@ Options
 
   Output directory. [Required]
 
+- dims
+
+  List of dimensions to load. X, Y and Z are always loaded. Limiting the dimensions can
+  speed runtime and reduce temporary disk use.
+
 - temp_dir
 
   Directory in which to place tiled output. If not provided, temporary files are placed

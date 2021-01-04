@@ -60,3 +60,8 @@ Options
 
   Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
   for debugging. [Default: no limit]
+
+- stats
+
+  Generate summary statistics in 'ept.json' similar to those produced by Entwine.
+  [Default: false]

@@ -375,14 +375,13 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
 
     if (m_b.stats)
     {
-        for (PointRef p : *view)
+        for (PointId id = 0; id < view->size(); ++id)
         {
             for (auto& sp : stats)
             {
                 Dimension::Id dim = sp.first;
                 Stats& s = sp.second;
-                double d = p.getFieldAs<double>(dim);
-                s.insert(p.getFieldAs<double>(dim));
+                s.insert(view->getFieldAs<double>(dim, id));
             }
         }
     }

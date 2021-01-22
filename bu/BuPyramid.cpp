@@ -8,7 +8,6 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include "BuPyramid.hpp"
-#include "BuTypes.hpp"
 #include "FileInfo.hpp"
 #include "OctantInfo.hpp"
 #include "../untwine/Common.hpp"
@@ -21,7 +20,7 @@ namespace bu
 
 /// BuPyramid
 
-BuPyramid::BuPyramid() : m_manager(m_b)
+BuPyramid::BuPyramid(BaseInfo& common) : m_b(common), m_manager(m_b)
 {}
 
 
@@ -31,7 +30,6 @@ void BuPyramid::run(const Options& options, ProgressWriter& progress)
     m_b.outputDir = options.outputDir;
     m_b.stats = options.stats;
 
-    readBaseInfo();
     getInputFiles();
     size_t count = queueWork();
     
@@ -41,76 +39,6 @@ void BuPyramid::run(const Options& options, ProgressWriter& progress)
     std::thread runner(&PyramidManager::run, &m_manager);
     runner.join();
     writeInfo();
-}
-
-
-void BuPyramid::readBaseInfo()
-{
-    auto nextblock = [](std::istream& in)
-    {
-        std::string s;
-        bool firstnl = false;
-
-        while (in)
-        {
-            char c;
-            in.get(c);
-            if (c == '\n')
-            {
-                if (firstnl)
-                {
-                    // Remove trailing newline.
-                    s.resize(s.size() - 1);
-                    return s;
-                }
-                else
-                    firstnl = true;
-            }
-            else
-                firstnl = false;
-            s += c;
-        }
-        return s;
-    };
-
-    std::string baseFilename = m_b.inputDir + "/" + MetadataFilename;
-    std::ifstream in(baseFilename);
-
-    if (!in)
-        fatal("Can't open '" + MetadataFilename + "' in directory '" + m_b.inputDir + "'.");
-
-    std::stringstream ss(nextblock(in));
-    ss >> m_b.bounds.minx >> m_b.bounds.miny >> m_b.bounds.minz;
-    ss >> m_b.bounds.maxx >> m_b.bounds.maxy >> m_b.bounds.maxz;
-
-    ss.str(nextblock(in));
-    ss.clear();
-    ss >> m_b.trueBounds.minx >> m_b.trueBounds.miny >> m_b.trueBounds.minz;
-    ss >> m_b.trueBounds.maxx >> m_b.trueBounds.maxy >> m_b.trueBounds.maxz;
-
-    std::string srs = nextblock(in);
-    if (srs != "NONE")
-        m_b.srs.set(srs);
-
-    if (!in)
-        throw "Couldn't read info file.";
-
-    ss.str(nextblock(in));
-    ss.clear();
-    m_b.pointSize = 0;
-    while (true)
-    {
-        FileDimInfo fdi;
-        ss >> fdi;
-        if (!ss)
-            break;
-        if (fdi.name.empty())
-            fatal("Invalid dimension in info.txt.");
-        m_b.pointSize += pdal::Dimension::size(fdi.type);
-        m_b.dimInfo.push_back(fdi);
-    }
-    if (m_b.pointSize == 0)
-        throw "Couldn't read info file.";
 }
 
 

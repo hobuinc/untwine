@@ -91,8 +91,12 @@ void BuPyramid::writeInfo()
         out << "\t{";
             out << "\"name\": \"" << fdi.name << "\", ";
             out << "\"type\": \"" << typeString(pdal::Dimension::base(fdi.type)) << "\", ";
-            if (fdi.name == "X" || fdi.name == "Y" || fdi.name == "Z")
-                out << "\"scale\": 0.01, \"offset\": 0, ";
+            if (fdi.name == "X")
+                out << "\"scale\": " << m_b.scale[0] << ", \"offset\": " << m_b.offset[0] << ", ";
+            if (fdi.name == "Y")
+                out << "\"scale\": " << m_b.scale[1] << ", \"offset\": " << m_b.offset[1] << ", ";
+            if (fdi.name == "Z")
+                out << "\"scale\": " << m_b.scale[2] << ", \"offset\": " << m_b.offset[2] << ", ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type);
             const Stats *stats = m_manager.stats(fdi.name);
             if (stats)

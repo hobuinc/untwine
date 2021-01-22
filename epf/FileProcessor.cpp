@@ -14,6 +14,7 @@
 #include "FileProcessor.hpp"
 #include "../untwine/ProgressWriter.hpp"
 
+#include <pdal/pdal_features.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/filters/StreamCallbackFilter.hpp>
 
@@ -29,8 +30,14 @@ FileProcessor::FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& g
 
 void FileProcessor::run()
 {
+
     pdal::Options opts;
     opts.add("filename", m_fi.filename);
+    opts.add("count", m_fi.numPoints);
+#ifdef PDAL_LAS_START
+    if (m_fi.driver == "readers.las")
+        opts.add("start", m_fi.start);
+#endif
 
     pdal::StageFactory factory;
     pdal::Stage *s = factory.createStage(m_fi.driver);

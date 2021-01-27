@@ -68,7 +68,7 @@ void BuPyramid::writeInfo()
     pdal::BOX3D& b = m_b.bounds;
     std::ios init(NULL);
     init.copyfmt(out);
-    out << std::fixed << std::setw(12);
+    out << std::fixed;
     out << "\"bounds\": [" <<
         b.minx << ", " << b.miny << ", " << b.minz << ", " <<
         b.maxx << ", " << b.maxy << ", " << b.maxz << "],\n";

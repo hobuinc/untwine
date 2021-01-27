@@ -128,6 +128,7 @@ void Epf::run(const Options& options, ProgressWriter& progress)
     //ABELL - would be nice to avoid this copy, but it probably doesn't matter much.
     Totals totals = m_writer->totals(MaxPointsPerNode);
 
+    // Progress for reprocessing goes from .4 to .6.
     progress.setPercent(.4);
     progress.setIncrement(.2 / totals.size());
 

@@ -66,8 +66,8 @@ void BuPyramid::writeInfo()
     out << "{\n";
 
     pdal::BOX3D& b = m_b.bounds;
-    std::ios init(NULL);
-    init.copyfmt(out);
+
+    // Set fixed output for bounds output to get sufficient precision.
     out << std::fixed;
     out << "\"bounds\": [" <<
         b.minx << ", " << b.miny << ", " << b.minz << ", " <<
@@ -77,6 +77,8 @@ void BuPyramid::writeInfo()
     out << "\"boundsConforming\": [" <<
         tb.minx << ", " << tb.miny << ", " << tb.minz << ", " <<
         tb.maxx << ", " << tb.maxy << ", " << tb.maxz << "],\n";
+    // Reset to default float output to match PDAL option handling for now.
+    out << std::defaultfloat;
 
     out << "\"dataType\": \"laszip\",\n";
     out << "\"hierarchyType\": \"json\",\n";
@@ -137,7 +139,6 @@ void BuPyramid::writeInfo()
     out << "}\n";
 
     out << "}\n";
-    out.copyfmt(init);
 }
 
 

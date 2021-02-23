@@ -11,6 +11,17 @@ License
 
 Untwine is licensed under the GPLv3. Commercial licensing is possible by contacting Hobu, Inc. for pricing.
 
+Building Untwine:
+--------
+
+The following steps will build the `untwine` executable:
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
 Using Untwine
 -------------
 

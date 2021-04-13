@@ -38,7 +38,7 @@ void FileProcessor::run()
 
     pdal::StreamCallbackFilter f;
 
-    const PointCount CountIncrement = 100000;
+    PointCount CountIncrement = 100000;
     PointCount count = 0;
     PointCount limit = CountIncrement;
 

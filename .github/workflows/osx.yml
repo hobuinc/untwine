@@ -1,0 +1,42 @@
+name: OSX
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: OSX
+
+    runs-on: 'macos-latest'
+    strategy:
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        channels: conda-forge
+        auto-update-conda: true
+
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+          source ./ci/osx/setup.sh
+
+    - name: CMake
+      shell: bash -l {0}
+      run: |
+          source ../ci/osx/cmake.sh
+      working-directory: ./build
+
+    - name: Compile
+      shell: bash -l {0}
+      run: |
+          source ../ci/osx/compile.sh
+      working-directory: ./build
+
+    - name: Test
+      shell: bash -l {0}
+      run: |
+          source ../ci/osx/test.sh
+      working-directory: ./build
+

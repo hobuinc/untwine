@@ -38,7 +38,7 @@ void FileProcessor::run()
 
     pdal::StreamCallbackFilter f;
 
-    const PointCount CountIncrement = 100000;
+    PointCount CountIncrement = 100000;
     PointCount count = 0;
     PointCount limit = CountIncrement;
 
@@ -50,7 +50,7 @@ void FileProcessor::run()
     // This is some random cell that ultimately won't get used, but it contains a buffer
     // into which we can write data.
     Cell *cell = m_cellMgr.get(VoxelKey());
-    f.setCallback([this, &count, &limit, &cell](pdal::PointRef& point)
+    f.setCallback([this, &count, &limit, &cell, &CountIncrement](pdal::PointRef& point)
         {
             // Write the data into the point buffer in the cell.  This is the *last*
             // cell buffer that we used. We're hoping that it's the right one.

@@ -1,0 +1,44 @@
+name: Windows
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: MSVC
+
+    runs-on: 'windows-latest'
+    strategy:
+      fail-fast: true
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: ilammy/msvc-dev-cmd@v1
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        channels: conda-forge
+        auto-update-conda: true
+        python-version: '3.8'
+
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+          source ./ci/win/setup.sh
+
+    - name: CMake
+      shell: bash -l {0}
+      working-directory: ./build
+      run: |
+          source ../ci/win/cmake.sh
+
+    - name: Compile
+      shell: bash -l {0}
+      working-directory: ./build
+      run: |
+          source ../ci/win/compile.sh
+
+    - name: Test
+      shell: bash -l {0}
+      working-directory: ./build
+      run: |
+          source ../ci/win/test.sh
+

@@ -189,8 +189,8 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     };
 
     m_b.scale[0] = calcScale(m_b.scale[0], m_b.bounds.minx, m_b.bounds.maxx);
-    m_b.scale[1] = calcScale(m_b.scale[1], m_b.bounds.minx, m_b.bounds.maxx);
-    m_b.scale[2] = calcScale(m_b.scale[2], m_b.bounds.minx, m_b.bounds.maxx);
+    m_b.scale[1] = calcScale(m_b.scale[1], m_b.bounds.miny, m_b.bounds.maxy);
+    m_b.scale[2] = calcScale(m_b.scale[2], m_b.bounds.minz, m_b.bounds.maxz);
 }
 
 PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,

@@ -37,7 +37,7 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
     programArgs.add("output_dir,o", "Output directory", options.outputDir).setPositional();
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
-    programArgs.add("level", "Set an initial tree leve, rather than guess based on data",
+    programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);
     programArgs.add("file_limit", "Only load 'file_limit' files, even if more exist",
         options.fileLimit, (size_t)10000000);

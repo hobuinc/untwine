@@ -20,6 +20,7 @@
 
 #include <unordered_set>
 
+#include <pdal/pdal_features.hpp>
 #include <pdal/Dimension.hpp>
 #include <pdal/Metadata.hpp>
 #include <pdal/StageFactory.hpp>
@@ -198,6 +199,7 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
 {
     using namespace pdal;
 
+    std::vector<FileInfo> tempFileInfos;
     std::vector<std::string> filenames;
     PointCount totalPoints = 0;
 
@@ -271,13 +273,41 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
             std::cerr << "Files have mismatched SRS values. Using SRS from '" <<
                 m_srsFileInfo.filename << "'.\n";
         fi.srs = qi.m_srs;
-        fileInfos.push_back(fi);
+        tempFileInfos.push_back(fi);
         if (!m_srsFileInfo.valid() && qi.m_srs.valid())
             m_srsFileInfo = fi;
 
         m_grid.expand(qi.m_bounds, qi.m_pointCount);
         totalPoints += fi.numPoints;
     }
+
+
+#ifdef PDAL_LAS_START
+    PointCount ChunkSize = 5000000;
+    for (const FileInfo& fi : tempFileInfos)
+    {
+        if (fi.driver != "readers.las" || fi.numPoints < ChunkSize)
+        {
+            fileInfos.push_back(fi);
+            continue;
+        }
+        PointCount remaining = fi.numPoints;
+        pdal::PointId start = 0;
+        while (remaining)
+        {
+            FileInfo lasFi(fi);
+            lasFi.numPoints = (std::min)(ChunkSize, remaining);
+            lasFi.start = start;
+            fileInfos.push_back(lasFi);
+
+            start += ChunkSize;
+            remaining -= lasFi.numPoints;
+        }
+    }
+#else
+    fileInfos = std::move(tempFileInfos);
+#endif
+
     return totalPoints;
 }
 

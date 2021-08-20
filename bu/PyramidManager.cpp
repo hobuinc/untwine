@@ -28,7 +28,8 @@ namespace untwine
 namespace bu
 {
 
-PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(10), m_totalPoints(0)
+PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(10), m_totalPoints(0),
+    m_copc(m_b)
 {}
 
 
@@ -70,9 +71,19 @@ void PyramidManager::run()
             break;
         process(o);
     }
-    createHierarchy();
-}
 
+    createHierarchy();
+    if (m_b.opts.singleFile)
+    {
+        m_copc.writeChunkTable();
+        m_copc.writeHierarchy(m_childCounts);
+        m_copc.updateHeader(m_stats);
+        // The header is last because we don't have the evlr position until the end.
+        m_copc.writeHeader();
+    }
+    else
+        writeHierarchy();
+}
 
 // Take the item off the queue and stick it on the complete list. If we have all 8 octants,
 // remove the items from the complete list and queue a Processor job.
@@ -133,6 +144,15 @@ OctantInfo PyramidManager::removeComplete(const VoxelKey& k)
     return o;
 }
 
+// Called when a processor wants to write a chunk in single-file mode. Returns the location
+// where the chunk should be written.
+uint64_t PyramidManager::newChunk(const VoxelKey& key, uint32_t size, uint32_t count)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto off = m_copc.newChunk(key, size, count);
+std::cerr << "New chunk for " << key << " size/count/offset = " << size << "/" << count << "/" << off << "!\n";
+    return off;
+}
 
 void PyramidManager::logOctant(const VoxelKey& k, int cnt, const IndexedStats& istats)
 {
@@ -155,9 +175,9 @@ void PyramidManager::logOctant(const VoxelKey& k, int cnt, const IndexedStats& i
     m_totalPoints += cnt;
 }
 
-
 void PyramidManager::createHierarchy()
 {
+    // Create a map of child counts for the hierarchy.
     std::function<int(const VoxelKey&)> calcCounts;
     calcCounts = [this, &calcCounts](const VoxelKey& k)
     {
@@ -171,9 +191,11 @@ void PyramidManager::createHierarchy()
         m_childCounts[k] = count;
         return count + 1;
     };
-
     calcCounts(VoxelKey(0, 0, 0, 0));
+}
 
+void PyramidManager::writeHierarchy()
+{
     std::deque<VoxelKey> roots;
 
     roots.push_back(VoxelKey(0, 0, 0, 0));
@@ -195,7 +217,7 @@ std::deque<VoxelKey> PyramidManager::emitRoot(const VoxelKey& root)
     entries.push_back({root, m_written[root]});
     std::deque<VoxelKey> roots = emit(root, stopLevel, entries);
 
-    std::ofstream out(m_b.outputDir + "/ept-hierarchy/" + root.toString() + ".json");
+    std::ofstream out(m_b.opts.outputName + "/ept-hierarchy/" + root.toString() + ".json");
 
     out << "{\n";
 

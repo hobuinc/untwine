@@ -16,6 +16,7 @@
 
 #include <pdal/PointLayout.hpp>
 #include <pdal/util/Algorithm.hpp>
+#include <pdal/util/OStream.hpp>
 
 #include <lazperf/filestream.hpp>
 
@@ -29,11 +30,12 @@ namespace bu
 {
 
 CopcSupport::CopcSupport(const BaseInfo& b) :
-    m_f(new std::ofstream(b.opts.outputName, std::ios::out | std::ios::binary)),
     m_lazVlr(3, extraByteSize(b.dimInfo), lazperf::VariableChunkSize),
     m_ebVlr(extraByteSize(b.dimInfo)),
     m_wktVlr(b.srs.getWKT1())
 {
+    m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
+
     //ABELL
     m_header.file_source_id = 0;
     m_header.global_encoding = (1 << 4);
@@ -142,7 +144,7 @@ void CopcSupport::writeHeader()
 {
     uint64_t start;
     uint64_t end;
-    std::ostream& out = *m_f;
+    std::ostream& out = m_f;
 
     out.seekp(0);
     m_header.write(out);
@@ -187,7 +189,7 @@ void CopcSupport::writeChunkTable()
     m_chunkTable.resize(m_chunkTable.size() - 1);
 
     // Write chunk table offset
-    pdal::OLeStream out(m_f.get());
+    pdal::OLeStream out(&m_f);
     out.seek(m_chunkOffsetPos);
     out << m_pointPos;
 
@@ -198,7 +200,7 @@ void CopcSupport::writeChunkTable()
     out << (uint32_t)m_chunkTable.size();
 
     // Write the chunk table itself.
-    lazperf::OutFileStream stream(*m_f);
+    lazperf::OutFileStream stream(m_f);
     lazperf::compress_chunk_table(stream.cb(), m_chunkTable, true);
 
     // The ELVRs start after the chunk table.
@@ -209,18 +211,18 @@ void CopcSupport::writeChunkTable()
 void CopcSupport::writeHierarchy(const CountMap& counts)
 {
     // Move to the location *after* the EVLR header.
-    m_f->seekp(m_header.evlr_offset + lazperf::evlr_header::Size);
+    m_f.seekp(m_header.evlr_offset + lazperf::evlr_header::Size);
 
-    uint64_t beginPos = m_f->tellp();
+    uint64_t beginPos = m_f.tellp();
     Hierarchy root = emitRoot(VoxelKey(0, 0, 0, 0), counts);
     m_copcVlr.root_hier_offset = root.offset;
     m_copcVlr.root_hier_size = root.byteSize;
-    uint64_t endPos = m_f->tellp();
+    uint64_t endPos = m_f.tellp();
     
     // Now write VLR header.
     lazperf::evlr_header h { 0, "entwine", 1000, (endPos - beginPos), "EPT Hierarchy" };
-    m_f->seekp(m_header.evlr_offset);
-    h.write(*m_f);
+    m_f.seekp(m_header.evlr_offset);
+    h.write(m_f);
 }
 
 CopcSupport::Hierarchy CopcSupport::emitRoot(const VoxelKey& root, const CountMap& counts)
@@ -232,7 +234,7 @@ CopcSupport::Hierarchy CopcSupport::emitRoot(const VoxelKey& root, const CountMa
     entries.push_back({root, m_hierarchy[root]});
     emitChildren(root, counts, entries, stopLevel);
 
-    pdal::OLeStream out(m_f.get());
+    pdal::OLeStream out(&m_f);
     uint64_t startPos = out.position();
     for (auto it = entries.begin(); it != entries.end(); ++it)
     {

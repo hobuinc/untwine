@@ -8,6 +8,7 @@ if ((PDAL_VERSION_MAJOR EQUAL 1) AND (PDAL_VERSION_MINOR LESS 7))
   message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 1.7 or higher.")
 endif()
 
+find_package(Lazperf REQUIRED 2)
 find_package(Threads)
 set_package_properties(Threads PROPERTIES DESCRIPTION
     "The thread library of the system" TYPE REQUIRED)
@@ -28,11 +29,14 @@ target_include_directories(untwine
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${PDAL_INCLUDE_DIRS}
+        /Users/acbell/laszipinstall/include
 )
 target_link_libraries(untwine
     PRIVATE
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
+        LAZPERF::lazperf
+        /Users/acbell/laszipinstall/lib/liblaszip.dylib
 )
 
 install(TARGETS untwine DESTINATION bin)

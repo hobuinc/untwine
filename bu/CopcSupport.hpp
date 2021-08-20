@@ -17,8 +17,6 @@
 #include "Stats.hpp"
 #include "../untwine/VoxelKey.hpp"
 
-#include <pdal/util/OStream.hpp>
-
 #include <lazperf/lazperf.hpp>
 #include <lazperf/vlr.hpp>
 
@@ -52,8 +50,7 @@ public:
     void writeHierarchy(const CountMap& counts);
 
 private:
-    std::unique_ptr<std::ofstream> m_f;
-//    pdal::OLeStream m_out;
+    std::ofstream m_f;
     lazperf::header14 m_header;
     lazperf::copc_vlr m_copcVlr;
     lazperf::laz_vlr m_lazVlr;

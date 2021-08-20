@@ -10,14 +10,21 @@
  *                                                                           *
  ****************************************************************************/
 
-
+#include <mutex>
 #include <numeric>
 #include <random>
 
 #include "../untwine/GridKey.hpp"
 
+#include <pdal/PDALUtils.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/io/BufferReader.hpp>
+#include <pdal/util/Algorithm.hpp>
+
+#include <lazperf/lazperf.hpp>
+#include <lazperf/writers.hpp>
+//ABELL
+#include <lazperf/readers.hpp>
 
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
@@ -86,6 +93,11 @@ void Processor::sample(Index& accepted, Index& rejected)
 
     std::random_device rd;
     std::mt19937 g(rd());
+    /**
+    std::vector<int32_t> v{1234};
+    std::seed_seq seed(v.begin(), v.end());
+    std::mt19937 g(seed);
+    **/
 
     //ABELL - This may not be the best way to do this. Probably better to work from some
     //  point (center, whatever) out, but this is cheap because you don't have to do
@@ -183,6 +195,7 @@ bool Processor::acceptable(int pointId, GridKey key)
 }
 
 
+/**
 bool Processor::tooClose(pdal::PointId id1, pdal::PointId id2)
 {
     const Point& p1 = m_points[id1];
@@ -194,6 +207,7 @@ bool Processor::tooClose(pdal::PointId id1, pdal::PointId id2)
 
     return dx * dx + dy * dy + dz * dz <= m_vi.squareSpacing();
 }
+**/
 
 
 void Processor::writeBinOutput(Index& index)
@@ -206,7 +220,7 @@ void Processor::writeBinOutput(Index& index)
     // Note that we write the the input directory, as this will be input to a later
     // pass.
     std::string filename = m_vi.key().toString() + ".bin";
-    std::string fullFilename = m_b.inputDir + "/" + filename;
+    std::string fullFilename = m_b.opts.tempDir + "/" + filename;
     std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
     if (!out)
         fatal("Couldn't open '" + fullFilename + "' for output.");
@@ -280,29 +294,45 @@ void Processor::writeCompressedOutput(Index& index)
 Processor::IndexIter
 Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter pos)
 {
+    using namespace pdal;
+
     auto begin = pos;
-    pdal::PointTable table;
+    PointTable table;
     IndexedStats stats;
 
     //ABELL - fixme
     // For now we copy the dimension list so we're sure that it matches the layout, though
     // there's no reason why it should change. We should modify things to use a single
     // layout.
+
+    // PDRF 3 dim list
+    Dimension::IdList lasDims { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
+        Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
+        Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
+        Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
+        Dimension::Id::PointSourceId, Dimension::Id::GpsTime, Dimension::Id::Red,
+        Dimension::Id::Green, Dimension::Id::Blue };
     DimInfoList dims = m_b.dimInfo;
+    m_extraDims.clear();
     for (FileDimInfo& fdi : dims)
     {
         fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
-        if (m_b.stats)
+        if (m_b.opts.stats)
         {
+            // For single file output we need the counts by return number.
             if (fdi.dim == pdal::Dimension::Id::Classification)
+                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+            else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
                 stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
             else
                 stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
         }
+        if (!Utils::contains(lasDims, fdi.dim))
+            m_extraDims.push_back(DimType(fdi.dim, fdi.type));
     }
     table.finalize();
 
-    pdal::PointViewPtr view(new pdal::PointView(table));
+    PointViewPtr view(new pdal::PointView(table));
 
     // The octant's points can came from one or more FileInfo.  The points are sorted such
     // all the points that come from a single FileInfo are consecutive.
@@ -341,7 +371,7 @@ flush:
     {
         flushCompressed(table, view, o, stats);
     }
-    catch (pdal::pdal_error& err)
+    catch (pdal_error& err)
     {
         fatal(err.what());
     }
@@ -371,22 +401,35 @@ void Processor::appendCompressed(pdal::PointViewPtr view, const DimInfoList& dim
 void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr view,
     const OctantInfo& oi, IndexedStats& stats)
 {
-    using namespace pdal;
-
-    std::string filename = m_b.outputDir + "/ept-data/" + oi.key().toString() + ".laz";
-
-    if (m_b.stats)
+    // For single file output we need the stats for 
+    if (m_b.opts.stats)
     {
-        for (PointId id = 0; id < view->size(); ++id)
+        for (pdal::PointId id = 0; id < view->size(); ++id)
         {
             for (auto& sp : stats)
             {
-                Dimension::Id dim = sp.first;
+                pdal::Dimension::Id dim = sp.first;
                 Stats& s = sp.second;
                 s.insert(view->getFieldAs<double>(dim, id));
             }
         }
     }
+
+    if (m_b.opts.singleFile)
+    {
+        createChunk(oi.key(), view);
+    }
+    else
+    {
+        std::string filename = m_b.opts.outputName + "/ept-data/" + oi.key().toString() + ".laz";
+        writeEptFile(filename, table, view); 
+    }
+}
+
+void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef table,
+    pdal::PointViewPtr view)
+{
+    using namespace pdal;
 
     StageFactory factory;
 
@@ -423,6 +466,269 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
 
     w->prepare(table);
     w->execute(table);
+}
+
+void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
+{
+    using namespace pdal;
+
+    PointLayoutPtr layout = view->layout();
+    int ebCount {0};
+    for (DimType dim : m_extraDims)
+        ebCount += layout->dimSize(dim.m_id);
+
+    std::vector<char> buf(lazperf::baseCount(3) + ebCount);
+
+    lazperf::writer::chunk_compressor compressor(3, ebCount);
+    for (PointId idx = 0; idx < view->size(); ++idx)
+    {
+        PointRef point(*view, idx);
+        fillPointBuf(point, buf);
+        compressor.compress(buf.data());
+    }
+    std::vector<unsigned char> chunk = compressor.done();
+
+    uint64_t location = m_manager.newChunk(key, chunk.size(), (uint32_t)view->size());
+
+    std::ofstream out(m_b.opts.outputName, std::ios::out | std::ios::in | std::ios::binary);
+    out.seekp(std::ofstream::pos_type(location));
+    out.write(reinterpret_cast<const char *>(chunk.data()), chunk.size());
+    out.close();
+    if (!out)
+        fatal("Failure writing to '" + m_b.opts.outputName + "'.");
+    /**
+    **/
+    /**
+    laszip_POINTER ctx;
+    laszip_create(&ctx);
+    laszip_set_point_type_and_size(ctx, 3, lazperf::baseCount(3) + ebCount);
+    laszip_open_writer(ctx, "dummy.laz", true);
+    for (PointId idx = 0; idx < view->size(); ++idx)
+    {
+        print = (idx < 5);
+        PointRef point(*view, idx);
+        laszip_point_struct p = fillPointStruct(point);
+        laszip_set_point(ctx, &p);
+        laszip_write_point(ctx);
+    }
+    laszip_close_writer(ctx);
+    laszip_destroy(ctx);
+    **/
+}
+
+laszip_point_struct Processor::fillPointStruct(pdal::PointRef& point)
+{
+    using namespace pdal;
+    laszip_point_struct p;
+
+// We're currently only writing PDRF 3.
+    bool has14PointFormat = false;
+    bool hasTime = true; //  m_lasHeader.hasTime();
+    bool hasColor = true; // m_lasHeader.hasColor();
+    bool hasInfrared = false; // m_lasHeader.hasInfrared();
+
+//    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
+
+    // we always write the base fields
+    using namespace Dimension;
+
+    uint8_t returnNumber(1);
+    uint8_t numberOfReturns(1);
+    if (point.hasDim(Id::ReturnNumber))
+        returnNumber = point.getFieldAs<uint8_t>(Id::ReturnNumber);
+    if (point.hasDim(Id::NumberOfReturns))
+        numberOfReturns = point.getFieldAs<uint8_t>(Id::NumberOfReturns);
+
+    auto converter = [](double d, Dimension::Id dim) -> int32_t
+    {
+        int32_t i(0);
+
+        if (!Utils::numericCast(d, i))
+            fatal("Unable to convert scaled value (" +
+                Utils::toString(d) + ") to "
+                "int32 for dimension '" + Dimension::name(dim) +
+                "' when writing LAS/LAZ file.");
+        return i;
+    };
+
+    uint8_t classification = point.getFieldAs<uint8_t>(Id::Classification);
+    uint8_t classFlags = 0;
+    if (point.hasDim(Id::ClassFlags))
+        classFlags = point.getFieldAs<uint8_t>(Id::ClassFlags);
+    else
+        classFlags = classification >> 5;
+
+    double x = (point.getFieldAs<double>(Id::X) - m_b.offset[0]) / m_b.scale[0];
+    double y = (point.getFieldAs<double>(Id::Y) - m_b.offset[1]) / m_b.scale[1];
+    double z = (point.getFieldAs<double>(Id::Z) - m_b.offset[2]) / m_b.scale[2];
+
+    p.X = converter(x, Id::X);
+    p.Y = converter(y, Id::Y);
+    p.Z = converter(z, Id::Z);
+
+    p.intensity = point.getFieldAs<uint16_t>(Id::Intensity);
+    p.scan_direction_flag = point.getFieldAs<uint8_t>(Id::ScanDirectionFlag);
+    p.edge_of_flight_line = point.getFieldAs<uint8_t>(Id::EdgeOfFlightLine);
+    p.synthetic_flag = classFlags & 0x1;
+    p.keypoint_flag = (classFlags >> 1) & 0x1;
+    p.withheld_flag = (classFlags >> 2) & 0x1;
+    p.user_data = point.getFieldAs<uint8_t>(Id::UserData);
+    p.point_source_ID = point.getFieldAs<uint16_t>(Id::PointSourceId);
+    p.return_number = returnNumber;
+    p.number_of_returns = numberOfReturns;
+    p.scan_angle_rank = point.getFieldAs<int8_t>(Id::ScanAngleRank);
+    p.classification = classification;
+    p.extended_point_type = 0;
+    p.gps_time = point.getFieldAs<double>(Id::GpsTime);
+    p.rgb[0] = point.getFieldAs<uint16_t>(Id::Red);
+    p.rgb[1] = point.getFieldAs<uint16_t>(Id::Green);
+    p.rgb[2] = point.getFieldAs<uint16_t>(Id::Blue);
+
+    char buf[1000];
+    Everything e;
+    int ed_size = 0;
+    if (m_extraDims.size())
+    {
+        LeInserter ostream(buf, 1000);
+        Everything e;
+        for (auto& dim : m_extraDims)
+        {
+            point.getField((char *)&e, dim.m_id, dim.m_type);
+            Utils::insertDim(ostream, dim.m_type, e);
+            ed_size += Dimension::size(dim.m_type);
+        }
+    }
+    p.extra_bytes = (laszip_U8 *)buf;
+    p.num_extra_bytes = ed_size;
+
+    return p;
+}
+
+void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
+{
+    using namespace pdal;
+
+    LeInserter ostream(buf.data(), buf.size());
+
+// We're currently only writing PDRF 3.
+    bool has14PointFormat = false;
+    bool hasTime = true; //  m_lasHeader.hasTime();
+    bool hasColor = true; // m_lasHeader.hasColor();
+    bool hasInfrared = false; // m_lasHeader.hasInfrared();
+
+//    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
+
+    // we always write the base fields
+    using namespace Dimension;
+
+    uint8_t returnNumber(1);
+    uint8_t numberOfReturns(1);
+    if (point.hasDim(Id::ReturnNumber))
+        returnNumber = point.getFieldAs<uint8_t>(Id::ReturnNumber);
+    if (point.hasDim(Id::NumberOfReturns))
+        numberOfReturns = point.getFieldAs<uint8_t>(Id::NumberOfReturns);
+
+    /**
+    if (numberOfReturns > maxReturnCount)
+    {
+        if (m_discardHighReturnNumbers)
+        {
+            // If this return number is too high, pitch the point.
+            if (returnNumber > maxReturnCount)
+                return false;
+            numberOfReturns = maxReturnCount;
+        }
+    }
+    **/
+
+    auto converter = [](double d, Dimension::Id dim) -> int32_t
+    {
+        int32_t i(0);
+
+        if (!Utils::numericCast(d, i))
+            fatal("Unable to convert scaled value (" +
+                Utils::toString(d) + ") to "
+                "int32 for dimension '" + Dimension::name(dim) +
+                "' when writing LAS/LAZ file.");
+        return i;
+    };
+
+    double x = (point.getFieldAs<double>(Id::X) - m_b.offset[0]) / m_b.scale[0];
+    double y = (point.getFieldAs<double>(Id::Y) - m_b.offset[1]) / m_b.scale[1];
+    double z = (point.getFieldAs<double>(Id::Z) - m_b.offset[2]) / m_b.scale[2];
+
+    ostream << converter(x, Id::X);
+    ostream << converter(y, Id::Y);
+    ostream << converter(z, Id::Z);
+
+    ostream << point.getFieldAs<uint16_t>(Id::Intensity);
+
+    uint8_t scanChannel = point.getFieldAs<uint8_t>(Id::ScanChannel);
+    uint8_t scanDirectionFlag = point.getFieldAs<uint8_t>(Id::ScanDirectionFlag);
+    uint8_t edgeOfFlightLine = point.getFieldAs<uint8_t>(Id::EdgeOfFlightLine);
+    uint8_t classification = point.getFieldAs<uint8_t>(Id::Classification);
+
+    if (has14PointFormat)
+    {
+        uint8_t bits = returnNumber | (numberOfReturns << 4);
+        ostream << bits;
+
+        uint8_t classFlags;
+        if (point.hasDim(Id::ClassFlags))
+            classFlags = point.getFieldAs<uint8_t>(Id::ClassFlags);
+        else
+            classFlags = classification >> 5;
+        bits = (classFlags & 0x0F) |
+            ((scanChannel & 0x03) << 4) |
+            ((scanDirectionFlag & 0x01) << 6) |
+            ((edgeOfFlightLine & 0x01) << 7);
+        ostream << bits;
+    }
+    else
+    {
+        uint8_t bits = returnNumber | (numberOfReturns << 3) |
+            (scanDirectionFlag << 6) | (edgeOfFlightLine << 7);
+        ostream << bits;
+    }
+
+    ostream << classification;
+
+    uint8_t userData = point.getFieldAs<uint8_t>(Id::UserData);
+    if (has14PointFormat)
+    {
+         // Guaranteed to fit if scan angle rank isn't wonky.
+        int16_t scanAngleRank =
+            static_cast<int16_t>(std::round(
+                point.getFieldAs<float>(Id::ScanAngleRank) / .006f));
+        ostream << userData << scanAngleRank;
+    }
+    else
+    {
+        int8_t scanAngleRank = point.getFieldAs<int8_t>(Id::ScanAngleRank);
+        ostream << scanAngleRank << userData;
+    }
+
+    ostream << point.getFieldAs<uint16_t>(Id::PointSourceId);
+
+    if (hasTime)
+        ostream << point.getFieldAs<double>(Id::GpsTime);
+
+    if (hasColor)
+    {
+        ostream << point.getFieldAs<uint16_t>(Id::Red);
+        ostream << point.getFieldAs<uint16_t>(Id::Green);
+        ostream << point.getFieldAs<uint16_t>(Id::Blue);
+    }
+
+    if (hasInfrared)
+        ostream << point.getFieldAs<uint16_t>(Id::Infrared);
+
+    Everything e;
+    for (auto& dim : m_extraDims)
+    {
+        point.getField((char *)&e, dim.m_id, dim.m_type);
+        Utils::insertDim(ostream, dim.m_type, e);
+    }
 }
 
 } // namespace bu

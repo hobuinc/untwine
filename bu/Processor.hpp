@@ -1,4 +1,5 @@
 /*****************************************************************************
+
  *   Copyright (c) 2020, Hobu, Inc. (info@hobu.co)                           *
  *                                                                           *
  *   All rights reserved.                                                    *
@@ -18,6 +19,8 @@
 #include "PointAccessor.hpp"
 #include "Stats.hpp"
 #include "VoxelInfo.hpp"
+
+#include <laszip/laszip_api.h>
 
 namespace untwine
 {
@@ -44,7 +47,8 @@ private:
     void sample(Index& accepted, Index& rejected);
     void write(Index& accepted, Index& rejected);
     bool acceptable(int pointId, GridKey key);
-    bool tooClose(pdal::PointId id1, pdal::PointId id2);
+    // Only used in more complex sampling.
+    //    bool tooClose(pdal::PointId id1, pdal::PointId id2);
 
     void appendRemainder(Index& index);
     void writeBinOutput(Index& index);
@@ -54,10 +58,16 @@ private:
         IndexIter begin, IndexIter end);
     void flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr view,
         const OctantInfo& oi, IndexedStats& stats);
+    void writeEptFile(const std::string& filename, pdal::PointTableRef table,
+        pdal::PointViewPtr view);
+    void createChunk(const VoxelKey& key, pdal::PointViewPtr view);
+    void fillPointBuf(pdal::PointRef& point, std::vector<char>& buf);
+    laszip_point_struct fillPointStruct(pdal::PointRef& point);
 
     VoxelInfo m_vi;
     const BaseInfo& m_b;
     PyramidManager& m_manager;
+    pdal::DimTypeList m_extraDims;
     PointAccessor m_points;
 };
 

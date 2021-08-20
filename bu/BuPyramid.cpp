@@ -24,12 +24,8 @@ BuPyramid::BuPyramid(BaseInfo& common) : m_b(common), m_manager(m_b)
 {}
 
 
-void BuPyramid::run(const Options& options, ProgressWriter& progress)
+void BuPyramid::run(ProgressWriter& progress)
 {
-    m_b.inputDir = options.tempDir;
-    m_b.outputDir = options.outputDir;
-    m_b.stats = options.stats;
-
     getInputFiles();
     size_t count = queueWork();
     
@@ -38,7 +34,8 @@ void BuPyramid::run(const Options& options, ProgressWriter& progress)
     m_manager.setProgress(&progress);
     std::thread runner(&PyramidManager::run, &m_manager);
     runner.join();
-    writeInfo();
+    if (!m_b.opts.singleFile)
+        writeInfo();
 }
 
 
@@ -61,7 +58,7 @@ void BuPyramid::writeInfo()
         }
     };
 
-    std::ofstream out(m_b.outputDir + "/ept.json");
+    std::ofstream out(m_b.opts.outputName + "/ept.json");
 
     out << "{\n";
 
@@ -157,7 +154,7 @@ void BuPyramid::getInputFiles()
         return std::make_pair(true, VoxelKey(x, y, z, level));
     };
 
-    std::vector<std::string> files = pdal::FileUtils::directoryList(m_b.inputDir);
+    std::vector<std::string> files = pdal::FileUtils::directoryList(m_b.opts.tempDir);
 
     VoxelKey root;
     for (std::string file : files)

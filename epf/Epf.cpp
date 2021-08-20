@@ -43,26 +43,26 @@ Epf::~Epf()
 {}
 
 
-void Epf::run(const Options& options, ProgressWriter& progress)
+void Epf::run(ProgressWriter& progress)
 {
     using namespace pdal;
 
     BOX3D totalBounds;
 
-    if (pdal::FileUtils::fileExists(options.tempDir + "/" + MetadataFilename))
+    if (pdal::FileUtils::fileExists(m_b.opts.tempDir + "/" + MetadataFilename))
         fatal("Output directory already contains EPT data.");
 
-    m_grid.setCubic(options.doCube);
+    m_grid.setCubic(m_b.opts.doCube);
 
     std::vector<FileInfo> fileInfos;
-    progress.m_total = createFileInfo(options.inputFiles, options.dimNames, fileInfos);
+    progress.m_total = createFileInfo(m_b.opts.inputFiles, m_b.opts.dimNames, fileInfos);
 
-    if (options.level != -1)
-        m_grid.resetLevel(options.level);
+    if (m_b.opts.level != -1)
+        m_grid.resetLevel(m_b.opts.level);
 
     // This is just a debug thing that will allow the number of input files to be limited.
-    if (fileInfos.size() > options.fileLimit)
-        fileInfos.resize(options.fileLimit);
+    if (fileInfos.size() > m_b.opts.fileLimit)
+        fileInfos.resize(m_b.opts.fileLimit);
 
     // Stick all the dimension names from each input file in a set.
     std::unordered_set<std::string> allDimNames;
@@ -94,7 +94,7 @@ void Epf::run(const Options& options, ProgressWriter& progress)
     }
 
     // Make a writer with NumWriters threads.
-    m_writer.reset(new Writer(options.tempDir, NumWriters, layout->pointSize()));
+    m_writer.reset(new Writer(m_b.opts.tempDir, NumWriters, layout->pointSize()));
 
     // Sort file infos so the largest files come first. This helps to make sure we don't delay
     // processing big files that take the longest (use threads more efficiently).
@@ -133,13 +133,13 @@ void Epf::run(const Options& options, ProgressWriter& progress)
     progress.setIncrement(.2 / totals.size());
 
     // Make a new writer.
-    m_writer.reset(new Writer(options.tempDir, 4, layout->pointSize()));
+    m_writer.reset(new Writer(m_b.opts.tempDir, 4, layout->pointSize()));
     for (auto& t : totals)
     {
         VoxelKey key = t.first;
         int numPoints = t.second;
         int pointSize = layout->pointSize();
-        std::string tempDir = options.tempDir;
+        std::string tempDir = m_b.opts.tempDir;
         m_pool.add([&progress, key, numPoints, pointSize, tempDir, this]()
         {
             Reprocessor r(key, numPoints, pointSize, tempDir, m_grid, m_writer.get());

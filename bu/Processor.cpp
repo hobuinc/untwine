@@ -23,8 +23,6 @@
 
 #include <lazperf/lazperf.hpp>
 #include <lazperf/writers.hpp>
-//ABELL
-#include <lazperf/readers.hpp>
 
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
@@ -496,112 +494,6 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     out.close();
     if (!out)
         fatal("Failure writing to '" + m_b.opts.outputName + "'.");
-    /**
-    **/
-    /**
-    laszip_POINTER ctx;
-    laszip_create(&ctx);
-    laszip_set_point_type_and_size(ctx, 3, lazperf::baseCount(3) + ebCount);
-    laszip_open_writer(ctx, "dummy.laz", true);
-    for (PointId idx = 0; idx < view->size(); ++idx)
-    {
-        print = (idx < 5);
-        PointRef point(*view, idx);
-        laszip_point_struct p = fillPointStruct(point);
-        laszip_set_point(ctx, &p);
-        laszip_write_point(ctx);
-    }
-    laszip_close_writer(ctx);
-    laszip_destroy(ctx);
-    **/
-}
-
-laszip_point_struct Processor::fillPointStruct(pdal::PointRef& point)
-{
-    using namespace pdal;
-    laszip_point_struct p;
-
-// We're currently only writing PDRF 3.
-    bool has14PointFormat = false;
-    bool hasTime = true; //  m_lasHeader.hasTime();
-    bool hasColor = true; // m_lasHeader.hasColor();
-    bool hasInfrared = false; // m_lasHeader.hasInfrared();
-
-//    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
-
-    // we always write the base fields
-    using namespace Dimension;
-
-    uint8_t returnNumber(1);
-    uint8_t numberOfReturns(1);
-    if (point.hasDim(Id::ReturnNumber))
-        returnNumber = point.getFieldAs<uint8_t>(Id::ReturnNumber);
-    if (point.hasDim(Id::NumberOfReturns))
-        numberOfReturns = point.getFieldAs<uint8_t>(Id::NumberOfReturns);
-
-    auto converter = [](double d, Dimension::Id dim) -> int32_t
-    {
-        int32_t i(0);
-
-        if (!Utils::numericCast(d, i))
-            fatal("Unable to convert scaled value (" +
-                Utils::toString(d) + ") to "
-                "int32 for dimension '" + Dimension::name(dim) +
-                "' when writing LAS/LAZ file.");
-        return i;
-    };
-
-    uint8_t classification = point.getFieldAs<uint8_t>(Id::Classification);
-    uint8_t classFlags = 0;
-    if (point.hasDim(Id::ClassFlags))
-        classFlags = point.getFieldAs<uint8_t>(Id::ClassFlags);
-    else
-        classFlags = classification >> 5;
-
-    double x = (point.getFieldAs<double>(Id::X) - m_b.offset[0]) / m_b.scale[0];
-    double y = (point.getFieldAs<double>(Id::Y) - m_b.offset[1]) / m_b.scale[1];
-    double z = (point.getFieldAs<double>(Id::Z) - m_b.offset[2]) / m_b.scale[2];
-
-    p.X = converter(x, Id::X);
-    p.Y = converter(y, Id::Y);
-    p.Z = converter(z, Id::Z);
-
-    p.intensity = point.getFieldAs<uint16_t>(Id::Intensity);
-    p.scan_direction_flag = point.getFieldAs<uint8_t>(Id::ScanDirectionFlag);
-    p.edge_of_flight_line = point.getFieldAs<uint8_t>(Id::EdgeOfFlightLine);
-    p.synthetic_flag = classFlags & 0x1;
-    p.keypoint_flag = (classFlags >> 1) & 0x1;
-    p.withheld_flag = (classFlags >> 2) & 0x1;
-    p.user_data = point.getFieldAs<uint8_t>(Id::UserData);
-    p.point_source_ID = point.getFieldAs<uint16_t>(Id::PointSourceId);
-    p.return_number = returnNumber;
-    p.number_of_returns = numberOfReturns;
-    p.scan_angle_rank = point.getFieldAs<int8_t>(Id::ScanAngleRank);
-    p.classification = classification;
-    p.extended_point_type = 0;
-    p.gps_time = point.getFieldAs<double>(Id::GpsTime);
-    p.rgb[0] = point.getFieldAs<uint16_t>(Id::Red);
-    p.rgb[1] = point.getFieldAs<uint16_t>(Id::Green);
-    p.rgb[2] = point.getFieldAs<uint16_t>(Id::Blue);
-
-    char buf[1000];
-    Everything e;
-    int ed_size = 0;
-    if (m_extraDims.size())
-    {
-        LeInserter ostream(buf, 1000);
-        Everything e;
-        for (auto& dim : m_extraDims)
-        {
-            point.getField((char *)&e, dim.m_id, dim.m_type);
-            Utils::insertDim(ostream, dim.m_type, e);
-            ed_size += Dimension::size(dim.m_type);
-        }
-    }
-    p.extra_bytes = (laszip_U8 *)buf;
-    p.num_extra_bytes = ed_size;
-
-    return p;
 }
 
 void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)

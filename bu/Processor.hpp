@@ -20,8 +20,6 @@
 #include "Stats.hpp"
 #include "VoxelInfo.hpp"
 
-#include <laszip/laszip_api.h>
-
 namespace untwine
 {
 
@@ -62,7 +60,6 @@ private:
         pdal::PointViewPtr view);
     void createChunk(const VoxelKey& key, pdal::PointViewPtr view);
     void fillPointBuf(pdal::PointRef& point, std::vector<char>& buf);
-    laszip_point_struct fillPointStruct(pdal::PointRef& point);
 
     VoxelInfo m_vi;
     const BaseInfo& m_b;

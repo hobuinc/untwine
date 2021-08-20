@@ -148,10 +148,7 @@ OctantInfo PyramidManager::removeComplete(const VoxelKey& k)
 // where the chunk should be written.
 uint64_t PyramidManager::newChunk(const VoxelKey& key, uint32_t size, uint32_t count)
 {
-    std::lock_guard<std::mutex> lock(m_mutex);
-    auto off = m_copc.newChunk(key, size, count);
-std::cerr << "New chunk for " << key << " size/count/offset = " << size << "/" << count << "/" << off << "!\n";
-    return off;
+    return m_copc.newChunk(key, size, count);
 }
 
 void PyramidManager::logOctant(const VoxelKey& k, int cnt, const IndexedStats& istats)

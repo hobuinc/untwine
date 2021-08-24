@@ -29,14 +29,13 @@ target_include_directories(untwine
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${PDAL_INCLUDE_DIRS}
-        /Users/acbell/laszipinstall/include
 )
 target_link_libraries(untwine
     PRIVATE
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
         LAZPERF::lazperf
-        /Users/acbell/laszipinstall/lib/liblaszip.dylib
+        ${LASZIP_LIBRARIES}
 )
 
 install(TARGETS untwine DESTINATION bin)

@@ -7,4 +7,5 @@ conda install -c conda-forge cmake ninja compilers -y
 
 
 conda install --yes --quiet pdal -y
+conda upgrade laz-perf
 

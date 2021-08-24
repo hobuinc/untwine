@@ -35,7 +35,6 @@ target_link_libraries(untwine
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
         LAZPERF::lazperf
-        ${LASZIP_LIBRARIES}
 )
 
 install(TARGETS untwine DESTINATION bin)

@@ -74,7 +74,7 @@ void FileProcessor::run()
                 cell = m_cellMgr.get(cellIndex);
                 cell->copyPoint(p);
             }
-            // Advance the cell - move the buffer pointer so when refer to the cell's
+            // Advance the cell - move the buffer pointer so when we refer to the cell's
             // point, we're referring to the next location in the cell's buffer.
             cell->advance();
             count++;

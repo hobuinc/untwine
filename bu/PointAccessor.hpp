@@ -37,7 +37,7 @@ public:
 
     void read(FileInfo& fi)
     {
-        std::string filename = m_b.inputDir + "/" + fi.filename();
+        std::string filename = m_b.opts.tempDir + "/" + fi.filename();
         auto ctx = mapFile(filename, true, 0, fi.numPoints() * m_b.pointSize);
         if (ctx.m_addr == nullptr)
             fatal(filename + ": " + ctx.m_error);

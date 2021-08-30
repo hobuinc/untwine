@@ -20,9 +20,11 @@ void fatal(const std::string& err);
 
 struct Options
 {
-    std::string outputDir;
+    std::string outputName;
+    bool singleFile;
     StringList inputFiles;
     std::string tempDir;
+    bool cleanTempDir;
     bool doCube;
     size_t fileLimit;
     int level;
@@ -33,15 +35,13 @@ struct Options
 
 struct BaseInfo
 {
+    Options opts;
     pdal::BOX3D bounds;
     pdal::BOX3D trueBounds;
     size_t pointSize;
-    std::string inputDir;
-    std::string outputDir;
-    int maxLevel;
+    std::string outputFile;
     DimInfoList dimInfo;
     pdal::SpatialReference srs;
-    bool stats;
 
     using d3 = std::array<double, 3>;
     d3 scale { -1.0, -1.0, -1.0 };

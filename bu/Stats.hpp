@@ -177,5 +177,6 @@ private:
 };
 
 using IndexedStats = std::vector<std::pair<pdal::Dimension::Id, Stats>>;
+using StatsMap = std::unordered_map<std::string, Stats>;
 } // namespace untwine
 

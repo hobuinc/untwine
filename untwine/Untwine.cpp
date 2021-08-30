@@ -33,9 +33,13 @@ void fatal(const std::string& err)
 
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
-    programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
-    programArgs.add("output_dir,o", "Output directory", options.outputDir).setPositional();
+    programArgs.add("files,i", "Input files/directory", options.inputFiles);
+    programArgs.add("output_dir,o", "Output directory/filename for single-file output",
+        options.outputName);
+    programArgs.add("single_file", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
+    programArgs.add("clean_temp_dir", "Remove files from the temp directory",
+        options.cleanTempDir, true);
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);
@@ -59,10 +63,11 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
     {
         bool version;
         bool help;
-        programArgs.add("version", "Report the untwine version.", version);
-        programArgs.add("help", "Print some help.", help);
+        pdal::ProgramArgs hargs;
+        hargs.add("version", "Report the untwine version.", version);
+        hargs.add("help", "Print some help.", help);
 
-        programArgs.parseSimple(arglist);
+        hargs.parseSimple(arglist);
         if (version)
             std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
         if (help)
@@ -74,8 +79,16 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             return false;
 
         programArgs.parse(arglist);
+
         if (!tempArg->set())
-            options.tempDir = options.outputDir + "/temp";
+        {
+            if (options.singleFile)
+                options.tempDir = options.outputName + "_tmp";
+            else
+                options.tempDir = options.outputName + "/temp";
+        }
+        if (options.singleFile)
+            options.stats = true;
     }
     catch (const pdal::arg_error& err)
     {
@@ -86,13 +99,24 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
 
 void createDirs(const Options& options)
 {
-    pdal::FileUtils::createDirectory(options.outputDir);
-    pdal::FileUtils::createDirectory(options.tempDir);
-    pdal::FileUtils::deleteFile(options.outputDir + "/ept.json");
-    pdal::FileUtils::deleteDirectory(options.outputDir + "/ept-data");
-    pdal::FileUtils::deleteDirectory(options.outputDir + "/ept-hierarchy");
-    pdal::FileUtils::createDirectory(options.outputDir + "/ept-data");
-    pdal::FileUtils::createDirectory(options.outputDir + "/ept-hierarchy");
+    if (pdal::FileUtils::fileExists(options.tempDir) &&
+        !pdal::FileUtils::isDirectory(options.tempDir))
+        fatal("Can't use temp directory - exists as a regular or special file.");
+    if (options.cleanTempDir)
+        pdal::FileUtils::deleteDirectory(options.tempDir);
+    if (!pdal::FileUtils::createDirectory(options.tempDir))
+        fatal("Couldn't create temp directory: '" + options.tempDir + "'.");
+
+    if (!options.singleFile)
+    {
+        if (!pdal::FileUtils::createDirectory(options.outputName))
+            fatal("Couldn't create output directory: " + options.outputName + "'.");
+        pdal::FileUtils::deleteFile(options.outputName + "/ept.json");
+        pdal::FileUtils::deleteDirectory(options.outputName + "/ept-data");
+        pdal::FileUtils::deleteDirectory(options.outputName + "/ept-hierarchy");
+        pdal::FileUtils::createDirectory(options.outputName + "/ept-data");
+        pdal::FileUtils::createDirectory(options.outputName + "/ept-hierarchy");
+    }
 }
 
 } // namespace untwine
@@ -110,7 +134,9 @@ int main(int argc, char *argv[])
 
     using namespace untwine;
 
-    Options options;
+    BaseInfo common;
+    Options& options = common.opts;
+
     if (!handleOptions(arglist, options))
         return 0;
     createDirs(options);
@@ -119,13 +145,11 @@ int main(int argc, char *argv[])
 
     try
     {
-        BaseInfo common;
-
         epf::Epf preflight(common);
-        preflight.run(options, progress);
+        preflight.run(progress);
 
         bu::BuPyramid builder(common);
-        builder.run(options, progress);
+        builder.run(progress);
     }
     catch (const char *s)
     {

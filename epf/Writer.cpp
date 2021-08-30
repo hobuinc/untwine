@@ -30,14 +30,6 @@ namespace epf
 Writer::Writer(const std::string& directory, int numThreads, size_t pointSize) :
     m_directory(directory), m_pool(numThreads), m_stop(false), m_pointSize(pointSize)
 {
-    if (FileUtils::fileExists(directory))
-    {
-        if (!FileUtils::isDirectory(directory))
-            fatal("Specified output directory '" + directory + "' is not a directory.");
-    }
-    else
-        FileUtils::createDirectory(directory);
-
     std::function<void()> f = std::bind(&Writer::run, this);
     while (numThreads--)
         m_pool.add(f);

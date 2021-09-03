@@ -186,7 +186,7 @@ void CopcSupport::writeHeader()
 
 void CopcSupport::writeChunkTable()
 {
-    m_chunkTable.resize(m_chunkTable.size() - 1);
+    m_chunkTable.resize(m_chunkTable.size());
 
     // Write chunk table offset
     pdal::OLeStream out(&m_f);

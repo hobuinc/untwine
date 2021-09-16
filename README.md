@@ -1,6 +1,6 @@
 # Untwine
 
- Untwine is software from [Hobu, Inc.](https://hobu.co) for creating [Entwine Point Tile](https://entwine.io/entwine-point-tile.html)  (EPT)
+Untwine is software from [Hobu, Inc.](https://hobu.co) for creating [Entwine Point Tile](https://entwine.io/entwine-point-tile.html)  (EPT)
 web services from [PDAL](https://pdal.io)-readable point cloud data sources. It
 provides an alternative processing approach than the [Entwine](https://entwine.io)
 software, but the output is expected to be compatible EPT.
@@ -9,7 +9,8 @@ software, but the output is expected to be compatible EPT.
 License
 -------
 
-Untwine is licensed under the GPLv3. Commercial licensing is possible by contacting Hobu, Inc. for pricing.
+Untwine is licensed under the GPLv3. Commercial licensing is possible by contacting
+Hobu, Inc. for pricing.
 
 Building Untwine:
 --------
@@ -74,5 +75,12 @@ Options
 
 - stats
 
-  Generate summary statistics in 'ept.json' similar to those produced by Entwine.
+  Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output
+  Min/max stats are always generated when generating single-file output.
   [Default: false]
+
+- single_file
+
+  Generate a LAZ file with spatially arranged data and hierarchy information
+  [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
+

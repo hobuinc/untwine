@@ -31,6 +31,7 @@ struct Options
     int progressFd;
     StringList dimNames;
     bool stats;
+    int pointFormatId;
 };
 
 struct BaseInfo

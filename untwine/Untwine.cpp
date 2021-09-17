@@ -51,6 +51,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
         options.stats);
+    programArgs.add("format", "Point format to write (only 6, 7, or 8 allowed)",
+        options.pointFormatId, 6);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)

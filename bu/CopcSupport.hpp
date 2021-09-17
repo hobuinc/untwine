@@ -39,6 +39,14 @@ public:
         int32_t byteSize;
         int32_t pointCount;
     };
+
+    struct CopcStatistic
+
+    {
+        double minimum;
+        double maximum;
+    };
+
     using CountMap = std::unordered_map<VoxelKey, int>;
     using Entries = std::vector<std::pair<VoxelKey, Hierarchy>>;
 

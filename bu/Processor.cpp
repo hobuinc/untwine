@@ -398,7 +398,7 @@ void Processor::appendCompressed(pdal::PointViewPtr view, const DimInfoList& dim
 void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr view,
     const OctantInfo& oi, IndexedStats& stats)
 {
-    // For single file output we need the stats for 
+    // For single file output we need the stats for
     if (m_b.opts.stats)
     {
         for (pdal::PointId id = 0; id < view->size(); ++id)
@@ -419,7 +419,7 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
     else
     {
         std::string filename = m_b.opts.outputName + "/ept-data/" + oi.key().toString() + ".laz";
-        writeEptFile(filename, table, view); 
+        writeEptFile(filename, table, view);
     }
 }
 
@@ -474,9 +474,9 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     for (DimType dim : m_extraDims)
         ebCount += layout->dimSize(dim.m_id);
 
-    std::vector<char> buf(lazperf::baseCount(3) + ebCount);
+    std::vector<char> buf(lazperf::baseCount(m_b.opts.pointFormatId) + ebCount);
 
-    lazperf::writer::chunk_compressor compressor(3, ebCount);
+    lazperf::writer::chunk_compressor compressor(m_b.opts.pointFormatId, ebCount);
     for (PointId idx = 0; idx < view->size(); ++idx)
     {
         PointRef point(*view, idx);
@@ -501,11 +501,11 @@ void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
 
     LeInserter ostream(buf.data(), buf.size());
 
-// We're currently only writing PDRF 3.
-    bool has14PointFormat = false;
+    // We're only write PDRF 6, 7, or 8.
+    bool has14PointFormat = true;
     bool hasTime = true; //  m_lasHeader.hasTime();
-    bool hasColor = true; // m_lasHeader.hasColor();
-    bool hasInfrared = false; // m_lasHeader.hasInfrared();
+    bool hasColor = m_b.opts.pointFormatId == 7 || m_b.opts.pointFormatId == 8; // m_lasHeader.hasColor();
+    bool hasInfrared = m_b.opts.pointFormatId == 8; // m_lasHeader.hasInfrared();
 
 //    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
 

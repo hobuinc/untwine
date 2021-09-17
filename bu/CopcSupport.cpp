@@ -30,7 +30,7 @@ namespace bu
 {
 
 CopcSupport::CopcSupport(const BaseInfo& b) :
-    m_lazVlr(3, extraByteSize(b.dimInfo), lazperf::VariableChunkSize),
+    m_lazVlr(b.opts.pointFormatId, extraByteSize(b.dimInfo), lazperf::VariableChunkSize),
     m_ebVlr(extraByteSize(b.dimInfo)),
     m_wktVlr(b.srs.getWKT1())
 {
@@ -44,9 +44,9 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_header.creation.year = 1;
     m_header.header_size = lazperf::header14::Size;
     m_header.vlr_count = 3;
-    m_header.point_format_id = 3;
+    m_header.point_format_id = b.opts.pointFormatId;
     m_header.point_format_id |= (1 << 7);    // Bit for laszip
-    m_header.point_record_length = lazperf::baseCount(3) + extraByteSize(b.dimInfo);
+    m_header.point_record_length = lazperf::baseCount(b.opts.pointFormatId) + extraByteSize(b.dimInfo);
     m_header.scale.x = b.scale[0];
     m_header.scale.y = b.scale[1];
     m_header.scale.z = b.scale[2];
@@ -218,7 +218,7 @@ void CopcSupport::writeHierarchy(const CountMap& counts)
     m_copcVlr.root_hier_offset = root.offset;
     m_copcVlr.root_hier_size = root.byteSize;
     uint64_t endPos = m_f.tellp();
-    
+
     // Now write VLR header.
     lazperf::evlr_header h { 0, "entwine", 1000, (endPos - beginPos), "EPT Hierarchy" };
     m_f.seekp(m_header.evlr_offset);

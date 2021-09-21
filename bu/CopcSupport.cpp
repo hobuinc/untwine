@@ -132,7 +132,7 @@ CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
                 Dimension::Id dim = layout.assignDim(fdi.name, fdi.type);
                 info.dims.push_back(dim);
                 info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
-                info.ebVLRSize = info.ebVLRSize += layout.dimSize(dim);
+                info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
             }
         }
     }

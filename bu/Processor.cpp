@@ -302,30 +302,60 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
     // there's no reason why it should change. We should modify things to use a single
     // layout.
 
-    // PDRF 3 dim list
+    // Start with PDRF 6 dim list
     Dimension::IdList lasDims { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
-        Dimension::Id::PointSourceId, Dimension::Id::GpsTime, Dimension::Id::Red,
-        Dimension::Id::Green, Dimension::Id::Blue };
+        Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
+
+    Dimension::IdList colors { Dimension::Id::Red, Dimension::Id::Green,
+        Dimension::Id::Blue, Dimension::Id::Infrared };
+
+    if (m_b.opts.pointFormatId == 7)
+    {
+        lasDims.push_back(Dimension::Id::Red);
+        lasDims.push_back(Dimension::Id::Green);
+        lasDims.push_back(Dimension::Id::Blue);
+    }
+    if (m_b.opts.pointFormatId == 8)
+    {
+        lasDims.push_back(Dimension::Id::Red);
+        lasDims.push_back(Dimension::Id::Green);
+        lasDims.push_back(Dimension::Id::Blue);
+        lasDims.push_back(Dimension::Id::Infrared);
+    }
+
     DimInfoList dims = m_b.dimInfo;
     m_extraDims.clear();
     for (FileDimInfo& fdi : dims)
     {
-        fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
-        if (m_b.opts.stats)
+        // register dimension if we are in lasDims
+        Dimension::Id candidate = pdal::Dimension::id(fdi.name);
+        if (Utils::contains(lasDims, candidate))
         {
-            // For single file output we need the counts by return number.
-            if (fdi.dim == pdal::Dimension::Id::Classification)
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-            else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-            else
+            // we add this one
+            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
+            if (m_b.opts.stats)
+            {
+                // For single file output we need the counts by return number.
+                if (fdi.dim == pdal::Dimension::Id::Classification)
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+                else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+                else
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
+            }
+        } else
+        {
+            // If we are a color dimension, but we're not supposed to be written due to
+            // point source id, don't add it as an extra bytes dimension
+            if (!Utils::contains(colors, candidate))
+            {
+                m_extraDims.push_back(DimType(fdi.dim, fdi.type));
                 stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
+            }
         }
-        if (!Utils::contains(lasDims, fdi.dim))
-            m_extraDims.push_back(DimType(fdi.dim, fdi.type));
     }
     table.finalize();
 

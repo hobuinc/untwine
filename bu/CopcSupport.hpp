@@ -20,15 +20,69 @@
 #include <lazperf/lazperf.hpp>
 #include <lazperf/vlr.hpp>
 
+
 namespace untwine
 {
 
-struct BaseInfo;
+class BaseInfo;
 struct FileDimInfo;
 using DimInfoList = std::vector<FileDimInfo>;
 
 namespace bu
 {
+
+
+struct copc_extents_vlr : public lazperf::vlr
+{
+public:
+
+    struct CopcExtent
+    {
+        double minimum;
+        double maximum;
+
+        CopcExtent();
+        CopcExtent(double minimum, double maximum);
+    };
+
+    std::vector<CopcExtent> items;
+
+    copc_extents_vlr(int itemCount);
+    copc_extents_vlr();
+    virtual ~copc_extents_vlr();
+
+    static copc_extents_vlr create(std::istream& in, int byteSize);
+    void read(std::istream& in, int byteSize);
+    void write(std::ostream& out) const;
+    virtual size_t size() const;
+    virtual lazperf::vlr_header header() const;
+};
+
+struct copc_info_vlr : public lazperf::vlr
+{
+public:
+    int64_t span {0};
+    uint64_t root_hier_offset {0};
+    uint64_t root_hier_size {0};
+    uint64_t laz_vlr_offset {0};
+    uint64_t laz_vlr_size {0};
+    uint64_t wkt_vlr_offset {0};
+    uint64_t wkt_vlr_size {0};
+    uint64_t eb_vlr_offset {0};
+    uint64_t eb_vlr_size {0};
+    uint64_t extent_vlr_offset {0};
+    uint64_t extent_vlr_size {0};
+    uint64_t reserved[9] {0};
+
+    copc_info_vlr();
+    virtual ~copc_info_vlr();
+
+    static copc_info_vlr create(std::istream& in);
+    void read(std::istream& in);
+    void write(std::ostream& out) const;
+    virtual size_t size() const;
+    virtual lazperf::vlr_header header() const;
+};
 
 class CopcSupport
 {
@@ -38,13 +92,6 @@ public:
         uint64_t offset;
         int32_t byteSize;
         int32_t pointCount;
-    };
-
-    struct CopcStatistic
-
-    {
-        double minimum;
-        double maximum;
     };
 
     using CountMap = std::unordered_map<VoxelKey, int>;
@@ -58,21 +105,37 @@ public:
     void writeHierarchy(const CountMap& counts);
 
 private:
+
+
+    struct VLRInfo
+    {
+        int ebVLRSize {0};
+        int extentsVLRSize {0};
+        pdal::Dimension::IdList dims;
+
+        VLRInfo();
+    };
+
+    BaseInfo m_b;
     std::ofstream m_f;
     lazperf::header14 m_header;
-    lazperf::copc_vlr m_copcVlr;
+    copc_info_vlr m_copcVlr;
     lazperf::laz_vlr m_lazVlr;
     lazperf::eb_vlr m_ebVlr;
     lazperf::wkt_vlr m_wktVlr;
+    copc_extents_vlr m_extentVlr;
     std::vector<lazperf::chunk> m_chunkTable;
     uint64_t m_chunkOffsetPos;
     uint64_t m_pointPos;
     std::unordered_map<VoxelKey, Hierarchy> m_hierarchy;
 
-    int extraByteSize(const DimInfoList& dims) const;
+    int ebVLRSize() const;
+    int extentVLRSize() const;
     Hierarchy emitRoot(const VoxelKey& root, const CountMap& counts);
     void emitChildren(const VoxelKey& root, const CountMap& counts,
         Entries& entries, int stopLevel);
+
+    VLRInfo computeVLRSizes() const;
 };
 
 

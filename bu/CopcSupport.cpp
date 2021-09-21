@@ -11,12 +11,14 @@
  ****************************************************************************/
 
 #include <iostream>
+#include <limits>
 
 #include "CopcSupport.hpp"
 
 #include <pdal/PointLayout.hpp>
 #include <pdal/util/Algorithm.hpp>
 #include <pdal/util/OStream.hpp>
+#include <pdal/util/Extractor.hpp>
 
 #include <lazperf/filestream.hpp>
 
@@ -30,23 +32,25 @@ namespace bu
 {
 
 CopcSupport::CopcSupport(const BaseInfo& b) :
-    m_lazVlr(b.opts.pointFormatId, extraByteSize(b.dimInfo), lazperf::VariableChunkSize),
-    m_ebVlr(extraByteSize(b.dimInfo)),
-    m_wktVlr(b.srs.getWKT1())
+    m_b(b),
+    m_lazVlr(b.opts.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
+    m_ebVlr(ebVLRSize()),
+    m_wktVlr(b.srs.getWKT1()),
+    m_extentVlr(extentVLRSize())
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
 
     //ABELL
     m_header.file_source_id = 0;
-    m_header.global_encoding = (1 << 4);
+    m_header.global_encoding = (1 << 4); // Set for WKT
     //ABELL
     m_header.creation.day = 1;
     m_header.creation.year = 1;
     m_header.header_size = lazperf::header14::Size;
-    m_header.vlr_count = 3;
+    m_header.vlr_count = 4;
     m_header.point_format_id = b.opts.pointFormatId;
     m_header.point_format_id |= (1 << 7);    // Bit for laszip
-    m_header.point_record_length = lazperf::baseCount(b.opts.pointFormatId) + extraByteSize(b.dimInfo);
+    m_header.point_record_length = lazperf::baseCount(b.opts.pointFormatId) + ebVLRSize();
     m_header.scale.x = b.scale[0];
     m_header.scale.y = b.scale[1];
     m_header.scale.z = b.scale[2];
@@ -56,7 +60,8 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_header.point_offset = lazperf::header14::Size +
         lazperf::vlr_header::Size + m_copcVlr.size() +
         lazperf::vlr_header::Size + m_lazVlr.size() +
-        lazperf::vlr_header::Size + m_wktVlr.size();
+        lazperf::vlr_header::Size + m_wktVlr.size() +
+        lazperf::vlr_header::Size + m_extentVlr.size();
     if (m_header.ebCount())
     {
         m_header.vlr_count++;
@@ -69,28 +74,86 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_pointPos = m_chunkOffsetPos + sizeof(uint64_t);
 }
 
-int CopcSupport::extraByteSize(const DimInfoList& dims) const
+CopcSupport::VLRInfo::VLRInfo()
+    : ebVLRSize(0)
+    , extentsVLRSize(0)
+{}
+
+
+CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
 {
     using namespace pdal;
 
-    // PDRF 3 dim list
-    Dimension::IdList lasDims { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
+    VLRInfo info;
+
+    // Start with PDRF 6 dim list
+    info.dims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
-        Dimension::Id::PointSourceId, Dimension::Id::GpsTime, Dimension::Id::Red,
-        Dimension::Id::Green, Dimension::Id::Blue };
+        Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
-    int extraBytes {0};
-    PointLayout layout;
-    for (const FileDimInfo& fdi : dims)
+    Dimension::IdList colors { Dimension::Id::Red, Dimension::Id::Green,
+        Dimension::Id::Blue, Dimension::Id::Infrared };
+
+    if (m_b.opts.pointFormatId == 7)
     {
-        Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
-        if (!Utils::contains(lasDims, dim))
-            extraBytes += layout.dimSize(dim);
+        info.dims.push_back(Dimension::Id::Red);
+        info.dims.push_back(Dimension::Id::Green);
+        info.dims.push_back(Dimension::Id::Blue);
     }
-    return extraBytes;
+    if (m_b.opts.pointFormatId == 8)
+    {
+        info.dims.push_back(Dimension::Id::Red);
+        info.dims.push_back(Dimension::Id::Green);
+        info.dims.push_back(Dimension::Id::Blue);
+        info.dims.push_back(Dimension::Id::Infrared);
+    }
+
+    PointLayout layout;
+    for (const FileDimInfo& fdi : m_b.dimInfo)
+    {
+        Dimension::Id candidate = pdal::Dimension::id(fdi.name);
+        if (Utils::contains(info.dims, candidate))
+        {
+            Dimension::Id dim = layout.assignDim(fdi.name, fdi.type);
+            if (!(candidate == pdal::Dimension::Id::X ||
+                candidate == pdal::Dimension::Id::Y ||
+                candidate == pdal::Dimension::Id::Z))
+            {
+                info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
+            }
+        } else
+        {
+            // Don't add colors, which would have been added above
+            // already if the pointFormatId required it
+            if (!Utils::contains(colors, candidate))
+            {
+                Dimension::Id dim = layout.assignDim(fdi.name, fdi.type);
+                info.dims.push_back(dim);
+                info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
+                info.ebVLRSize = info.ebVLRSize += layout.dimSize(dim);
+            }
+        }
+    }
+    return info;
+
 }
+
+
+int CopcSupport::ebVLRSize() const
+{
+    VLRInfo info = computeVLRSizes();
+    return info.ebVLRSize;
+}
+
+
+int CopcSupport::extentVLRSize() const
+{
+    VLRInfo info = computeVLRSizes();
+    return info.extentsVLRSize;
+}
+
 
 /// \param  size  Size of the chunk in bytes
 /// \param  count  Number of points in the chunk
@@ -138,7 +201,41 @@ void CopcSupport::updateHeader(const StatsMap& stats)
 
     if (m_header.point_count_14 > (std::numeric_limits<uint32_t>::max)())
         m_header.point_count = 0;
+
+    VLRInfo info = computeVLRSizes();
+    pdal::PointLayout layout;
+    for (const FileDimInfo& fdi : m_b.dimInfo)
+    {
+        pdal::Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
+
+    }
+    std::vector<copc_extents_vlr::CopcExtent> extents;
+    for (const pdal::Dimension::Id& dimId: info.dims)
+    {
+        if (layout.hasDim(dimId))
+        {
+            if (!(dimId == pdal::Dimension::Id::X ||
+                dimId == pdal::Dimension::Id::Y ||
+                dimId == pdal::Dimension::Id::Z )) // these are in the header
+            {
+                std::string name (layout.dimName(dimId));
+                double min = stats.at(name).minimum();
+                double max = stats.at(name).maximum();
+                extents.push_back(copc_extents_vlr::CopcExtent(min, max));
+            }
+
+        }
+    }
+
+    // copy into our VLR:
+    for (size_t i = 0; i < extents.size(); i++)
+    {
+        m_extentVlr.items[i].maximum = extents[i].maximum;
+        m_extentVlr.items[i].minimum = extents[i].minimum;
+    }
+
 }
+
 
 void CopcSupport::writeHeader()
 {
@@ -166,6 +263,14 @@ void CopcSupport::writeHeader()
     end = out.tellp();
     m_copcVlr.wkt_vlr_offset = start;
     m_copcVlr.wkt_vlr_size = end - start;
+
+    m_extentVlr.header().write(out);
+    start = out.tellp();
+    m_extentVlr.write(out);
+    end = out.tellp();
+    m_copcVlr.extent_vlr_offset = start;
+    m_copcVlr.extent_vlr_size = end - start;
+
 
     if (m_header.ebCount())
     {
@@ -274,6 +379,143 @@ void CopcSupport::emitChildren(const VoxelKey& p, const CountMap& counts,
         }
     }
 }
+
+
+copc_extents_vlr::copc_extents_vlr()
+{}
+
+
+copc_extents_vlr::copc_extents_vlr(int byteSize)
+{
+    int itemCount = byteSize / sizeof(CopcExtent);
+    items.resize(itemCount);
+}
+
+
+copc_extents_vlr::~copc_extents_vlr()
+{}
+
+
+copc_extents_vlr::CopcExtent::CopcExtent() :
+    minimum((std::numeric_limits<double>::max)()),
+    maximum((std::numeric_limits<double>::min)())
+{}
+
+
+copc_extents_vlr::CopcExtent::CopcExtent(double minimum, double maximum) :
+    minimum(minimum),
+    maximum(maximum)
+{}
+
+
+copc_extents_vlr copc_extents_vlr::create(std::istream& in, int byteSize)
+{
+    copc_extents_vlr extentsVlr;
+    extentsVlr.read(in, byteSize);
+    return extentsVlr;
+}
+
+
+void copc_extents_vlr::read(std::istream& in, int byteSize)
+{
+    std::vector<char> buf(byteSize);
+    pdal::LeExtractor s(buf.data(), buf.size());
+    in.read(buf.data(), buf.size());
+
+    int numItems = byteSize / sizeof(CopcExtent);
+    items.clear();
+    for (int i = 0; i < numItems; ++i)
+    {
+        CopcExtent field;
+
+        s >> field.minimum >> field.maximum;
+        items.push_back(field);
+    }
+}
+
+
+void copc_extents_vlr::write(std::ostream& out) const
+{
+    std::vector<char> buf(size());
+    pdal::LeInserter s(buf.data(), buf.size());
+
+    for (auto& i: items)
+    {
+        s << i.minimum << i.maximum;
+    }
+
+    out.write(buf.data(), buf.size());
+}
+
+
+size_t copc_extents_vlr::size() const
+{
+    return items.size() * sizeof(CopcExtent);
+}
+
+
+lazperf::vlr_header copc_extents_vlr::header() const
+{
+    return lazperf::vlr_header { 0, "entwine", 10000, (uint16_t)size(), "COPC extents" };
+}
+
+
+// Initialized in header.
+copc_info_vlr::copc_info_vlr()
+{}
+
+
+copc_info_vlr::~copc_info_vlr()
+{}
+
+
+copc_info_vlr copc_info_vlr::create(std::istream& in)
+{
+    copc_info_vlr copcVlr;
+    copcVlr.read(in);
+    return copcVlr;
+}
+
+
+void copc_info_vlr::read(std::istream& in)
+{
+    std::vector<char> buf(size());
+    in.read(buf.data(), buf.size());
+    pdal::LeExtractor s(buf.data(), buf.size());
+
+    s >> span >> root_hier_offset >> root_hier_size;
+    s >> laz_vlr_offset >> laz_vlr_size >> wkt_vlr_offset >> wkt_vlr_size;
+    s >> eb_vlr_offset >> eb_vlr_size >> extent_vlr_offset >> extent_vlr_size;
+    for (int i = 0; i < 9; ++i)
+        s >> reserved[i];
+}
+
+
+void copc_info_vlr::write(std::ostream& out) const
+{
+    std::vector<char> buf(size());
+    pdal::LeInserter s(buf.data(), buf.size());
+
+    s << span << root_hier_offset << root_hier_size;
+    s << laz_vlr_offset << laz_vlr_size << wkt_vlr_offset << wkt_vlr_size;
+    s << eb_vlr_offset << eb_vlr_size << extent_vlr_offset << extent_vlr_size;
+    for (int i = 0; i < 9; ++i)
+        s << reserved[i];
+    out.write(buf.data(), buf.size());
+}
+
+
+size_t copc_info_vlr::size() const
+{
+    return sizeof(uint64_t) * 20;
+}
+
+
+lazperf::vlr_header copc_info_vlr::header() const
+{
+    return lazperf::vlr_header { 0, "entwine", 1, (uint16_t)size(), "COPC info" };
+}
+
 
 } // namespace bu
 } // namespace untwine

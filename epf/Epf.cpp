@@ -76,9 +76,15 @@ void Epf::run(ProgressWriter& progress)
     PointLayoutPtr layout(new PointLayout());
     for (const std::string& dimName : allDimNames)
     {
-        Dimension::Type type = Dimension::defaultType(Dimension::id(dimName));
-        if (type == Dimension::Type::None)
+        Dimension::Type type;
+        try
+        {
+            type = Dimension::defaultType(Dimension::id(dimName));
+        }
+        catch (pdal::pdal_error&)
+        {
             type = Dimension::Type::Double;
+        }
         layout->registerOrAssignDim(dimName, type);
     }
     layout->finalize();
@@ -156,12 +162,32 @@ void Epf::run(ProgressWriter& progress)
 
 void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
 {
+    using namespace pdal;
+
     // Info to be passed to sampler.
     m_b.bounds = m_grid.processingBounds();
     m_b.trueBounds = m_grid.conformingBounds();
     if (m_srsFileInfo.valid())
         m_b.srs = m_srsFileInfo.srs;
     m_b.pointSize = 0;
+
+    // Gather up which colors we are going to add based
+    // on pointFormatId
+    Dimension::IdList colors;
+    if (m_b.opts.pointFormatId == 7)
+    {
+        colors.push_back(Dimension::Id::Red);
+        colors.push_back(Dimension::Id::Green);
+        colors.push_back(Dimension::Id::Blue);
+    }
+    if (m_b.opts.pointFormatId == 8)
+    {
+        colors.push_back(Dimension::Id::Red);
+        colors.push_back(Dimension::Id::Green);
+        colors.push_back(Dimension::Id::Blue);
+        colors.push_back(Dimension::Id::Infrared);
+    }
+
     for (pdal::Dimension::Id id : layout->dims())
     {
         FileDimInfo di;
@@ -169,7 +195,22 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
         m_b.pointSize += pdal::Dimension::size(di.type);
-        m_b.dimInfo.push_back(di);
+
+
+        // Don't bother with colors if we aren't using
+        // those point formats
+        if  ((Dimension::Id::Red == id) ||
+             (Dimension::Id::Green == id) ||
+             (Dimension::Id::Blue == id) ||
+             (Dimension::Id::Infrared == id))
+        {
+            if (Utils::contains(colors, id))
+                m_b.dimInfo.push_back(di);
+        }
+        else
+        {
+            m_b.dimInfo.push_back(di);
+        }
     }
     m_b.offset[0] = m_b.bounds.maxx / 2 + m_b.bounds.minx / 2;
     m_b.offset[1] = m_b.bounds.maxy / 2 + m_b.bounds.miny / 2;

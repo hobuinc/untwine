@@ -352,6 +352,7 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
             // point source id, don't add it as an extra bytes dimension
             if (!Utils::contains(colors, candidate))
             {
+                fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
                 m_extraDims.push_back(DimType(fdi.dim, fdi.type));
                 stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
             }

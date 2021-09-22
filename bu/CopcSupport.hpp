@@ -110,8 +110,11 @@ private:
     struct VLRInfo
     {
         int ebVLRSize {0};
+        int ebVLRCount {0};
         int extentsVLRSize {0};
-        pdal::Dimension::IdList dims;
+        DimInfoList ebDims;
+        pdal::Dimension::IdList statsDims;
+
 
         VLRInfo();
     };
@@ -130,12 +133,15 @@ private:
     std::unordered_map<VoxelKey, Hierarchy> m_hierarchy;
 
     int ebVLRSize() const;
+    int ebVLRCount() const;
     int extentVLRSize() const;
     Hierarchy emitRoot(const VoxelKey& root, const CountMap& counts);
     void emitChildren(const VoxelKey& root, const CountMap& counts,
         Entries& entries, int stopLevel);
 
-    VLRInfo computeVLRSizes() const;
+    VLRInfo computeVLRInfo() const;
+    void setEbVLR();
+
 };
 
 

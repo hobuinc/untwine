@@ -34,7 +34,7 @@ namespace bu
 CopcSupport::CopcSupport(const BaseInfo& b) :
     m_b(b),
     m_lazVlr(b.opts.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
-    m_ebVlr(ebVLRSize()),
+    m_ebVlr(ebVLRCount()),
     m_wktVlr(b.srs.getWKT1()),
     m_extentVlr(extentVLRSize())
 {
@@ -72,7 +72,45 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_chunkOffsetPos = m_header.point_offset;
     // The actual point data comes after the chunk table offset.
     m_pointPos = m_chunkOffsetPos + sizeof(uint64_t);
+
+    setEbVLR();
 }
+
+
+void CopcSupport::setEbVLR()
+{
+
+    using DT = pdal::Dimension::Type;
+    const pdal::Dimension::Type lastypes[] = {
+        DT::None, DT::Unsigned8, DT::Signed8, DT::Unsigned16, DT::Signed16,
+        DT::Unsigned32, DT::Signed32, DT::Unsigned64, DT::Signed64,
+        DT::Float, DT::Double
+    };
+
+    VLRInfo info = computeVLRInfo();
+    m_ebVlr.items.clear();
+    for (FileDimInfo& fdi: info.ebDims)
+    {
+        lazperf::eb_vlr::ebfield field;
+
+        field.name = fdi.name;
+
+        uint8_t lastype = 0;
+        for (size_t i = 0; i < sizeof(lastypes) / sizeof(lastypes[0]); ++i)
+            if (fdi.type == lastypes[i])
+            {
+                lastype = i;
+                break;
+            }
+
+        field.data_type = lastype;
+        m_ebVlr.items.push_back(field);
+    }
+
+
+
+}
+
 
 CopcSupport::VLRInfo::VLRInfo()
     : ebVLRSize(0)
@@ -80,14 +118,14 @@ CopcSupport::VLRInfo::VLRInfo()
 {}
 
 
-CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
+CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
 {
     using namespace pdal;
 
     VLRInfo info;
 
     // Start with PDRF 6 dim list
-    info.dims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
+    Dimension::IdList dims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
@@ -98,25 +136,25 @@ CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
 
     if (m_b.opts.pointFormatId == 7)
     {
-        info.dims.push_back(Dimension::Id::Red);
-        info.dims.push_back(Dimension::Id::Green);
-        info.dims.push_back(Dimension::Id::Blue);
+        dims.push_back(Dimension::Id::Red);
+        dims.push_back(Dimension::Id::Green);
+        dims.push_back(Dimension::Id::Blue);
     }
     if (m_b.opts.pointFormatId == 8)
     {
-        info.dims.push_back(Dimension::Id::Red);
-        info.dims.push_back(Dimension::Id::Green);
-        info.dims.push_back(Dimension::Id::Blue);
-        info.dims.push_back(Dimension::Id::Infrared);
+        dims.push_back(Dimension::Id::Red);
+        dims.push_back(Dimension::Id::Green);
+        dims.push_back(Dimension::Id::Blue);
+        dims.push_back(Dimension::Id::Infrared);
     }
 
     PointLayout layout;
     for (const FileDimInfo& fdi : m_b.dimInfo)
     {
         Dimension::Id candidate = pdal::Dimension::id(fdi.name);
-        if (Utils::contains(info.dims, candidate))
+        if (Utils::contains(dims, candidate))
         {
-            Dimension::Id dim = layout.assignDim(fdi.name, fdi.type);
+            Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
             if (!(candidate == pdal::Dimension::Id::X ||
                 candidate == pdal::Dimension::Id::Y ||
                 candidate == pdal::Dimension::Id::Z))
@@ -125,17 +163,19 @@ CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
             }
         } else
         {
-            // Don't add colors, which would have been added above
-            // already if the pointFormatId required it
+            // Add our extra byte dimensions but don't add colors, which would
+            // have been added above already if the pointFormatId required it
             if (!Utils::contains(colors, candidate))
             {
-                Dimension::Id dim = layout.assignDim(fdi.name, fdi.type);
-                info.dims.push_back(dim);
+                Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
                 info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
                 info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
+                info.ebVLRCount++;
+                info.ebDims.push_back(fdi);
             }
         }
     }
+    info.statsDims = dims;
     return info;
 
 }
@@ -143,14 +183,21 @@ CopcSupport::VLRInfo CopcSupport::computeVLRSizes() const
 
 int CopcSupport::ebVLRSize() const
 {
-    VLRInfo info = computeVLRSizes();
+    VLRInfo info = computeVLRInfo();
     return info.ebVLRSize;
 }
+
+int CopcSupport::ebVLRCount() const
+{
+    VLRInfo info = computeVLRInfo();
+    return info.ebVLRCount;
+}
+
 
 
 int CopcSupport::extentVLRSize() const
 {
-    VLRInfo info = computeVLRSizes();
+    VLRInfo info = computeVLRInfo();
     return info.extentsVLRSize;
 }
 
@@ -189,28 +236,27 @@ void CopcSupport::updateHeader(const StatsMap& stats)
         }
         catch (const std::out_of_range&)
         {}
+
         m_header.points_by_return_14[i - 1] = count;
         if (i <= 5)
         {
-            if (m_header.points_by_return_14[i] <= (std::numeric_limits<uint32_t>::max)())
-                m_header.points_by_return[i - 1] = m_header.points_by_return_14[i - 1];
-            else
-                m_header.points_by_return[i - 1] = 0;
+            m_header.points_by_return[i - 1] = 0;
         }
     }
 
-    if (m_header.point_count_14 > (std::numeric_limits<uint32_t>::max)())
-        m_header.point_count = 0;
+    // Don't use old point_count because we are pointSourceId 6, 7, or 8
+    m_header.point_count = 0;
 
-    VLRInfo info = computeVLRSizes();
+    VLRInfo info = computeVLRInfo();
     pdal::PointLayout layout;
     for (const FileDimInfo& fdi : m_b.dimInfo)
     {
         pdal::Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
 
     }
+
     std::vector<copc_extents_vlr::CopcExtent> extents;
-    for (const pdal::Dimension::Id& dimId: info.dims)
+    for (const pdal::Dimension::Id& dimId: info.statsDims)
     {
         if (layout.hasDim(dimId))
         {

@@ -124,9 +124,9 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
 
     VLRInfo info;
 
-    // Start with PDRF 6 dim list
-    Dimension::IdList dims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
-        Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
+    // Start with PDRF 6 dim list for statistics
+    // No XYZ because we don't gather stats for those
+    Dimension::IdList statsDims = { Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
         Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
@@ -136,46 +136,44 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
 
     if (m_b.opts.pointFormatId == 7)
     {
-        dims.push_back(Dimension::Id::Red);
-        dims.push_back(Dimension::Id::Green);
-        dims.push_back(Dimension::Id::Blue);
+        statsDims.push_back(Dimension::Id::Red);
+        statsDims.push_back(Dimension::Id::Green);
+        statsDims.push_back(Dimension::Id::Blue);
     }
     if (m_b.opts.pointFormatId == 8)
     {
-        dims.push_back(Dimension::Id::Red);
-        dims.push_back(Dimension::Id::Green);
-        dims.push_back(Dimension::Id::Blue);
-        dims.push_back(Dimension::Id::Infrared);
+        statsDims.push_back(Dimension::Id::Red);
+        statsDims.push_back(Dimension::Id::Green);
+        statsDims.push_back(Dimension::Id::Blue);
+        statsDims.push_back(Dimension::Id::Infrared);
     }
 
     PointLayout layout;
     for (const FileDimInfo& fdi : m_b.dimInfo)
     {
-        Dimension::Id candidate = pdal::Dimension::id(fdi.name);
-        if (Utils::contains(dims, candidate))
+        Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
+        if (Utils::contains(statsDims, fdi.dim))
         {
-            Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
-            if (!(candidate == pdal::Dimension::Id::X ||
-                candidate == pdal::Dimension::Id::Y ||
-                candidate == pdal::Dimension::Id::Z))
-            {
-                info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
-            }
+            info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
         } else
         {
             // Add our extra byte dimensions but don't add colors, which would
             // have been added above already if the pointFormatId required it
-            if (!Utils::contains(colors, candidate))
+            if (!Utils::contains(colors, fdi.dim) &&
+                 !(fdi.dim == pdal::Dimension::Id::X ||
+                   fdi.dim == pdal::Dimension::Id::Y ||
+                   fdi.dim == pdal::Dimension::Id::Z))
             {
-                Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
-                info.extentsVLRSize = info.extentsVLRSize + sizeof(copc_extents_vlr::CopcExtent);
+                info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
+
                 info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
                 info.ebVLRCount++;
                 info.ebDims.push_back(fdi);
+                statsDims.push_back(fdi.dim);
             }
         }
     }
-    info.statsDims = dims;
+    info.statsDims = statsDims;
     return info;
 
 }
@@ -252,7 +250,6 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     for (const FileDimInfo& fdi : m_b.dimInfo)
     {
         pdal::Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
-
     }
 
     std::vector<copc_extents_vlr::CopcExtent> extents;

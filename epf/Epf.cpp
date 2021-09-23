@@ -194,6 +194,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
+        di.dim = id;
         m_b.pointSize += pdal::Dimension::size(di.type);
 
 

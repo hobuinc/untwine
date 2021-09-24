@@ -126,7 +126,8 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
 
     // Start with PDRF 6 dim list for statistics
     // No XYZ because we don't gather stats for those
-    Dimension::IdList statsDims = { Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
+    Dimension::IdList statsDims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
+        Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
         Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
@@ -159,10 +160,7 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
         {
             // Add our extra byte dimensions but don't add colors, which would
             // have been added above already if the pointFormatId required it
-            if (!Utils::contains(colors, fdi.dim) &&
-                 !(fdi.dim == pdal::Dimension::Id::X ||
-                   fdi.dim == pdal::Dimension::Id::Y ||
-                   fdi.dim == pdal::Dimension::Id::Z))
+            if (!Utils::contains(colors, fdi.dim))
             {
                 info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
 
@@ -257,16 +255,10 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     {
         if (layout.hasDim(dimId))
         {
-            if (!(dimId == pdal::Dimension::Id::X ||
-                dimId == pdal::Dimension::Id::Y ||
-                dimId == pdal::Dimension::Id::Z )) // these are in the header
-            {
-                std::string name (layout.dimName(dimId));
-                double min = stats.at(name).minimum();
-                double max = stats.at(name).maximum();
-                extents.push_back(copc_extents_vlr::CopcExtent(min, max));
-            }
-
+            std::string name (layout.dimName(dimId));
+            double min = stats.at(name).minimum();
+            double max = stats.at(name).maximum();
+            extents.push_back(copc_extents_vlr::CopcExtent(min, max));
         }
     }
 

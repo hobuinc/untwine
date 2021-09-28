@@ -171,21 +171,32 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         m_b.srs = m_srsFileInfo.srs;
     m_b.pointSize = 0;
 
-    // Gather up which colors we are going to add based
-    // on pointFormatId
-    Dimension::IdList colors;
-    if (m_b.opts.pointFormatId == 7)
+
+    auto check_dimension_exists = [] (pdal::Dimension::Id dim,  DimInfoList const& dimInfo)
     {
-        colors.push_back(Dimension::Id::Red);
-        colors.push_back(Dimension::Id::Green);
-        colors.push_back(Dimension::Id::Blue);
-    }
-    if (m_b.opts.pointFormatId == 8)
+        auto it = std::find_if(dimInfo.begin(), dimInfo.end(),
+                               [&dim](const FileDimInfo& fdi) { return fdi.dim == dim; });
+
+        if (it == dimInfo.end()) return false;
+
+        return true;
+    };
+
+    // Set the pointFormatId based on whether or not colors exist in the
+    // file
+    int old (m_b.opts.pointFormatId);
+
+    if (check_dimension_exists(pdal::Dimension::Id::Infrared, m_b.dimInfo))
     {
-        colors.push_back(Dimension::Id::Red);
-        colors.push_back(Dimension::Id::Green);
-        colors.push_back(Dimension::Id::Blue);
-        colors.push_back(Dimension::Id::Infrared);
+        m_b.opts.pointFormatId = 8;
+    } else if (check_dimension_exists(pdal::Dimension::Id::Red, m_b.dimInfo) ||
+               check_dimension_exists(pdal::Dimension::Id::Green, m_b.dimInfo) ||
+               check_dimension_exists(pdal::Dimension::Id::Blue, m_b.dimInfo))
+    {
+        m_b.opts.pointFormatId = 7;
+    } else
+    {
+        m_b.opts.pointFormatId = 6;
     }
 
     for (pdal::Dimension::Id id : layout->dims())
@@ -196,22 +207,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         di.offset = layout->dimOffset(id);
         di.dim = id;
         m_b.pointSize += pdal::Dimension::size(di.type);
-
-
-        // Don't bother with colors if we aren't using
-        // those point formats
-        if  ((Dimension::Id::Red == id) ||
-             (Dimension::Id::Green == id) ||
-             (Dimension::Id::Blue == id) ||
-             (Dimension::Id::Infrared == id))
-        {
-            if (Utils::contains(colors, id))
-                m_b.dimInfo.push_back(di);
-        }
-        else
-        {
-            m_b.dimInfo.push_back(di);
-        }
+        m_b.dimInfo.push_back(di);
     }
     m_b.offset[0] = m_b.bounds.maxx / 2 + m_b.bounds.minx / 2;
     m_b.offset[1] = m_b.bounds.maxy / 2 + m_b.bounds.miny / 2;
@@ -234,6 +230,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     m_b.scale[0] = calcScale(m_b.scale[0], m_b.bounds.minx, m_b.bounds.maxx);
     m_b.scale[1] = calcScale(m_b.scale[1], m_b.bounds.miny, m_b.bounds.maxy);
     m_b.scale[2] = calcScale(m_b.scale[2], m_b.bounds.minz, m_b.bounds.maxz);
+
 }
 
 PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,

@@ -132,9 +132,6 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
         Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
-    Dimension::IdList colors { Dimension::Id::Red, Dimension::Id::Green,
-        Dimension::Id::Blue, Dimension::Id::Infrared };
-
     if (m_b.opts.pointFormatId == 7)
     {
         statsDims.push_back(Dimension::Id::Red);
@@ -158,17 +155,12 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
             info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
         } else
         {
-            // Add our extra byte dimensions but don't add colors, which would
-            // have been added above already if the pointFormatId required it
-            if (!Utils::contains(colors, fdi.dim))
-            {
-                info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
+            info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
+            info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
+            info.ebVLRCount++;
 
-                info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
-                info.ebVLRCount++;
-                info.ebDims.push_back(fdi);
-                statsDims.push_back(fdi.dim);
-            }
+            info.ebDims.push_back(fdi);
+            statsDims.push_back(fdi.dim);
         }
     }
     info.statsDims = statsDims;
@@ -188,7 +180,6 @@ int CopcSupport::ebVLRCount() const
     VLRInfo info = computeVLRInfo();
     return info.ebVLRCount;
 }
-
 
 
 int CopcSupport::extentVLRSize() const

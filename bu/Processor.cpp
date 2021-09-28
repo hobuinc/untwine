@@ -309,9 +309,6 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
         Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
-    Dimension::IdList colors { Dimension::Id::Red, Dimension::Id::Green,
-        Dimension::Id::Blue, Dimension::Id::Infrared };
-
     if (m_b.opts.pointFormatId == 7)
     {
         lasDims.push_back(Dimension::Id::Red);
@@ -348,14 +345,9 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
             }
         } else
         {
-            // If we are a color dimension, but we're not supposed to be written due to
-            // point source id, don't add it as an extra bytes dimension
-            if (!Utils::contains(colors, candidate))
-            {
-                fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
-                m_extraDims.push_back(DimType(fdi.dim, fdi.type));
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
-            }
+            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
+            m_extraDims.push_back(DimType(fdi.dim, fdi.type));
+            stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
         }
     }
     table.finalize();

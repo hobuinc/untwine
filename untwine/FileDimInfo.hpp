@@ -29,6 +29,12 @@ struct FileDimInfo
     pdal::Dimension::Type type;
     int offset;
     pdal::Dimension::Id dim;
+
+    bool operator==(const FileDimInfo& r) const
+    {
+       return dim == r.dim;
+    }
+
 };
 using DimInfoList = std::vector<FileDimInfo>;
 

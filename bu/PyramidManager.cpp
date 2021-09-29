@@ -148,6 +148,9 @@ OctantInfo PyramidManager::removeComplete(const VoxelKey& k)
 // where the chunk should be written.
 uint64_t PyramidManager::newChunk(const VoxelKey& key, uint32_t size, uint32_t count)
 {
+    static std::mutex m;
+
+    std::unique_lock<std::mutex> lock(m);
     return m_copc.newChunk(key, size, count);
 }
 

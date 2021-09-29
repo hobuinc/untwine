@@ -99,14 +99,6 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
 
 void createDirs(const Options& options)
 {
-    if (pdal::FileUtils::fileExists(options.tempDir) &&
-        !pdal::FileUtils::isDirectory(options.tempDir))
-        fatal("Can't use temp directory - exists as a regular or special file.");
-    if (options.cleanTempDir)
-        pdal::FileUtils::deleteDirectory(options.tempDir);
-    if (!pdal::FileUtils::createDirectory(options.tempDir))
-        fatal("Couldn't create temp directory: '" + options.tempDir + "'.");
-
     if (!options.singleFile)
     {
         if (!pdal::FileUtils::createDirectory(options.outputName))
@@ -117,6 +109,14 @@ void createDirs(const Options& options)
         pdal::FileUtils::createDirectory(options.outputName + "/ept-data");
         pdal::FileUtils::createDirectory(options.outputName + "/ept-hierarchy");
     }
+
+    if (pdal::FileUtils::fileExists(options.tempDir) &&
+        !pdal::FileUtils::isDirectory(options.tempDir))
+        fatal("Can't use temp directory - exists as a regular or special file.");
+    if (options.cleanTempDir)
+        pdal::FileUtils::deleteDirectory(options.tempDir);
+    if (!pdal::FileUtils::createDirectory(options.tempDir))
+        fatal("Couldn't create temp directory: '" + options.tempDir + "'.");
 }
 
 } // namespace untwine

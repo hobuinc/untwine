@@ -36,7 +36,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_lazVlr(b.opts.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
     m_ebVlr(ebVLRCount()),
     m_wktVlr(b.srs.getWKT1()),
-    m_extentVlr(extentVLRCount())
+    m_extentVlr()
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
 
@@ -257,8 +257,8 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     // copy into our VLR:
     for (size_t i = 0; i < extents.size(); i++)
     {
-        m_extentVlr.items[i].maximum = extents[i].maximum;
-        m_extentVlr.items[i].minimum = extents[i].minimum;
+        m_extentVlr.addItem(extents[i]);
+//         m_extentVlr.items[i].minimum = extents[i].minimum;
     }
 
 }
@@ -352,7 +352,7 @@ void CopcSupport::writeHierarchy(const CountMap& counts)
     uint64_t endPos = m_f.tellp();
 
     // Now write VLR header.
-    lazperf::evlr_header h { 0, "entwine", 1000, (endPos - beginPos), "EPT Hierarchy" };
+    lazperf::evlr_header h { 0, "copc", 1000, (endPos - beginPos), "EPT Hierarchy" };
     m_f.seekp(m_header.evlr_offset);
     h.write(m_f);
 }
@@ -412,9 +412,9 @@ copc_extents_vlr::copc_extents_vlr()
 {}
 
 
-copc_extents_vlr::copc_extents_vlr(int itemCount)
+void copc_extents_vlr::addItem(const CopcExtent& item)
 {
-    items.resize(itemCount);
+    items.push_back(item);
 }
 
 
@@ -479,7 +479,7 @@ size_t copc_extents_vlr::size() const
 
 lazperf::vlr_header copc_extents_vlr::header() const
 {
-    return lazperf::vlr_header { 0, "entwine", 10000, (uint16_t)size(), "COPC extents" };
+    return lazperf::vlr_header { 0, "copc", 10000, (uint16_t)size(), "COPC extents" };
 }
 
 
@@ -536,7 +536,7 @@ size_t copc_info_vlr::size() const
 
 lazperf::vlr_header copc_info_vlr::header() const
 {
-    return lazperf::vlr_header { 0, "entwine", 1, (uint16_t)size(), "COPC info" };
+    return lazperf::vlr_header { 0, "copc", 1, (uint16_t)size(), "COPC info" };
 }
 
 

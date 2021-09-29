@@ -42,13 +42,12 @@ public:
         double maximum;
 
         CopcExtent(double minimum, double maximum);
-        CopcExtent() {};
     };
 
     std::vector<CopcExtent> items;
 
-    copc_extents_vlr(int itemCount);
     copc_extents_vlr();
+    void addItem(const CopcExtent& item);
     virtual ~copc_extents_vlr();
 
     static copc_extents_vlr create(std::istream& in, int byteSize);

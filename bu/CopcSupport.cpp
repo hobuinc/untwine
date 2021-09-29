@@ -36,7 +36,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_lazVlr(b.opts.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
     m_ebVlr(ebVLRCount()),
     m_wktVlr(b.srs.getWKT1()),
-    m_extentVlr(extentVLRSize())
+    m_extentVlr(extentVLRCount())
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
 
@@ -114,7 +114,8 @@ void CopcSupport::setEbVLR()
 
 CopcSupport::VLRInfo::VLRInfo()
     : ebVLRSize(0)
-    , extentsVLRSize(0)
+    , ebVLRCount(0)
+    , extentVLRCount(0)
 {}
 
 
@@ -125,7 +126,6 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
     VLRInfo info;
 
     // Start with PDRF 6 dim list for statistics
-    // No XYZ because we don't gather stats for those
     Dimension::IdList statsDims = { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
@@ -152,11 +152,12 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
         Dimension::Id dim = layout.registerOrAssignDim(fdi.name, fdi.type);
         if (Utils::contains(statsDims, fdi.dim))
         {
-            info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
+            info.extentVLRCount++;
+            info.ebVLRCount++;
         } else
         {
-            info.extentsVLRSize = info.extentsVLRSize + (2* sizeof(double));
             info.ebVLRSize = info.ebVLRSize + layout.dimSize(dim);
+            info.extentVLRCount++;
             info.ebVLRCount++;
 
             info.ebDims.push_back(fdi);
@@ -182,10 +183,10 @@ int CopcSupport::ebVLRCount() const
 }
 
 
-int CopcSupport::extentVLRSize() const
+int CopcSupport::extentVLRCount() const
 {
     VLRInfo info = computeVLRInfo();
-    return info.extentsVLRSize;
+    return info.extentVLRCount;
 }
 
 
@@ -411,20 +412,13 @@ copc_extents_vlr::copc_extents_vlr()
 {}
 
 
-copc_extents_vlr::copc_extents_vlr(int byteSize)
+copc_extents_vlr::copc_extents_vlr(int itemCount)
 {
-    int itemCount = byteSize / sizeof(CopcExtent);
     items.resize(itemCount);
 }
 
 
 copc_extents_vlr::~copc_extents_vlr()
-{}
-
-
-copc_extents_vlr::CopcExtent::CopcExtent() :
-    minimum((std::numeric_limits<double>::max)()),
-    maximum((std::numeric_limits<double>::min)())
 {}
 
 
@@ -452,9 +446,12 @@ void copc_extents_vlr::read(std::istream& in, int byteSize)
     items.clear();
     for (int i = 0; i < numItems; ++i)
     {
-        CopcExtent field;
+        double minimum;
+        double maximum;
 
-        s >> field.minimum >> field.maximum;
+        s >> minimum >> maximum;
+
+        CopcExtent field(minimum, maximum);
         items.push_back(field);
     }
 }

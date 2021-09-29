@@ -41,8 +41,8 @@ public:
         double minimum;
         double maximum;
 
-        CopcExtent();
         CopcExtent(double minimum, double maximum);
+        CopcExtent() {};
     };
 
     std::vector<CopcExtent> items;
@@ -111,10 +111,9 @@ private:
     {
         int ebVLRSize {0};
         int ebVLRCount {0};
-        int extentsVLRSize {0};
+        int extentVLRCount {0};
         DimInfoList ebDims;
         pdal::Dimension::IdList statsDims;
-
 
         VLRInfo();
     };
@@ -134,7 +133,7 @@ private:
 
     int ebVLRSize() const;
     int ebVLRCount() const;
-    int extentVLRSize() const;
+    int extentVLRCount() const;
     Hierarchy emitRoot(const VoxelKey& root, const CountMap& counts);
     void emitChildren(const VoxelKey& root, const CountMap& counts,
         Entries& entries, int stopLevel);

@@ -266,6 +266,8 @@ void CopcSupport::updateHeader(const StatsMap& stats)
 
 void CopcSupport::writeHeader()
 {
+    uint64_t start (0);
+    uint64_t end (0);
     std::ostream& out = m_f;
 
     out.seekp(0);
@@ -283,11 +285,13 @@ void CopcSupport::writeHeader()
 
     m_extentVlr.header().write(out);
     m_extentVlr.write(out);
+    end = out.tellp();
 
     if (m_header.ebCount())
     {
         m_ebVlr.header().write(out);
         m_ebVlr.write(out);
+        end = out.tellp();
     }
 
     // Rewrite the COPC VLR with the updated positions and seek back to the end of the VLRs.

@@ -332,6 +332,8 @@ void CopcSupport::writeHierarchy(const CountMap& counts)
 
     uint64_t beginPos = m_f.tellp();
     Hierarchy root = emitRoot(VoxelKey(0, 0, 0, 0), counts);
+    m_copcVlr.root_hier_offset = root.offset;
+    m_copcVlr.root_hier_size = root.byteSize;
     uint64_t endPos = m_f.tellp();
 
     // Now write VLR header.
@@ -490,6 +492,7 @@ void copc_info_vlr::read(std::istream& in)
     pdal::LeExtractor s(buf.data(), buf.size());
 
     s >> center_x >> center_y >> center_z >> halfsize >> spacing;
+    s >> root_hier_offset >> root_hier_size;
     for (int i = 0; i < 15; ++i)
         s >> reserved[i];
 }
@@ -501,7 +504,8 @@ void copc_info_vlr::write(std::ostream& out) const
     pdal::LeInserter s(buf.data(), buf.size());
 
     s << center_x << center_y << center_z << halfsize << spacing;
-    for (int i = 0; i < 15; ++i)
+    s << root_hier_offset << root_hier_size;
+    for (int i = 0; i < 13; ++i)
         s << reserved[i];
     out.write(buf.data(), buf.size());
 }

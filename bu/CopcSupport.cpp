@@ -266,8 +266,6 @@ void CopcSupport::updateHeader(const StatsMap& stats)
 
 void CopcSupport::writeHeader()
 {
-    uint64_t start;
-    uint64_t end;
     std::ostream& out = m_f;
 
     out.seekp(0);
@@ -278,35 +276,18 @@ void CopcSupport::writeHeader()
     m_copcVlr.write(out);
 
     m_lazVlr.header().write(out);
-    start = out.tellp();
     m_lazVlr.write(out);
-    end = out.tellp();
-    m_copcVlr.laz_vlr_offset = start;
-    m_copcVlr.laz_vlr_size = end - start;
 
     m_wktVlr.header().write(out);
-    start = out.tellp();
     m_wktVlr.write(out);
-    end = out.tellp();
-    m_copcVlr.wkt_vlr_offset = start;
-    m_copcVlr.wkt_vlr_size = end - start;
 
     m_extentVlr.header().write(out);
-    start = out.tellp();
     m_extentVlr.write(out);
-    end = out.tellp();
-    m_copcVlr.extent_vlr_offset = start;
-    m_copcVlr.extent_vlr_size = end - start;
-
 
     if (m_header.ebCount())
     {
         m_ebVlr.header().write(out);
-        start = out.tellp();
         m_ebVlr.write(out);
-        end = out.tellp();
-        m_copcVlr.eb_vlr_offset = start;
-        m_copcVlr.eb_vlr_size = end - start;
     }
 
     // Rewrite the COPC VLR with the updated positions and seek back to the end of the VLRs.
@@ -347,8 +328,6 @@ void CopcSupport::writeHierarchy(const CountMap& counts)
 
     uint64_t beginPos = m_f.tellp();
     Hierarchy root = emitRoot(VoxelKey(0, 0, 0, 0), counts);
-    m_copcVlr.root_hier_offset = root.offset;
-    m_copcVlr.root_hier_size = root.byteSize;
     uint64_t endPos = m_f.tellp();
 
     // Now write VLR header.
@@ -506,10 +485,8 @@ void copc_info_vlr::read(std::istream& in)
     in.read(buf.data(), buf.size());
     pdal::LeExtractor s(buf.data(), buf.size());
 
-    s >> span >> root_hier_offset >> root_hier_size;
-    s >> laz_vlr_offset >> laz_vlr_size >> wkt_vlr_offset >> wkt_vlr_size;
-    s >> eb_vlr_offset >> eb_vlr_size >> extent_vlr_offset >> extent_vlr_size;
-    for (int i = 0; i < 9; ++i)
+    s >> center_x >> center_y >> center_z >> halfsize >> spacing;
+    for (int i = 0; i < 15; ++i)
         s >> reserved[i];
 }
 
@@ -519,10 +496,8 @@ void copc_info_vlr::write(std::ostream& out) const
     std::vector<char> buf(size());
     pdal::LeInserter s(buf.data(), buf.size());
 
-    s << span << root_hier_offset << root_hier_size;
-    s << laz_vlr_offset << laz_vlr_size << wkt_vlr_offset << wkt_vlr_size;
-    s << eb_vlr_offset << eb_vlr_size << extent_vlr_offset << extent_vlr_size;
-    for (int i = 0; i < 9; ++i)
+    s << center_x << center_y << center_z << halfsize << spacing;
+    for (int i = 0; i < 15; ++i)
         s << reserved[i];
     out.write(buf.data(), buf.size());
 }

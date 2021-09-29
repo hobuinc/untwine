@@ -60,18 +60,12 @@ public:
 struct copc_info_vlr : public lazperf::vlr
 {
 public:
-    int64_t span {0};
-    uint64_t root_hier_offset {0};
-    uint64_t root_hier_size {0};
-    uint64_t laz_vlr_offset {0};
-    uint64_t laz_vlr_size {0};
-    uint64_t wkt_vlr_offset {0};
-    uint64_t wkt_vlr_size {0};
-    uint64_t eb_vlr_offset {0};
-    uint64_t eb_vlr_size {0};
-    uint64_t extent_vlr_offset {0};
-    uint64_t extent_vlr_size {0};
-    uint64_t reserved[9] {0};
+    double center_x {0.0};
+    double center_y {0.0};
+    double center_z {0.0};
+    double halfsize {0.0};
+    double spacing {0.0};
+    uint64_t reserved[15] {0};
 
     copc_info_vlr();
     virtual ~copc_info_vlr();

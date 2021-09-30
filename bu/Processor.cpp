@@ -323,25 +323,19 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
     m_extraDims.clear();
     for (FileDimInfo& fdi : dims)
     {
-        // register dimension if we are in lasDims
-        Dimension::Id candidate = pdal::Dimension::id(fdi.name);
-        if (Utils::contains(lasDims, candidate))
+        fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
+        if (m_b.opts.stats)
         {
-            // we add this one
-            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
-            if (m_b.opts.stats)
-            {
-                // For single file output we need the counts by return number.
-                if (fdi.dim == pdal::Dimension::Id::Classification)
-                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-                else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
-                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-                else
-                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
-            }
-        } else
+            // For single file output we need the counts by return number.
+            if (fdi.dim == pdal::Dimension::Id::Classification)
+                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+            else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
+                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+            else
+                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
+        }
+        if (Utils::contains(lasDims, fdi.dim))
         {
-            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
             m_extraDims.push_back(DimType(fdi.dim, fdi.type));
             stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
         }

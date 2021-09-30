@@ -509,7 +509,6 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     std::vector<unsigned char> chunk = compressor.done();
 
     uint64_t location = m_manager.newChunk(key, chunk.size(), (uint32_t)view->size());
-//     std::cout << "made new chunk: " << location << " with size: " << chunk.size() << std::endl;
 
     std::ofstream out(m_b.opts.outputName, std::ios::out | std::ios::in | std::ios::binary);
     out.seekp(std::ofstream::pos_type(location));

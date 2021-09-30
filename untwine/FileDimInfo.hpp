@@ -30,12 +30,8 @@ struct FileDimInfo
     int offset;
     pdal::Dimension::Id dim;
 
-    bool operator==(const FileDimInfo& r) const
-    {
-       return dim == r.dim;
-    }
-
 };
+
 using DimInfoList = std::vector<FileDimInfo>;
 
 inline std::ostream& operator<<(std::ostream& out, const FileDimInfo& fdi)

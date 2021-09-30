@@ -34,7 +34,7 @@ struct Options
     int pointFormatId;
 };
 
-class BaseInfo
+struct BaseInfo
 {
 public:
     BaseInfo() {};

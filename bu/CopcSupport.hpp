@@ -24,7 +24,7 @@
 namespace untwine
 {
 
-class BaseInfo;
+struct BaseInfo;
 struct FileDimInfo;
 using DimInfoList = std::vector<FileDimInfo>;
 

@@ -98,6 +98,13 @@ int CopcSupport::extraByteSize(const DimInfoList& dims) const
 /// \return  The offset of the chunk in the file.
 uint64_t CopcSupport::newChunk(const VoxelKey& key, int32_t size, int32_t count)
 {
+    // Chunks of size zero are a special case.
+    if (count == 0)
+    {
+        m_hierarchy[key] = { 0, 0, 0 };
+        return 0;
+    }
+
     uint64_t chunkStart = m_pointPos;
     m_pointPos += size;
     assert(count <= (std::numeric_limits<int32_t>::max)() && count >= 0);

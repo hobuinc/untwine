@@ -265,7 +265,6 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     for (size_t i = 0; i < extents.size(); i++)
     {
         m_extentVlr.addItem(extents[i]);
-//         m_extentVlr.items[i].minimum = extents[i].minimum;
     }
 
 }
@@ -500,7 +499,7 @@ void copc_info_vlr::read(std::istream& in)
 
     s >> center_x >> center_y >> center_z >> halfsize >> spacing;
     s >> root_hier_offset >> root_hier_size;
-    for (int i = 0; i < 15; ++i)
+    for (int i = 0; i < 13; ++i)
         s >> reserved[i];
 }
 

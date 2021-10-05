@@ -302,8 +302,8 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
     Dimension::IdList lasDims { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
-        Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
-        Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
+        Dimension::Id::Classification, Dimension::Id::ScanChannel, Dimension::Id::UserData,
+        Dimension::Id::ScanAngleRank, Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
     if (m_b.opts.pointFormatId == 7)
     {

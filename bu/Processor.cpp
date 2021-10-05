@@ -42,17 +42,26 @@ Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo
 
 void Processor::run()
 {
+    // If we don't merge small files into one, we'll end up trying to deal with too many
+    // open files later and run out of file descriptors.
+    for (int i = 0; i < 8; ++i)
+    {
+        OctantInfo& child = m_vi[i];
+        if (child.fileInfos().size() >= 4)
+            child.mergeSmallFiles(m_b.opts.tempDir, m_b.pointSize);
+    }
+
     size_t totalPoints = 0;
     size_t totalFileInfos = 0;
     for (int i = 0; i < 8; ++i)
     {
         OctantInfo& child = m_vi[i];
-
         totalFileInfos += child.fileInfos().size();
         totalPoints += child.numPoints();
         if (child.numPoints() < MinimumPoints)
             m_vi.octant().appendFileInfos(child);
     }
+
     // It's possible that all the file infos have been moved above, but this is cheap.
     if (totalPoints < MinimumTotalPoints)
         for (int i = 0; i < 8; ++i)
@@ -332,6 +341,7 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
     auto fii = o.fileInfos().begin();
     auto fiiEnd = o.fileInfos().end();
     size_t count = 0;
+
     if (fii != fiiEnd)
     {
         // We're trying to find the range of points that come from a single FileInfo.

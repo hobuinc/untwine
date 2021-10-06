@@ -29,7 +29,9 @@ struct FileDimInfo
     pdal::Dimension::Type type;
     int offset;
     pdal::Dimension::Id dim;
+
 };
+
 using DimInfoList = std::vector<FileDimInfo>;
 
 inline std::ostream& operator<<(std::ostream& out, const FileDimInfo& fdi)

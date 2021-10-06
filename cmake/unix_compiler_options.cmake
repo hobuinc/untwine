@@ -13,15 +13,14 @@ function(untwine_target_compile_settings target)
                 -Wno-noexcept-type
             )
         endif()
-        set(PDAL_COMPILER_GCC 1)
+        set(UNTWINE_COMPILER_GCC 1)
     elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-        set(PDAL_COMPILER_CLANG 1)
+        set(UNTWINE_COMPILER_CLANG 1)
     else()
         message(FATAL_ERROR "Unsupported C++ compiler")
     endif()
 
     target_compile_options(${target} PRIVATE
-        ${PDAL_CXX_STANDARD}
         -Wall
         -Wextra
         -Wpointer-arith
@@ -39,7 +38,7 @@ function(untwine_target_compile_settings target)
 
         -Werror
     )
-    if (PDAL_COMPILER_CLANG)
+    if (UNTWINE_COMPILER_CLANG)
         target_compile_options(${target} PRIVATE
             -Wno-unknown-warning-option
         )

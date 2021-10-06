@@ -307,30 +307,53 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
     // there's no reason why it should change. We should modify things to use a single
     // layout.
 
-    // PDRF 3 dim list
+    // Start with PDRF 6 dim list
     Dimension::IdList lasDims { Dimension::Id::X, Dimension::Id::Y, Dimension::Id::Z,
         Dimension::Id::Intensity, Dimension::Id::ReturnNumber, Dimension::Id::NumberOfReturns,
         Dimension::Id::ScanDirectionFlag, Dimension::Id::EdgeOfFlightLine,
-        Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
-        Dimension::Id::PointSourceId, Dimension::Id::GpsTime, Dimension::Id::Red,
-        Dimension::Id::Green, Dimension::Id::Blue };
+        Dimension::Id::Classification, Dimension::Id::ScanChannel, Dimension::Id::UserData,
+        Dimension::Id::ScanAngleRank, Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
+
+    if (m_b.opts.pointFormatId == 7)
+    {
+        lasDims.push_back(Dimension::Id::Red);
+        lasDims.push_back(Dimension::Id::Green);
+        lasDims.push_back(Dimension::Id::Blue);
+    }
+    if (m_b.opts.pointFormatId == 8)
+    {
+        lasDims.push_back(Dimension::Id::Red);
+        lasDims.push_back(Dimension::Id::Green);
+        lasDims.push_back(Dimension::Id::Blue);
+        lasDims.push_back(Dimension::Id::Infrared);
+    }
+
     DimInfoList dims = m_b.dimInfo;
     m_extraDims.clear();
     for (FileDimInfo& fdi : dims)
     {
-        fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
-        if (m_b.opts.stats)
+        // register dimension if we are in lasDims
+        Dimension::Id candidate = pdal::Dimension::id(fdi.name);
+        if (Utils::contains(lasDims, candidate))
         {
-            // For single file output we need the counts by return number.
-            if (fdi.dim == pdal::Dimension::Id::Classification)
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-            else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
-            else
-                stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
-        }
-        if (!Utils::contains(lasDims, fdi.dim))
+            // we add this one
+            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
+            if (m_b.opts.stats)
+            {
+                // For single file output we need the counts by return number.
+                if (fdi.dim == pdal::Dimension::Id::Classification)
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+                else if (fdi.dim == pdal::Dimension::Id::ReturnNumber && m_b.opts.singleFile)
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::Enumerate, false)});
+                else
+                    stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
+            }
+        } else
+        {
+            fdi.dim = table.layout()->registerOrAssignDim(fdi.name, fdi.type);
             m_extraDims.push_back(DimType(fdi.dim, fdi.type));
+            stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
+        }
     }
     table.finalize();
 
@@ -404,7 +427,7 @@ void Processor::appendCompressed(pdal::PointViewPtr view, const DimInfoList& dim
 void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr view,
     const OctantInfo& oi, IndexedStats& stats)
 {
-    // For single file output we need the stats for 
+    // For single file output we need the stats for
     if (m_b.opts.stats)
     {
         for (pdal::PointId id = 0; id < view->size(); ++id)
@@ -425,7 +448,7 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
     else
     {
         std::string filename = m_b.opts.outputName + "/ept-data/" + oi.key().toString() + ".laz";
-        writeEptFile(filename, table, view); 
+        writeEptFile(filename, table, view);
     }
 }
 
@@ -486,9 +509,9 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     for (DimType dim : m_extraDims)
         ebCount += layout->dimSize(dim.m_id);
 
-    std::vector<char> buf(lazperf::baseCount(3) + ebCount);
+    std::vector<char> buf(lazperf::baseCount(m_b.opts.pointFormatId) + ebCount);
 
-    lazperf::writer::chunk_compressor compressor(3, ebCount);
+    lazperf::writer::chunk_compressor compressor(m_b.opts.pointFormatId, ebCount);
     for (PointId idx = 0; idx < view->size(); ++idx)
     {
         PointRef point(*view, idx);
@@ -513,11 +536,11 @@ void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
 
     LeInserter ostream(buf.data(), buf.size());
 
-// We're currently only writing PDRF 3.
-    bool has14PointFormat = false;
+    // We're only write PDRF 6, 7, or 8.
+    bool has14PointFormat = true;
     bool hasTime = true; //  m_lasHeader.hasTime();
-    bool hasColor = true; // m_lasHeader.hasColor();
-    bool hasInfrared = false; // m_lasHeader.hasInfrared();
+    bool hasColor = m_b.opts.pointFormatId == 7 || m_b.opts.pointFormatId == 8; // m_lasHeader.hasColor();
+    bool hasInfrared = m_b.opts.pointFormatId == 8; // m_lasHeader.hasInfrared();
 
 //    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
 

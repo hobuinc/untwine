@@ -31,10 +31,14 @@ struct Options
     int progressFd;
     StringList dimNames;
     bool stats;
+    int pointFormatId;
 };
 
 struct BaseInfo
 {
+public:
+    BaseInfo() {};
+
     Options opts;
     pdal::BOX3D bounds;
     pdal::BOX3D trueBounds;
@@ -46,6 +50,7 @@ struct BaseInfo
     using d3 = std::array<double, 3>;
     d3 scale { -1.0, -1.0, -1.0 };
     d3 offset {};
+
 };
 
 const std::string MetadataFilename {"info2.txt"};

@@ -76,9 +76,15 @@ void Epf::run(ProgressWriter& progress)
     PointLayoutPtr layout(new PointLayout());
     for (const std::string& dimName : allDimNames)
     {
-        Dimension::Type type = Dimension::defaultType(Dimension::id(dimName));
-        if (type == Dimension::Type::None)
+        Dimension::Type type;
+        try
+        {
+            type = Dimension::defaultType(Dimension::id(dimName));
+        }
+        catch (pdal::pdal_error&)
+        {
             type = Dimension::Type::Double;
+        }
         layout->registerOrAssignDim(dimName, type);
     }
     layout->finalize();
@@ -156,18 +162,50 @@ void Epf::run(ProgressWriter& progress)
 
 void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
 {
+    using namespace pdal;
+
     // Info to be passed to sampler.
     m_b.bounds = m_grid.processingBounds();
     m_b.trueBounds = m_grid.conformingBounds();
     if (m_srsFileInfo.valid())
         m_b.srs = m_srsFileInfo.srs;
     m_b.pointSize = 0;
+
+
+    auto check_dimension_exists = [] (pdal::Dimension::Id dim,  DimInfoList const& dimInfo)
+    {
+        auto it = std::find_if(dimInfo.begin(), dimInfo.end(),
+                               [&dim](const FileDimInfo& fdi) { return fdi.dim == dim; });
+
+        if (it == dimInfo.end()) return false;
+
+        return true;
+    };
+
+    // Set the pointFormatId based on whether or not colors exist in the
+    // file
+    int old (m_b.opts.pointFormatId);
+
+    if (check_dimension_exists(pdal::Dimension::Id::Infrared, m_b.dimInfo))
+    {
+        m_b.opts.pointFormatId = 8;
+    } else if (check_dimension_exists(pdal::Dimension::Id::Red, m_b.dimInfo) ||
+               check_dimension_exists(pdal::Dimension::Id::Green, m_b.dimInfo) ||
+               check_dimension_exists(pdal::Dimension::Id::Blue, m_b.dimInfo))
+    {
+        m_b.opts.pointFormatId = 7;
+    } else
+    {
+        m_b.opts.pointFormatId = 6;
+    }
+
     for (pdal::Dimension::Id id : layout->dims())
     {
         FileDimInfo di;
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
+        di.dim = id;
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }
@@ -192,6 +230,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     m_b.scale[0] = calcScale(m_b.scale[0], m_b.bounds.minx, m_b.bounds.maxx);
     m_b.scale[1] = calcScale(m_b.scale[1], m_b.bounds.miny, m_b.bounds.maxy);
     m_b.scale[2] = calcScale(m_b.scale[2], m_b.bounds.minz, m_b.bounds.maxz);
+
 }
 
 PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,

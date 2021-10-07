@@ -125,6 +125,7 @@ private:
     uint64_t m_chunkOffsetPos;
     uint64_t m_pointPos;
     std::unordered_map<VoxelKey, Hierarchy> m_hierarchy;
+    int m_pointFormatId;
 
     int ebVLRSize() const;
     int ebVLRCount() const;

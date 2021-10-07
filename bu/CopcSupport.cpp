@@ -33,10 +33,11 @@ namespace bu
 
 CopcSupport::CopcSupport(const BaseInfo& b) :
     m_b(b),
-    m_lazVlr(b.opts.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
+    m_lazVlr(b.pointFormatId, ebVLRSize(), lazperf::VariableChunkSize),
     m_ebVlr(ebVLRCount()),
     m_wktVlr(b.srs.getWKT1()),
-    m_extentVlr()
+    m_extentVlr(),
+    m_pointFormatId(b.pointFormatId)
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
 
@@ -48,9 +49,9 @@ CopcSupport::CopcSupport(const BaseInfo& b) :
     m_header.creation.year = 1;
     m_header.header_size = lazperf::header14::Size;
     m_header.vlr_count = 4;
-    m_header.point_format_id = b.opts.pointFormatId;
+    m_header.point_format_id = m_pointFormatId;
     m_header.point_format_id |= (1 << 7);    // Bit for laszip
-    m_header.point_record_length = lazperf::baseCount(b.opts.pointFormatId) + ebVLRSize();
+    m_header.point_record_length = lazperf::baseCount(m_pointFormatId) + ebVLRSize();
     m_header.scale.x = b.scale[0];
     m_header.scale.y = b.scale[1];
     m_header.scale.z = b.scale[2];
@@ -132,18 +133,18 @@ CopcSupport::VLRInfo CopcSupport::computeVLRInfo() const
         Dimension::Id::Classification, Dimension::Id::ScanAngleRank, Dimension::Id::UserData,
         Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
-    if (m_b.opts.pointFormatId == 7)
+    if (m_pointFormatId == 7 || m_pointFormatId == 8)
     {
         statsDims.push_back(Dimension::Id::Red);
         statsDims.push_back(Dimension::Id::Green);
         statsDims.push_back(Dimension::Id::Blue);
+        if (m_pointFormatId == 8)
+            statsDims.push_back(Dimension::Id::Infrared);
     }
-    if (m_b.opts.pointFormatId == 8)
     {
         statsDims.push_back(Dimension::Id::Red);
         statsDims.push_back(Dimension::Id::Green);
         statsDims.push_back(Dimension::Id::Blue);
-        statsDims.push_back(Dimension::Id::Infrared);
     }
 
     PointLayout layout;

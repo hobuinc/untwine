@@ -171,33 +171,15 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         m_b.srs = m_srsFileInfo.srs;
     m_b.pointSize = 0;
 
-
-    auto check_dimension_exists = [] (pdal::Dimension::Id dim,  DimInfoList const& dimInfo)
-    {
-        auto it = std::find_if(dimInfo.begin(), dimInfo.end(),
-                               [&dim](const FileDimInfo& fdi) { return fdi.dim == dim; });
-
-        if (it == dimInfo.end()) return false;
-
-        return true;
-    };
-
-    // Set the pointFormatId based on whether or not colors exist in the
-    // file
-    int old (m_b.opts.pointFormatId);
-
-    if (check_dimension_exists(pdal::Dimension::Id::Infrared, m_b.dimInfo))
-    {
-        m_b.opts.pointFormatId = 8;
-    } else if (check_dimension_exists(pdal::Dimension::Id::Red, m_b.dimInfo) ||
-               check_dimension_exists(pdal::Dimension::Id::Green, m_b.dimInfo) ||
-               check_dimension_exists(pdal::Dimension::Id::Blue, m_b.dimInfo))
-    {
-        m_b.opts.pointFormatId = 7;
-    } else
-    {
-        m_b.opts.pointFormatId = 6;
-    }
+    // Set the pointFormatId based on whether or not colors exist in the file
+    if (layout->hasDim(Dimension::Id::Infrared))
+        m_b.pointFormatId = 8;
+    else if (layout->hasDim(Dimension::Id::Red) ||
+             layout->hasDim(Dimension::Id::Green) ||
+             layout->hasDim(Dimension::Id::Blue))
+        m_b.pointFormatId = 7;
+    else
+        m_b.pointFormatId = 6;
 
     for (pdal::Dimension::Id id : layout->dims())
     {

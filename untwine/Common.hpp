@@ -31,7 +31,6 @@ struct Options
     int progressFd;
     StringList dimNames;
     bool stats;
-    int pointFormatId;
 };
 
 struct BaseInfo
@@ -46,6 +45,7 @@ public:
     std::string outputFile;
     DimInfoList dimInfo;
     pdal::SpatialReference srs;
+    int pointFormatId;
 
     using d3 = std::array<double, 3>;
     d3 scale { -1.0, -1.0, -1.0 };

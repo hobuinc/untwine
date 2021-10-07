@@ -314,18 +314,13 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
         Dimension::Id::Classification, Dimension::Id::ScanChannel, Dimension::Id::UserData,
         Dimension::Id::ScanAngleRank, Dimension::Id::PointSourceId, Dimension::Id::GpsTime };
 
-    if (m_b.opts.pointFormatId == 7)
+    if (m_b.pointFormatId == 7 || m_b.pointFormatId == 8)
     {
         lasDims.push_back(Dimension::Id::Red);
         lasDims.push_back(Dimension::Id::Green);
         lasDims.push_back(Dimension::Id::Blue);
-    }
-    if (m_b.opts.pointFormatId == 8)
-    {
-        lasDims.push_back(Dimension::Id::Red);
-        lasDims.push_back(Dimension::Id::Green);
-        lasDims.push_back(Dimension::Id::Blue);
-        lasDims.push_back(Dimension::Id::Infrared);
+        if (m_b.pointFormatId == 8)
+            lasDims.push_back(Dimension::Id::Infrared);
     }
 
     DimInfoList dims = m_b.dimInfo;
@@ -509,9 +504,9 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     for (DimType dim : m_extraDims)
         ebCount += layout->dimSize(dim.m_id);
 
-    std::vector<char> buf(lazperf::baseCount(m_b.opts.pointFormatId) + ebCount);
+    std::vector<char> buf(lazperf::baseCount(m_b.pointFormatId) + ebCount);
 
-    lazperf::writer::chunk_compressor compressor(m_b.opts.pointFormatId, ebCount);
+    lazperf::writer::chunk_compressor compressor(m_b.pointFormatId, ebCount);
     for (PointId idx = 0; idx < view->size(); ++idx)
     {
         PointRef point(*view, idx);
@@ -536,11 +531,11 @@ void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
 
     LeInserter ostream(buf.data(), buf.size());
 
-    // We're only write PDRF 6, 7, or 8.
+    // We only write PDRF 6, 7, or 8.
     bool has14PointFormat = true;
     bool hasTime = true; //  m_lasHeader.hasTime();
-    bool hasColor = m_b.opts.pointFormatId == 7 || m_b.opts.pointFormatId == 8; // m_lasHeader.hasColor();
-    bool hasInfrared = m_b.opts.pointFormatId == 8; // m_lasHeader.hasInfrared();
+    bool hasColor = m_b.pointFormatId == 7 || m_b.pointFormatId == 8;
+    bool hasInfrared = m_b.pointFormatId == 8;
 
 //    static const size_t maxReturnCount = m_lasHeader.maxReturnCount();
 

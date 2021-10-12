@@ -160,6 +160,7 @@ void CopcSupport::setExtentsVlr(const StatsMap& stats)
 {
     using namespace pdal;
 
+    // Build a full list of the extent dimension IDs, including the extra byte dimensions.
     Dimension::IdList dims = extentDims(m_b.pointFormatId);
     for (const FileDimInfo& fdi : m_b.dimInfo)
         if (fdi.extraDim)
@@ -168,14 +169,17 @@ void CopcSupport::setExtentsVlr(const StatsMap& stats)
     std::vector<copc_extents_vlr::CopcExtent> extents(dims.size());
     for (auto it = stats.begin(); it != stats.end(); ++it)
     {
-        unsigned id = (unsigned)it->first;
         const Stats& stats = it->second;
 
-        if (id >= 0 && id < extents.size())
-        {
-            extents[id].minimum = stats.minimum();
-            extents[id].maximum = stats.minimum();
-        }
+        // Search for the Dimension ID in the list and grab the list index corresponding
+        // to it.
+        auto dimIt = std::find(dims.begin(), dims.end(), it->first);
+        if (dimIt == dims.end())
+            continue;
+        size_t idx = dimIt - dims.begin();
+
+        extents[idx].minimum = stats.minimum();
+        extents[idx].maximum = stats.maximum();
     }
     for (int i = 0; i < (int)extents.size(); ++i)
         m_extentVlr.setItem(i, extents[i]);

@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Copyright (c) 2020, Hobu, Inc. (info@hobu.co)                           *
+ *   Copyright (c) 2021, Hobu, Inc. (info@hobu.co)                           *
  *                                                                           *
  *   All rights reserved.                                                    *
  *                                                                           *
@@ -10,42 +10,12 @@
  *                                                                           *
  ****************************************************************************/
 
-#pragma once
-
 #include <pdal/Dimension.hpp>
 
 namespace untwine
 {
 
-struct FileDimInfo
-{
-    FileDimInfo()
-    {}
-
-    FileDimInfo(const std::string& name) : name(name), extraDim(false)
-    {}
-
-    std::string name;
-    pdal::Dimension::Type type;
-    int offset;
-    pdal::Dimension::Id dim;
-    bool extraDim;
-};
-
-using DimInfoList = std::vector<FileDimInfo>;
-
-inline std::ostream& operator<<(std::ostream& out, const FileDimInfo& fdi)
-{
-    out << fdi.name << " " << (int)fdi.type << " " << fdi.offset;
-    return out;
-}
-
-inline std::istream& operator>>(std::istream& in, FileDimInfo& fdi)
-{
-    int type;
-    in >> fdi.name >> type >> fdi.offset;
-    fdi.type = (pdal::Dimension::Type)type;
-    return in;
-}
+const pdal::Dimension::IdList& pdrfDims(int pdrf);
+const pdal::Dimension::IdList& extentDims(int pdrf);
 
 } // namespace untwine

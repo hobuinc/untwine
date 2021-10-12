@@ -162,14 +162,14 @@ void PyramidManager::logOctant(const VoxelKey& k, int cnt, const IndexedStats& i
     {
         Stats& s = is.second;
 
-        auto it = m_stats.find(s.name());
+        auto it = m_stats.find(is.first);
         if (it != m_stats.end())
         {
             Stats& cur = it->second;
             cur.merge(s);
         }
         else
-            m_stats.insert({s.name(), s});
+            m_stats.insert({is.first, s});
     }
     m_written.insert({k, cnt});
     m_totalPoints += cnt;
@@ -263,9 +263,9 @@ std::deque<VoxelKey> PyramidManager::emit(const VoxelKey& p, int stopLevel, Entr
 }
 
 
-Stats *PyramidManager::stats(const std::string& name)
+Stats *PyramidManager::stats(pdal::Dimension::Id id)
 {
-    auto si = m_stats.find(name);
+    auto si = m_stats.find(id);
     if (si == m_stats.end())
         return nullptr;
     return &si->second;

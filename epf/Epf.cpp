@@ -17,6 +17,7 @@
 #include "Reprocessor.hpp"
 #include "Writer.hpp"
 #include "../untwine/Common.hpp"
+#include "../untwine/Las.hpp"
 
 #include <unordered_set>
 
@@ -181,13 +182,15 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     else
         m_b.pointFormatId = 6;
 
-    for (pdal::Dimension::Id id : layout->dims())
+    const Dimension::IdList& lasDims = pdrfDims(m_b.pointFormatId);
+    for (Dimension::Id id : layout->dims())
     {
         FileDimInfo di;
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
         di.dim = id;
+        di.extraDim = !Utils::contains(lasDims, id);
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }

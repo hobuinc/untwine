@@ -166,7 +166,7 @@ void CopcSupport::setExtentsVlr(const StatsMap& stats)
         if (fdi.extraDim)
             dims.push_back(fdi.dim);
 
-    std::vector<copc_extents_vlr::CopcExtent> extents(dims.size());
+    std::vector<lazperf::copc_extents_vlr::CopcExtent> extents(dims.size());
     for (auto it = stats.begin(); it != stats.end(); ++it)
     {
         const Stats& stats = it->second;
@@ -314,85 +314,6 @@ void CopcSupport::emitChildren(const VoxelKey& p, const CountMap& counts,
                 entries.push_back({c, emitRoot(c, counts)});
         }
     }
-}
-
-
-copc_extents_vlr::copc_extents_vlr()
-{}
-
-
-copc_extents_vlr::copc_extents_vlr(int numExtents) : items(numExtents)
-{}
-
-
-void copc_extents_vlr::addItem(const CopcExtent& item)
-{
-    items.push_back(item);
-}
-
-
-void copc_extents_vlr::setItem(int i, const CopcExtent& item)
-{
-    items[i] = item;
-}
-
-
-copc_extents_vlr::~copc_extents_vlr()
-{}
-
-
-copc_extents_vlr copc_extents_vlr::create(std::istream& in, int byteSize)
-{
-    copc_extents_vlr extentsVlr;
-    extentsVlr.read(in, byteSize);
-    return extentsVlr;
-}
-
-
-void copc_extents_vlr::read(std::istream& in, int byteSize)
-{
-    std::vector<char> buf(byteSize);
-    pdal::LeExtractor s(buf.data(), buf.size());
-    in.read(buf.data(), buf.size());
-
-    int numItems = byteSize / (sizeof(double) * 2);
-    items.clear();
-
-    double minimum;
-    double maximum;
-    for (int i = 0; i < numItems; ++i)
-    {
-        s >> minimum >> maximum;
-        items.push_back(CopcExtent(minimum, maximum));
-    }
-}
-
-
-void copc_extents_vlr::write(std::ostream& out) const
-{
-    std::vector<char> buf(size());
-    pdal::LeInserter s(buf.data(), buf.size());
-
-    for (auto& i: items)
-        s << i.minimum << i.maximum;
-
-    out.write(buf.data(), buf.size());
-}
-
-
-uint64_t copc_extents_vlr::size() const
-{
-    return items.size() * sizeof(double) * 2;
-}
-
-lazperf::vlr_header copc_extents_vlr::header() const
-{
-    return lazperf::vlr_header { 0, "copc", 10000, (uint16_t)size(), "COPC extents" };
-}
-
-lazperf::evlr_header copc_extents_vlr::eheader() const
-{
-    return lazperf::evlr_header { 0, "copc", 10000, size(), "COPC extents" };
 }
 
 } // namespace bu

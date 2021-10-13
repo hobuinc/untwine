@@ -30,39 +30,6 @@ struct BaseInfo;
 namespace bu
 {
 
-
-struct copc_extents_vlr : public lazperf::vlr
-{
-public:
-
-    struct CopcExtent
-    {
-        double minimum;
-        double maximum;
-
-        CopcExtent(double minimum, double maximum) : minimum(minimum), maximum(maximum)
-        {}
-
-        CopcExtent() : minimum(0), maximum(0)
-        {}
-    };
-
-    std::vector<CopcExtent> items;
-
-    copc_extents_vlr();
-    copc_extents_vlr(int numExtentItems);
-    void setItem(int i, const CopcExtent& item);
-    void addItem(const CopcExtent& item);
-    virtual ~copc_extents_vlr();
-
-    static copc_extents_vlr create(std::istream& in, int byteSize);
-    void read(std::istream& in, int byteSize);
-    void write(std::ostream& out) const;
-    virtual uint64_t size() const;
-    virtual lazperf::vlr_header header() const;
-    virtual lazperf::evlr_header eheader() const;
-};
-
 class CopcSupport
 {
 public:
@@ -91,7 +58,7 @@ private:
     lazperf::laz_vlr m_lazVlr;
     lazperf::eb_vlr m_ebVlr;
     lazperf::wkt_vlr m_wktVlr;
-    copc_extents_vlr m_extentVlr;
+    lazperf::copc_extents_vlr m_extentVlr;
     std::vector<lazperf::chunk> m_chunkTable;
     uint64_t m_chunkOffsetPos;
     uint64_t m_pointPos;
@@ -104,7 +71,6 @@ private:
     void emitChildren(const VoxelKey& root, const CountMap& counts,
         Entries& entries, int stopLevel);
 };
-
 
 } // namesapce bu
 } // namesapce untwine

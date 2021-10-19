@@ -17,6 +17,7 @@
 #include "Reprocessor.hpp"
 #include "Writer.hpp"
 #include "../untwine/Common.hpp"
+#include "../untwine/Las.hpp"
 
 #include <unordered_set>
 
@@ -171,41 +172,25 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         m_b.srs = m_srsFileInfo.srs;
     m_b.pointSize = 0;
 
+    // Set the pointFormatId based on whether or not colors exist in the file
+    if (layout->hasDim(Dimension::Id::Infrared))
+        m_b.pointFormatId = 8;
+    else if (layout->hasDim(Dimension::Id::Red) ||
+             layout->hasDim(Dimension::Id::Green) ||
+             layout->hasDim(Dimension::Id::Blue))
+        m_b.pointFormatId = 7;
+    else
+        m_b.pointFormatId = 6;
 
-    auto check_dimension_exists = [] (pdal::Dimension::Id dim,  DimInfoList const& dimInfo)
-    {
-        auto it = std::find_if(dimInfo.begin(), dimInfo.end(),
-                               [&dim](const FileDimInfo& fdi) { return fdi.dim == dim; });
-
-        if (it == dimInfo.end()) return false;
-
-        return true;
-    };
-
-    // Set the pointFormatId based on whether or not colors exist in the
-    // file
-    int old (m_b.opts.pointFormatId);
-
-    if (check_dimension_exists(pdal::Dimension::Id::Infrared, m_b.dimInfo))
-    {
-        m_b.opts.pointFormatId = 8;
-    } else if (check_dimension_exists(pdal::Dimension::Id::Red, m_b.dimInfo) ||
-               check_dimension_exists(pdal::Dimension::Id::Green, m_b.dimInfo) ||
-               check_dimension_exists(pdal::Dimension::Id::Blue, m_b.dimInfo))
-    {
-        m_b.opts.pointFormatId = 7;
-    } else
-    {
-        m_b.opts.pointFormatId = 6;
-    }
-
-    for (pdal::Dimension::Id id : layout->dims())
+    const Dimension::IdList& lasDims = pdrfDims(m_b.pointFormatId);
+    for (Dimension::Id id : layout->dims())
     {
         FileDimInfo di;
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
         di.dim = id;
+        di.extraDim = !Utils::contains(lasDims, id);
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }

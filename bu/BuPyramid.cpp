@@ -97,7 +97,7 @@ void BuPyramid::writeInfo()
             if (fdi.name == "Z")
                 out << "\"scale\": " << m_b.scale[2] << ", \"offset\": " << m_b.offset[2] << ", ";
             out << "\"size\": " << pdal::Dimension::size(fdi.type);
-            const Stats *stats = m_manager.stats(fdi.name);
+            const Stats *stats = m_manager.stats(fdi.dim);
             if (stats)
             {
                 const Stats::EnumMap& v = stats->values();

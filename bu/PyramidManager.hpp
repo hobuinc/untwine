@@ -46,7 +46,7 @@ public:
     void logOctant(const VoxelKey& k, int cnt, const IndexedStats& istats);
     uint64_t totalPoints() const
         { return m_totalPoints; }
-    Stats *stats(const std::string& name);
+    Stats *stats(pdal::Dimension::Id id);
     uint64_t newChunk(const VoxelKey& key, uint32_t size, uint32_t count);
 
 private:

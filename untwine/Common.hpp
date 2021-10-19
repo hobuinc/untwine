@@ -13,6 +13,9 @@
 namespace untwine
 {
 
+// Number of cells into which points are put for each octree voxel.
+const int CellCount = 128;
+
 using PointCount = uint64_t;
 using StringList = std::vector<std::string>;
 
@@ -31,13 +34,13 @@ struct Options
     int progressFd;
     StringList dimNames;
     bool stats;
-    int pointFormatId;
 };
 
 struct BaseInfo
 {
 public:
-    BaseInfo() {};
+    BaseInfo()
+    {};
 
     Options opts;
     pdal::BOX3D bounds;
@@ -46,11 +49,11 @@ public:
     std::string outputFile;
     DimInfoList dimInfo;
     pdal::SpatialReference srs;
+    int pointFormatId;
 
     using d3 = std::array<double, 3>;
     d3 scale { -1.0, -1.0, -1.0 };
     d3 offset {};
-
 };
 
 const std::string MetadataFilename {"info2.txt"};

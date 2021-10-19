@@ -37,6 +37,7 @@ namespace epf
 
 /// Epf
 
+static_assert(MaxBuffers > NumFileProcessors, "MaxBuffers must be greater than NumFileProcessors.");
 Epf::Epf(BaseInfo& common) : m_b(common), m_pool(NumFileProcessors)
 {}
 

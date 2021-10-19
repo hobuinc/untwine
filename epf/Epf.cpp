@@ -57,6 +57,9 @@ void Epf::run(ProgressWriter& progress)
 
     m_grid.setCubic(m_b.opts.doCube);
 
+    // Create the file infos. As each info is created, the N x N x N grid is expanded to
+    // hold all the points. If the number of points seems too large, N is expanded to N + 1.
+    // The correct N is often wrong, especially for some areas where things are more dense.
     std::vector<FileInfo> fileInfos;
     progress.m_total = createFileInfo(m_b.opts.inputFiles, m_b.opts.dimNames, fileInfos);
 
@@ -133,7 +136,8 @@ void Epf::run(ProgressWriter& progress)
     // are finished.
     m_writer->stop();
 
-    // Get totals from the current writer.
+    // Get totals from the current writer that are greater than the MaxPointsPerNode.
+    // Each of these voxels that is too large will be reprocessed.
     //ABELL - would be nice to avoid this copy, but it probably doesn't matter much.
     Totals totals = m_writer->totals(MaxPointsPerNode);
 
@@ -141,7 +145,8 @@ void Epf::run(ProgressWriter& progress)
     progress.setPercent(.4);
     progress.setIncrement(.2 / totals.size());
 
-    // Make a new writer.
+    // Make a new writer since we stopped the old one. Could restart, but why bother with
+    // extra code...
     m_writer.reset(new Writer(m_b.opts.tempDir, 4, layout->pointSize()));
     for (auto& t : totals)
     {
@@ -149,6 +154,9 @@ void Epf::run(ProgressWriter& progress)
         int numPoints = t.second;
         int pointSize = layout->pointSize();
         std::string tempDir = m_b.opts.tempDir;
+
+        // Create a reprocessor thread. Note that the grid is copied by value and
+        // its level is re-calculated based on the number of points.
         m_pool.add([&progress, key, numPoints, pointSize, tempDir, this]()
         {
             Reprocessor r(key, numPoints, pointSize, tempDir, m_grid, m_writer.get());

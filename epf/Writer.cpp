@@ -78,6 +78,12 @@ void Writer::enqueue(const VoxelKey& key, DataVecPtr data, size_t dataSize)
     m_available.notify_one();
 }
 
+void Writer::replace(DataVecPtr data)
+{
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_bufferCache.replace(std::move(data));
+}
+
 void Writer::stop()
 {
     {

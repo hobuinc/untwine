@@ -48,7 +48,7 @@ namespace epf
 // Since processors try to hold onto buffers until they are full, there can be times at
 // which the buffers are exhaused and no more are available, but none are ready to be
 // written. In this case, the buffers for the processor needing a new buffer flushed to
-/  the queue even if they aren't full so that they can be reused. The active buffer for a
+// the queue even if they aren't full so that they can be reused. The active buffer for a
 // flushing processor is reserved, so there need to be at least one more buffer than the
 // number of file processors, though typically there are many more buffers than file processors.
 //

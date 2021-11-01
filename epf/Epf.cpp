@@ -203,10 +203,6 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }
-    m_b.offset[0] = m_b.bounds.maxx / 2 + m_b.bounds.minx / 2;
-    m_b.offset[1] = m_b.bounds.maxy / 2 + m_b.bounds.miny / 2;
-    m_b.offset[2] = m_b.bounds.maxz / 2 + m_b.bounds.minz / 2;
-
     auto calcScale = [](double scale, double low, double high)
     {
         if (scale > 0)
@@ -221,10 +217,23 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         return std::pow(10, (std::max)(power, -4.0));
     };
 
-    m_b.scale[0] = calcScale(m_b.scale[0], m_b.bounds.minx, m_b.bounds.maxx);
-    m_b.scale[1] = calcScale(m_b.scale[1], m_b.bounds.miny, m_b.bounds.maxy);
-    m_b.scale[2] = calcScale(m_b.scale[2], m_b.bounds.minz, m_b.bounds.maxz);
+    m_b.scale[0] = calcScale(m_b.scale[0], m_b.trueBounds.minx, m_b.trueBounds.maxx);
+    m_b.scale[1] = calcScale(m_b.scale[1], m_b.trueBounds.miny, m_b.trueBounds.maxy);
+    m_b.scale[2] = calcScale(m_b.scale[2], m_b.trueBounds.minz, m_b.trueBounds.maxz);
 
+    // Find an offset such that (offset - min) / scale is close to an integer.
+    auto calcOffset = [](double minval, double maxval, double scale)
+    {
+        double interval = maxval - minval;
+        double spacings = interval / scale;  // Number of quantized values in our range.
+        double halfspacings = spacings / 2;  // Half of that number.
+        double offset = (int32_t)halfspacings * scale; // Round to an even value and scale down.
+        return minval + offset;              // Add the base (min) value.
+    };
+
+    m_b.offset[0] = calcOffset(m_b.trueBounds.minx, m_b.trueBounds.maxx, m_b.scale[0]);
+    m_b.offset[1] = calcOffset(m_b.trueBounds.miny, m_b.trueBounds.maxy, m_b.scale[1]);
+    m_b.offset[2] = calcOffset(m_b.trueBounds.minz, m_b.trueBounds.maxz, m_b.scale[2]);
 }
 
 PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,

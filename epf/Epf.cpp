@@ -232,7 +232,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         double interval = maxval - minval;
         double spacings = interval / scale;  // Number of quantized values in our range.
         double halfspacings = spacings / 2;  // Half of that number.
-        double offset = (int32_t)halfspacings * scale; // Round to an even value and scale down.
+        double offset = (int32_t)halfspacings * scale; // Round to an int value and scale down.
         return minval + offset;              // Add the base (min) value.
     };
 

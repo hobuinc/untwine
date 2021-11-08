@@ -35,6 +35,7 @@ struct Options
     StringList dimNames;
     bool stats;
     std::string a_srs;
+    bool metadata;
 };
 
 struct BaseInfo

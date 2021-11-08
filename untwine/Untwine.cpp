@@ -53,6 +53,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.stats);
     programArgs.add("a_srs", "Assign output SRS",
         options.a_srs, "");
+    programArgs.add("metadata", "Write PDAL metadata to VLR output",
+        options.metadata, false);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)

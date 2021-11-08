@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-pwd
+echo $PWD
 
 git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     mkdir build && cd build && \
@@ -9,13 +9,13 @@ git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     ninja install && \
     cd ../..
 
-pwd
+echo $PWD
 
 mkdir build && cd build
-cmake .. \
-      -G Ninja \
+cmake -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_LIBRARY_PATH:FILEPATH="$CONDA_PREFIX/lib" \
       -DCMAKE_INCLUDE_PATH:FILEPATH="$CONDA_PREFIX/include" \
       -DCMAKE_FIND_FRAMEWORK="NEVER" \
-      -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX}
+      -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
+      ..

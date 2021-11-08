@@ -34,6 +34,8 @@ struct Options
     int progressFd;
     StringList dimNames;
     bool stats;
+    std::string a_srs;
+    bool metadata;
 };
 
 struct BaseInfo

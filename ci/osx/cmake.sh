@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-echo $PWD
 
 git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     mkdir build && cd build && \
@@ -9,9 +8,6 @@ git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     ninja install && \
     cd ../..
 
-echo $PWD
-
-mkdir build && cd build
 cmake -G Ninja \
       -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_LIBRARY_PATH:FILEPATH="$CONDA_PREFIX/lib" \

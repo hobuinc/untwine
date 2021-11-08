@@ -1,6 +1,5 @@
 #!/bin/bash
 
-pwd
 where cl.exe
 export CC=cl.exe
 export CXX=cl.exe
@@ -12,9 +11,6 @@ git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     ninja install && \
     cd ../..
 
-pwd
-
-mkdir build && cd build
 cmake .. -G "Ninja" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \

@@ -11,11 +11,10 @@ git clone https://github.com/hobu/laz-perf.git laz-perf && cd laz-perf && \
     ninja install && \
     cd ../..
 
-cmake .. -G "Ninja" \
+cmake -G "Ninja" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_INSTALL_PREFIX="$CONDA_PREFIX" \
     -DWITH_TESTS=ON \
     -DCMAKE_VERBOSE_MAKEFILE=OFF \
-    -DCMAKE_LIBRARY_PATH:FILEPATH="$CONDA_PREFIX/Library/lib" \
-    -DCMAKE_INCLUDE_PATH:FILEPATH="$CONDA_PREFIX/Library/include" \
-    -DOPENSSL_ROOT_DIR="$CONDA_PREFIX/Library"
+    -DOPENSSL_ROOT_DIR="$CONDA_PREFIX/Library" \
+    ..

@@ -17,5 +17,5 @@ cmake -G "Ninja" \
     -DWITH_TESTS=ON \
     -DCMAKE_VERBOSE_MAKEFILE=OFF \
     -DOPENSSL_ROOT_DIR="$CONDA_PREFIX/Library" \
-    -DCMAKE_PREFIX_PATH=$PREFIX/Library \
+    -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
     ..

@@ -458,6 +458,8 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef ta
     wopts.add("scale_x", m_b.scale[0]);
     wopts.add("scale_y", m_b.scale[1]);
     wopts.add("scale_z", m_b.scale[2]);
+    if (m_b.opts.a_srs.size())
+        wopts.add("a_srs", m_b.opts.a_srs);
     w->setOptions(wopts);
     w->setInput(*prev);
     // Set dataformat ID based on time/rgb, but for now accept the default.

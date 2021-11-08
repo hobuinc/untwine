@@ -36,7 +36,7 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
     programArgs.add("files,i", "Input files/directory", options.inputFiles);
     programArgs.add("output_dir,o", "Output directory/filename for single-file output",
         options.outputName);
-    programArgs.add("single_file", "Create a single output file", options.singleFile);
+    programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
     programArgs.add("clean_temp_dir", "Remove files from the temp directory",
         options.cleanTempDir, true);
@@ -51,6 +51,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
         options.stats);
+    programArgs.add("a_srs", "Assign output SRS",
+        options.a_srs, "");
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)

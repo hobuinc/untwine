@@ -34,8 +34,7 @@ namespace bu
 CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     m_lazVlr(b.pointFormatId, extraByteSize(), lazperf::VariableChunkSize),
     m_ebVlr(extraByteSize()),
-    m_wktVlr(b.srs.getWKT1()),
-    m_extentVlr(numExtentItems())
+    m_wktVlr(b.srs.getWKT1())
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
 
@@ -63,8 +62,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     m_header.point_offset = lazperf::header14::Size +
         lazperf::vlr_header::Size + m_copcVlr.size() +
         lazperf::vlr_header::Size + m_lazVlr.size() +
-        lazperf::vlr_header::Size + m_wktVlr.size() +
-        lazperf::vlr_header::Size + m_extentVlr.size();
+        lazperf::vlr_header::Size + m_wktVlr.size();
     if (m_header.ebCount())
     {
         m_header.vlr_count++;
@@ -119,6 +117,8 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     m_header.minx = stats.at(Id::X).minimum();
     m_header.miny = stats.at(Id::Y).minimum();
     m_header.minz = stats.at(Id::Z).minimum();
+    m_copcVlr.gpstime_minimum = stats.at(Id::GpsTime).minimum();
+    m_copcVlr.gpstime_maximum = stats.at(Id::GpsTime).maximum();
 
     for (int i = 1; i <= 15; ++i)
     {
@@ -142,47 +142,6 @@ void CopcSupport::updateHeader(const StatsMap& stats)
 
     if (m_header.point_count_14 > (std::numeric_limits<uint32_t>::max)())
         m_header.point_count = 0;
-
-    setExtentsVlr(stats);
-}
-
-
-int CopcSupport::numExtentItems() const
-{
-    int count = extentDims(m_b.pointFormatId).size();
-    for (const FileDimInfo& fdi : m_b.dimInfo)
-        if (fdi.extraDim)
-            count++;
-    return count;
-}
-
-void CopcSupport::setExtentsVlr(const StatsMap& stats)
-{
-    using namespace pdal;
-
-    // Build a full list of the extent dimension IDs, including the extra byte dimensions.
-    Dimension::IdList dims = extentDims(m_b.pointFormatId);
-    for (const FileDimInfo& fdi : m_b.dimInfo)
-        if (fdi.extraDim)
-            dims.push_back(fdi.dim);
-
-    std::vector<lazperf::copc_extents_vlr::CopcExtent> extents(dims.size());
-    for (auto it = stats.begin(); it != stats.end(); ++it)
-    {
-        const Stats& stats = it->second;
-
-        // Search for the Dimension ID in the list and grab the list index corresponding
-        // to it.
-        auto dimIt = std::find(dims.begin(), dims.end(), it->first);
-        if (dimIt == dims.end())
-            continue;
-        size_t idx = dimIt - dims.begin();
-
-        extents[idx].minimum = stats.minimum();
-        extents[idx].maximum = stats.maximum();
-    }
-    for (int i = 0; i < (int)extents.size(); ++i)
-        m_extentVlr.setItem(i, extents[i]);
 }
 
 
@@ -207,9 +166,6 @@ void CopcSupport::writeHeader()
 
     m_wktVlr.header().write(out);
     m_wktVlr.write(out);
-
-    m_extentVlr.header().write(out);
-    m_extentVlr.write(out);
 
     if (m_header.ebCount())
     {

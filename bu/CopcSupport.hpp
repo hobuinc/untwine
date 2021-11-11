@@ -58,7 +58,6 @@ private:
     lazperf::laz_vlr m_lazVlr;
     lazperf::eb_vlr m_ebVlr;
     lazperf::wkt_vlr m_wktVlr;
-    lazperf::copc_extents_vlr m_extentVlr;
     std::vector<lazperf::chunk> m_chunkTable;
     uint64_t m_chunkOffsetPos;
     uint64_t m_pointPos;

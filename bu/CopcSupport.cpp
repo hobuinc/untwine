@@ -54,7 +54,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     m_header.offset.x = b.offset[0];
     m_header.offset.y = b.offset[1];
     m_header.offset.z = b.offset[2];
-    m_header.vlr_count = 4;
+    m_header.vlr_count = 3;
 
     //IMPORTANT: We have to calculate the point offset here so that we can start writing
     // points to the proper location immediately. This means knowing the sizes of the VLRs

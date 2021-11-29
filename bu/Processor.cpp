@@ -450,7 +450,7 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef ta
     pdal::Options wopts;
     wopts.add("extra_dims", "all");
     wopts.add("software_id", "Entwine 1.0");
-    wopts.add("compression", "laszip");
+    wopts.add("compression", "lazperf");
     wopts.add("filename", filename);
     wopts.add("offset_x", m_b.offset[0]);
     wopts.add("offset_y", m_b.offset[1]);
@@ -470,6 +470,19 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef ta
     w->execute(table);
 }
 
+void Processor::sortChunk(const VoxelKey& key, pdal::PointViewPtr view)
+{
+
+    using namespace pdal;
+    auto cmp = [](const PointRef& p1, const PointRef& p2)
+    {
+        bool result = p1.compare(pdal::Dimension::Id::GpsTime, p2);
+        return result;
+    };
+
+    std::stable_sort(view->begin(), view->end(), cmp);
+
+}
 void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 {
     using namespace pdal;
@@ -480,7 +493,11 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
         return;
     }
 
+    if (view->layout()->hasDim(Dimension::Id::GpsTime))
+        sortChunk(key, view);
+
     PointLayoutPtr layout = view->layout();
+
     int ebCount {0};
     for (DimType dim : m_extraDims)
         ebCount += layout->dimSize(dim.m_id);

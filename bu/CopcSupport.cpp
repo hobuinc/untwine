@@ -117,8 +117,14 @@ void CopcSupport::updateHeader(const StatsMap& stats)
     m_header.minx = stats.at(Id::X).minimum();
     m_header.miny = stats.at(Id::Y).minimum();
     m_header.minz = stats.at(Id::Z).minimum();
-    m_copcVlr.gpstime_minimum = stats.at(Id::GpsTime).minimum();
-    m_copcVlr.gpstime_maximum = stats.at(Id::GpsTime).maximum();
+
+    m_copcVlr.gpstime_minimum = 0.0f;
+    m_copcVlr.gpstime_maximum = 0.0f;
+    if (stats.count(Id::GpsTime))
+    {
+        m_copcVlr.gpstime_minimum = stats.at(Id::GpsTime).minimum();
+        m_copcVlr.gpstime_maximum = stats.at(Id::GpsTime).maximum();
+    }
 
     for (int i = 1; i <= 15; ++i)
     {

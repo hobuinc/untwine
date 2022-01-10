@@ -78,21 +78,6 @@ void ThreadPool::work()
 
             task();
 
-            /**
-            try
-            {
-                task();
-            }
-            catch (std::exception& e)
-            {
-                err = e.what();
-            }
-            catch (...)
-            {
-                err = "Unknown error";
-            }
-            **/
-
             lock.lock();
             --m_outstanding;
             if (err.size())

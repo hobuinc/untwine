@@ -52,4 +52,11 @@ std::string QgisUntwine::progressMessage() const
     return m_progressMsg;
 }
 
+std::string QgisUntwine::errorMessage() const
+{
+    readPipe();
+
+    return m_errorMsg;
+}
+
 } // namespace untwine

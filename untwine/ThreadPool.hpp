@@ -123,11 +123,11 @@ public:
 
     // Add a threaded task, blocking until a thread is available.  If join() is
     // called, add() may not be called again until go() is called and completes.
-    void add(std::function<void()> task)
+    bool add(std::function<void()> task)
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         if (!m_running)
-            fatal("Attempted to add a task to a stopped ThreadPool");
+            return false;
 
         m_produceCv.wait(lock, [this]()
         {
@@ -139,6 +139,7 @@ public:
         // Notify worker that a task is available.
         lock.unlock();
         m_consumeCv.notify_all();
+        return true;
     }
 
     std::size_t size() const

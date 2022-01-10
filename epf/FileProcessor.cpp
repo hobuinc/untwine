@@ -99,7 +99,7 @@ void FileProcessor::run()
     }
     catch (const pdal::pdal_error& err)
     {
-        fatal(err.what());
+        throw FatalError(err.what());
     }
 
     m_progress.update(count % CountIncrement);

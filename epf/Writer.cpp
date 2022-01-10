@@ -138,7 +138,7 @@ void Writer::run()
         out.write(reinterpret_cast<const char *>(wd.data->data()), wd.dataSize);
         out.close();
         if (!out)
-            fatal("Failure writing to '" + path(wd.key) + "'.");
+            throw FatalError("Failure writing to '" + path(wd.key) + "'.");
 
         std::lock_guard<std::mutex> lock(m_mutex);
         m_bufferCache.replace(std::move(wd.data));

@@ -18,8 +18,8 @@ int main()
 //    files.push_back("C:\\Users\\andre\\nyc2");
 //    files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
 //    files.push_back("/Users/acbell/nyc/18TXL075075.las.laz");
-//    files.push_back("/Users/acbell/nyc/18TXL075090.las.laz");
-    files.push_back("/Users/acbell/nyc2");
+    files.push_back("/Users/acbell/nyc/18TXL075090.las.laz");
+//    files.push_back("/Users/acbell/nyc2");
 
     options.push_back({"dims", "X, Y, Z, Red, Green, Blue, Intensity"});
 //    book ok = api.start(files, ".\\out", options);
@@ -51,4 +51,5 @@ int main()
         if (!api.running())
             break;
     }
+    std::cerr << "Error = " << api.errorMessage() << "!\n";
 }

@@ -10,7 +10,11 @@ namespace untwine
 class ProgressWriter
 {
 public:
+    ProgressWriter();
     ProgressWriter(int fd);
+
+    // Set the progress file descriptor.
+    void setFd(int fd);
 
     /// Set the increment to use on the next call to setIncrement.
     void setIncrement(double increment);
@@ -19,6 +23,8 @@ public:
 
     /// Write a message using the current increment.
     void writeIncrement(const std::string& message);
+    /// Write an error message.
+    void writeErrorMessage(const std::string& message);
     /// Write a message and set the current percentage.
     void write(double percent, const std::string& message);
 

@@ -66,7 +66,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     if (m_header.ebCount())
     {
         m_header.vlr_count++;
-        m_header.point_offset += lazperf::vlr_header::Size + m_ebVlr.size();
+        m_header.point_offset += (uint32_t)(lazperf::vlr_header::Size + m_ebVlr.size());
     }
 
     // The chunk table offset is written as the first 8 bytes of the point data in LAZ.
@@ -140,7 +140,7 @@ void CopcSupport::updateHeader(const StatsMap& stats)
         if (i <= 5)
         {
             if (m_header.points_by_return_14[i] <= (std::numeric_limits<uint32_t>::max)())
-                m_header.points_by_return[i - 1] = m_header.points_by_return_14[i - 1];
+                m_header.points_by_return[i - 1] = (uint32_t)m_header.points_by_return_14[i - 1];
             else
                 m_header.points_by_return[i - 1] = 0;
         }

@@ -10,18 +10,18 @@ int main()
 {
     untwine::QgisUntwine::StringList files;
     untwine::QgisUntwine::Options options;
-//    std::string exe = "C:\\Users\\andre\\untwine\\build\\untwine.exe";
-    std::string exe = "/Users/acbell/untwine/build/untwine";
+    std::string exe = "C:\\Users\\andre\\untwine\\build\\untwine.exe";
+//    std::string exe = "/Users/acbell/untwine/build/untwine";
 
     untwine::QgisUntwine api(exe);
     
 //    files.push_back("C:\\Users\\andre\\nyc2");
-//    files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
+    files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
 //    files.push_back("/Users/acbell/nyc/18TXL075075.las.laz");
-    files.push_back("/Users/acbell/nyc/18TXL075090.las.laz");
+//    files.push_back("/Users/acbell/nyc/18TXL075090.las.laz");
 //    files.push_back("/Users/acbell/nyc2");
 
-    options.push_back({"dims", "X, Y, Z, Red, Green, Blue, Intensity"});
+//    options.push_back({"dims", "X, Y, Z, Red, Green, Blue, Intensity"});
 //    book ok = api.start(files, ".\\out", options);
     bool ok = api.start(files, "./out", options);
     if (! ok)

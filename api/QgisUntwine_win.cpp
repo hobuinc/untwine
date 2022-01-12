@@ -136,6 +136,7 @@ void QgisUntwine::readPipe() const
     while (true)
     {
         DWORD numRead;
+	uint32_t msgId;
 
         ReadFile(m_progressFd, &msgId, sizeof(msgId), &numRead, NULL);
         if (numRead != sizeof(msgId))

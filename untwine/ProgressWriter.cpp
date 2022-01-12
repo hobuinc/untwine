@@ -95,6 +95,12 @@ void ProgressWriter::writeMessage(uint32_t percent, const std::string& message)
 
 void ProgressWriter::writeErrorMessage(const std::string& message)
 {
+    if (m_progressFd < 0)
+    {
+        std::cerr << message << "\n";
+        return;
+    }
+
     const int32_t msgId = 1001;
 #ifndef _WIN32
     bool err = false;

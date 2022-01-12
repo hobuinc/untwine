@@ -43,6 +43,27 @@ Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo
 
 void Processor::run()
 {
+    // Don't let any exception sneak out of here.
+    try
+    {
+        runLocal();
+    }
+    catch (const std::exception& ex)
+    {
+        m_manager.queueWithError(m_vi.octant(), ex.what());
+        return;
+    }
+    catch (...)
+    {
+        std::string msg = std::string("Unexpected error processing ") + m_vi.key().toString() + ".";
+        m_manager.queueWithError(m_vi.octant(), msg);
+        return;
+    }
+    m_manager.queue(m_vi.octant());
+}
+
+void Processor::runLocal()
+{
     // If we don't merge small files into one, we'll end up trying to deal with too many
     // open files later and run out of file descriptors.
     for (int i = 0; i < 8; ++i)
@@ -78,8 +99,6 @@ void Processor::run()
         sample(accepted, rejected);
 
     write(accepted, rejected);
-
-    m_manager.queue(m_vi.octant());
 }
 
 
@@ -373,7 +392,6 @@ flush:
     {
         throw FatalError(err.what());
     }
-
     m_manager.logOctant(o.key(), count, stats);
     return pos;
 }

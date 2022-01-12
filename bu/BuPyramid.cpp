@@ -32,8 +32,13 @@ void BuPyramid::run(ProgressWriter& progress)
     progress.setPercent(.6);
     progress.setIncrement(.4 / count);
     m_manager.setProgress(&progress);
+    //ABELL - Not sure why this was being run in a separate thread. The current thread
+    // would block in join() anyway.
+    /**
     std::thread runner(&PyramidManager::run, &m_manager);
     runner.join();
+    **/
+    m_manager.run();
     if (!m_b.opts.singleFile)
         writeInfo();
 }

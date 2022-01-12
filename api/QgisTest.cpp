@@ -51,5 +51,5 @@ int main()
         if (!api.running())
             break;
     }
-    std::cerr << "Error = " << api.errorMessage() << "!\n";
+    std::cerr << "Error = " << api.errorMessage() << "\n";
 }

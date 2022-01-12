@@ -42,6 +42,7 @@ private:
     using Index = std::deque<int>;
     using IndexIter = Index::const_iterator;
 
+    void runLocal();
     void sample(Index& accepted, Index& rejected);
     void write(Index& accepted, Index& rejected);
     bool acceptable(int pointId, GridKey key);

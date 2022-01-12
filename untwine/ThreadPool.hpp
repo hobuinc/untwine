@@ -53,7 +53,7 @@ public:
     // to Pool::add will block until an enqueued task has been popped from the
     // queue.
     ThreadPool(std::size_t numThreads, int64_t queueSize = -1,
-            bool verbose = true) :
+            bool verbose = false) :
         m_queueSize(queueSize),
         m_numThreads(std::max<std::size_t>(numThreads, 1)), m_verbose(verbose)
     {
@@ -117,9 +117,24 @@ public:
         go();
     }
 
-    // Not thread-safe, pool should be joined before calling.
-    const std::vector<std::string>& errors() const
-    { return m_errors; }
+    // Determine if worker threads had errors.
+    bool hasErrors() const
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        return m_errors.size();
+    }
+
+    // Clear worker thread errors, returning the list of current errors in the process.
+    std::vector<std::string> clearErrors()
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+
+        std::vector<std::string> out = m_errors;
+        m_errors.clear();
+        return out;
+    }
+
 
     // Add a threaded task, blocking until a thread is available.  If join() is
     // called, add() may not be called again until go() is called and completes.
@@ -148,6 +163,17 @@ public:
     std::size_t numThreads() const
     { return m_numThreads; }
 
+    // Turn on or off exception trapping of worker threads. Optionally set a catchall string
+    // to be used when a exception is caught that doesn't derive from std::exception.
+    void trap(bool trapExceptions, const std::string& catchall = "Unknown error")
+    {
+        std::unique_lock<std::mutex> l(m_mutex);
+
+        m_trap = trapExceptions;
+        m_catchall = catchall;
+        m_errors.clear();
+    }
+
 private:
     // Worker thread function.  Wait for a task and run it.
     void work();
@@ -157,12 +183,12 @@ private:
     bool m_verbose;
     std::vector<std::thread> m_threads;
     std::queue<std::function<void()>> m_tasks;
-
     std::vector<std::string> m_errors;
-    std::mutex m_errorMutex;
 
     std::size_t m_outstanding = 0;
     bool m_running = false;
+    bool m_trap = false;
+    std::string m_catchall = "Unknown error.";
 
     mutable std::mutex m_mutex;
     std::condition_variable m_produceCv;

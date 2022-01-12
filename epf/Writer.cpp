@@ -92,6 +92,9 @@ void Writer::stop()
     }
     m_available.notify_all();
     m_pool.join();
+    std::vector<std::string> errors = m_pool.clearErrors();
+    if (errors.size())
+        throw FatalError(errors.front());
 }
 
 void Writer::run()

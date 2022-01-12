@@ -76,7 +76,23 @@ void ThreadPool::work()
 
             std::string err;
 
-            task();
+            if (m_trap)
+            {
+                try
+                {
+                    task();
+                }
+                catch (std::exception& e)
+                {
+                    err = e.what();
+                }
+                catch (...)
+                {
+                    err = m_catchall;
+                }
+            }
+            else
+                task();
 
             lock.lock();
             --m_outstanding;

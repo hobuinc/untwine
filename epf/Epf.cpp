@@ -302,8 +302,9 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         s->setOptions(opts);
 
         QuickInfo qi = s->preview();
+
         if (!qi.valid())
-            throw "Couldn't get quick info for '" + filename + "'.";
+            throw FatalError("Couldn't get quick info for '" + filename + "'.");
 
         // Get scale values from the reader if they exist.
         pdal::MetadataNode root = s->getMetadata();

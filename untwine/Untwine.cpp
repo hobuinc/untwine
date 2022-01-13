@@ -164,6 +164,16 @@ int main(int argc, char *argv[])
         progress.writeErrorMessage(err.what());
         return -1;
     }
+    catch (const std::exception& ex)
+    {
+        progress.writeErrorMessage(ex.what());
+	return -1;
+    }
+    catch (...)
+    {
+	progress.writeErrorMessage("Unknown/unexpected exception.");
+	return -1;
+    }
 
     return 0;
 }

@@ -16,7 +16,11 @@ int main()
     untwine::QgisUntwine api(exe);
     
 //    files.push_back("C:\\Users\\andre\\nyc2");
-    files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
+    std::vector<unsigned char> funnycVec = { 0xc4, 0x8d };
+    std::string funnyc(funnycVec.begin(), funnycVec.end());
+    std::string v8string { "C:\\Users\\andre\\untwine\\api\\build\\" + funnyc + "\\" + funnyc + ".las" };
+    files.push_back(v8string);
+//   files.push_back("C:\\Users\\andre\\nyc2\\18TXL075075.las.laz");
 //    files.push_back("/Users/acbell/nyc/18TXL075075.las.laz");
 //    files.push_back("/Users/acbell/nyc/18TXL075090.las.laz");
 //    files.push_back("/Users/acbell/nyc2");

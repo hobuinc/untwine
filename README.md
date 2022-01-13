@@ -23,6 +23,12 @@ cmake ..
 make
 ```
 
+Building a local docker image:
+--------
+```
+docker build -t untwine:latest .
+```
+
 Using Untwine
 -------------
 
@@ -35,6 +41,11 @@ Example:
 
 ```
 untwine --files=some_directory --output_dir=output_directory
+```
+
+Or with your previously built local docker image:
+```
+docker run -it -v "$PWD":/untwine untwine:latest --files=/untwine/test.laz --output_dir=/untwine/test.ept.copc --single_file --stats
 ```
 
 Options

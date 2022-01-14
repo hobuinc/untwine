@@ -43,6 +43,27 @@ Processor::Processor(PyramidManager& manager, const VoxelInfo& v, const BaseInfo
 
 void Processor::run()
 {
+    // Don't let any exception sneak out of here.
+    try
+    {
+        runLocal();
+    }
+    catch (const std::exception& ex)
+    {
+        m_manager.queueWithError(m_vi.octant(), ex.what());
+        return;
+    }
+    catch (...)
+    {
+        std::string msg = std::string("Unexpected error processing ") + m_vi.key().toString() + ".";
+        m_manager.queueWithError(m_vi.octant(), msg);
+        return;
+    }
+    m_manager.queue(m_vi.octant());
+}
+
+void Processor::runLocal()
+{
     // If we don't merge small files into one, we'll end up trying to deal with too many
     // open files later and run out of file descriptors.
     for (int i = 0; i < 8; ++i)
@@ -78,8 +99,6 @@ void Processor::run()
         sample(accepted, rejected);
 
     write(accepted, rejected);
-
-    m_manager.queue(m_vi.octant());
 }
 
 
@@ -226,7 +245,7 @@ void Processor::writeBinOutput(Index& index)
     std::string fullFilename = m_b.opts.tempDir + "/" + filename;
     std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
     if (!out)
-        fatal("Couldn't open '" + fullFilename + "' for output.");
+        throw FatalError("Couldn't open '" + fullFilename + "' for output.");
     for (size_t i = 0; i < index.size(); ++i)
         out.write(m_points[index[i]].cdata(), m_b.pointSize);
     m_vi.octant().appendFileInfo(FileInfo(filename, index.size()));
@@ -371,9 +390,8 @@ flush:
     }
     catch (pdal_error& err)
     {
-        fatal(err.what());
+        throw FatalError(err.what());
     }
-
     m_manager.logOctant(o.key(), count, stats);
     return pos;
 }
@@ -520,7 +538,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     out.write(reinterpret_cast<const char *>(chunk.data()), chunk.size());
     out.close();
     if (!out)
-        fatal("Failure writing to '" + m_b.opts.outputName + "'.");
+        throw FatalError("Failure writing to '" + m_b.opts.outputName + "'.");
 }
 
 void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
@@ -550,7 +568,7 @@ void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
         int32_t i(0);
 
         if (!Utils::numericCast(d, i))
-            fatal("Unable to convert scaled value (" +
+            throw FatalError("Unable to convert scaled value (" +
                 Utils::toString(d) + ") to "
                 "int32 for dimension '" + Dimension::name(dim) +
                 "' when writing LAS/LAZ file.");

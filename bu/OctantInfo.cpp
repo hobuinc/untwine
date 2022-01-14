@@ -28,7 +28,7 @@ void OctantInfo::mergeSmallFiles(const std::string tempDir, size_t pointSize)
 
     std::ofstream out(filename, std::ios::binary | std::ios::trunc);
     if (!out)
-        fatal("Couldn't open temporary merge file '" + filename + "'.");
+        throw FatalError("Couldn't open temporary merge file '" + filename + "'.");
 
     int totalPoints = 0;
     auto it = m_fileInfos.begin();
@@ -43,7 +43,7 @@ void OctantInfo::mergeSmallFiles(const std::string tempDir, size_t pointSize)
             filename = tempDir + "/" + fi.filename();
             std::ifstream in(filename, std::ios::binary);
             if (!in)
-                fatal("Couldn't open file '" + filename + "' to merge.");
+                throw FatalError("Couldn't open file '" + filename + "' to merge.");
             in.read(buf.data(), bytes);
             out.write(buf.data(), bytes);
             totalPoints += numPoints;

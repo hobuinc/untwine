@@ -19,7 +19,12 @@ const int CellCount = 128;
 using PointCount = uint64_t;
 using StringList = std::vector<std::string>;
 
-void fatal(const std::string& err);
+class  FatalError : public std::runtime_error
+{
+public:
+    inline FatalError(std::string const& msg) : std::runtime_error(msg)
+        {}
+};
 
 struct Options
 {

@@ -13,8 +13,16 @@
 namespace untwine
 {
 
+ProgressWriter::ProgressWriter() : m_progressFd(-1), m_percent(0.0), m_increment(.1)
+{}
+
 ProgressWriter::ProgressWriter(int fd) : m_progressFd(fd), m_percent(0.0), m_increment(.1)
 {}
+
+void ProgressWriter::setFd(int fd)
+{
+    m_progressFd = fd;
+}
 
 void ProgressWriter::setIncrement(double increment)
 {
@@ -61,9 +69,11 @@ void ProgressWriter::write(double percent, const std::string& message)
 
 void ProgressWriter::writeMessage(uint32_t percent, const std::string& message)
 {
+    const int32_t msgId = 1000;
 #ifndef _WIN32
     bool err = false;
-    err = (::write(m_progressFd, &percent, sizeof(percent)) == -1);
+    err = (::write(m_progressFd, &msgId, sizeof(msgId)) == -1);
+    err |= (::write(m_progressFd, &percent, sizeof(percent)) == -1);
     uint32_t ssize = (uint32_t)message.size();
     err |= (::write(m_progressFd, &ssize, sizeof(ssize)) == -1);
     err |= (::write(m_progressFd, message.data(), ssize) == -1);
@@ -75,7 +85,38 @@ void ProgressWriter::writeMessage(uint32_t percent, const std::string& message)
 #else
     DWORD numWritten;
     HANDLE h = reinterpret_cast<HANDLE>((intptr_t)m_progressFd);
+    WriteFile(h, &msgId, sizeof(msgId), &numWritten, NULL);
     WriteFile(h, &percent, sizeof(percent), &numWritten, NULL);
+    uint32_t ssize = (uint32_t)message.size();
+    WriteFile(h, &ssize, sizeof(ssize), &numWritten, NULL);
+    WriteFile(h, message.data(), ssize, &numWritten, NULL);
+#endif
+}
+
+void ProgressWriter::writeErrorMessage(const std::string& message)
+{
+    if (m_progressFd < 0)
+    {
+        std::cerr << message << "\n";
+        return;
+    }
+
+    const int32_t msgId = 1001;
+#ifndef _WIN32
+    bool err = false;
+    err = (::write(m_progressFd, &msgId, sizeof(msgId)) == -1);
+    uint32_t ssize = (uint32_t)message.size();
+    err |= (::write(m_progressFd, &ssize, sizeof(ssize)) == -1);
+    err |= (::write(m_progressFd, message.data(), ssize) == -1);
+    if (err)
+    {
+        ::close(m_progressFd);
+        m_progressFd = -1;
+    }
+#else
+    DWORD numWritten;
+    HANDLE h = reinterpret_cast<HANDLE>((intptr_t)m_progressFd);
+    WriteFile(h, &msgId, sizeof(msgId), &numWritten, NULL);
     uint32_t ssize = (uint32_t)message.size();
     WriteFile(h, &ssize, sizeof(ssize), &numWritten, NULL);
     WriteFile(h, message.data(), ssize, &numWritten, NULL);

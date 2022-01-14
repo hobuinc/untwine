@@ -32,7 +32,6 @@ PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(10), m_totalP
     m_copc(m_b)
 {}
 
-
 PyramidManager::~PyramidManager()
 {}
 
@@ -54,6 +53,18 @@ void PyramidManager::queue(const OctantInfo& o)
 }
 
 
+void PyramidManager::queueWithError(const OctantInfo& o, const std::string& error)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        m_queue.push(o);
+        m_error = error;
+    }
+    m_cv.notify_one();
+}
+
+
 void PyramidManager::run()
 {
     while (true)
@@ -65,6 +76,9 @@ void PyramidManager::run()
             m_cv.wait(lock, [this](){return m_queue.size();});
             o = m_queue.front();
             m_queue.pop();
+
+            if (m_error.size())
+                throw FatalError(m_error);
         }
 
         if (o.key() == VoxelKey(0, 0, 0, 0))

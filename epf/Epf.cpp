@@ -53,7 +53,7 @@ void Epf::run(ProgressWriter& progress)
     BOX3D totalBounds;
 
     if (pdal::FileUtils::fileExists(m_b.opts.tempDir + "/" + MetadataFilename))
-        fatal("Output directory already contains EPT data.");
+        throw FatalError("Output directory already contains EPT data.");
 
     m_grid.setCubic(m_b.opts.doCube);
 
@@ -118,6 +118,7 @@ void Epf::run(ProgressWriter& progress)
     progress.m_current = 0;
 
     // Add the files to the processing pool
+    m_pool.trap(true, "Unknown error in FileProcessor");
     for (const FileInfo& fi : fileInfos)
     {
         int pointSize = layout->pointSize();
@@ -129,12 +130,18 @@ void Epf::run(ProgressWriter& progress)
     }
 
     // Wait for  all the processors to finish and restart.
-    m_pool.cycle();
-    progress.setPercent(.4);
-
+    m_pool.join();
     // Tell the writer that it can exit. stop() will block until the writer threads
-    // are finished.
+    // are finished.  stop() will throw if an error occurred during writing.
     m_writer->stop();
+
+    // If the FileProcessors had an error, throw.
+    std::vector<std::string> errors = m_pool.clearErrors();
+    if (errors.size())
+        throw FatalError(errors.front());
+
+    m_pool.go();
+    progress.setPercent(.4);
 
     // Get totals from the current writer that are greater than the MaxPointsPerNode.
     // Each of these voxels that is too large will be reprocessed.
@@ -148,6 +155,7 @@ void Epf::run(ProgressWriter& progress)
     // Make a new writer since we stopped the old one. Could restart, but why bother with
     // extra code...
     m_writer.reset(new Writer(m_b.opts.tempDir, 4, layout->pointSize()));
+    m_pool.trap(true, "Unknown error in Reprocessor");
     for (auto& t : totals)
     {
         VoxelKey key = t.first;
@@ -165,6 +173,11 @@ void Epf::run(ProgressWriter& progress)
         });
     }
     m_pool.stop();
+    // If the Reprocessors had an error, throw.
+    errors = m_pool.clearErrors();
+    if (errors.size())
+        throw FatalError(errors.front());
+
     m_writer->stop();
 
     fillMetadata(layout);
@@ -282,15 +295,16 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         StageFactory factory;
         std::string driver = factory.inferReaderDriver(filename);
         if (driver.empty())
-            fatal("Can't infer reader for '" + filename + "'.");
+            throw FatalError("Can't infer reader for '" + filename + "'.");
         Stage *s = factory.createStage(driver);
         pdal::Options opts;
         opts.add("filename", filename);
         s->setOptions(opts);
 
         QuickInfo qi = s->preview();
+
         if (!qi.valid())
-            throw "Couldn't get quick info for '" + filename + "'.";
+            throw FatalError("Couldn't get quick info for '" + filename + "'.");
 
         // Get scale values from the reader if they exist.
         pdal::MetadataNode root = s->getMetadata();

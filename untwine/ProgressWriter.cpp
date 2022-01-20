@@ -13,10 +13,10 @@
 namespace untwine
 {
 
-ProgressWriter::ProgressWriter() : m_progressFd(-1), m_percent(0.0), m_increment(.1)
+ProgressWriter::ProgressWriter() : m_progressFd(-1), m_percent(0.0), m_increment(.01)
 {}
 
-ProgressWriter::ProgressWriter(int fd) : m_progressFd(fd), m_percent(0.0), m_increment(.1)
+ProgressWriter::ProgressWriter(int fd) : m_progressFd(fd), m_percent(0.0), m_increment(.01)
 {}
 
 void ProgressWriter::setFd(int fd)
@@ -123,15 +123,30 @@ void ProgressWriter::writeErrorMessage(const std::string& message)
 #endif
 }
 
+// Determine the point increment and reset the counters.
+void ProgressWriter::setPointIncrementer(PointCount total, int totalClicks)
+{
+    assert(totalClicks <= 100);
+    assert(totalClicks > 0);
+
+    m_current = 0;
+    if (total < ChunkSize)
+        m_pointIncrement = total;
+    else
+        m_pointIncrement = total / totalClicks;
+    m_nextClick = m_pointIncrement;
+}
+
+// Write a message if the threshold has been reached.
 void ProgressWriter::update(PointCount count)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    PointCount inc = m_current / m_threshold;
     m_current += count;
-    PointCount postInc = m_current / m_threshold;
-    if (inc != postInc)
+    while (m_current >= m_nextClick)
     {
+        m_nextClick += m_pointIncrement;
+
         lock.unlock();
         writeIncrement("Processed " + std::to_string(m_current) + " points");
     }

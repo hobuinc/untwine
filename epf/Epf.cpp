@@ -61,7 +61,7 @@ void Epf::run(ProgressWriter& progress)
     // hold all the points. If the number of points seems too large, N is expanded to N + 1.
     // The correct N is often wrong, especially for some areas where things are more dense.
     std::vector<FileInfo> fileInfos;
-    progress.m_total = createFileInfo(m_b.opts.inputFiles, m_b.opts.dimNames, fileInfos);
+    point_count_t totalPoints = createFileInfo(m_b.opts.inputFiles, m_b.opts.dimNames, fileInfos);
 
     if (m_b.opts.level != -1)
         m_grid.resetLevel(m_b.opts.level);
@@ -113,9 +113,7 @@ void Epf::run(ProgressWriter& progress)
     std::sort(fileInfos.begin(), fileInfos.end(), [](const FileInfo& f1, const FileInfo& f2)
         { return f1.numPoints > f2.numPoints; });
 
-    progress.m_threshold = progress.m_total / 40;
-    progress.setIncrement(.01);
-    progress.m_current = 0;
+    progress.setPointIncrementer(totalPoints, 40);
 
     // Add the files to the processing pool
     m_pool.trap(true, "Unknown error in FileProcessor");
@@ -150,7 +148,7 @@ void Epf::run(ProgressWriter& progress)
 
     // Progress for reprocessing goes from .4 to .6.
     progress.setPercent(.4);
-    progress.setIncrement(.2 / totals.size());
+    progress.setIncrement(.2 / (std::max)((size_t)1, totals.size()));
 
     // Make a new writer since we stopped the old one. Could restart, but why bother with
     // extra code...

@@ -42,6 +42,7 @@ public:
 
     void setProgress(ProgressWriter *progress);
     void queue(const OctantInfo& o);
+    void queueWithError(const OctantInfo& o, const std::string& error);
     void run();
     void logOctant(const VoxelKey& k, int cnt, const IndexedStats& istats);
     uint64_t totalPoints() const
@@ -62,6 +63,7 @@ private:
     StatsMap m_stats;
     ProgressWriter *m_progress;
     CopcSupport m_copc;
+    std::string m_error;
     //
     std::unordered_map<VoxelKey, int> m_written;
     std::unordered_map<VoxelKey, int> m_childCounts;

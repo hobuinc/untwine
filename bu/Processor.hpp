@@ -42,6 +42,7 @@ private:
     using Index = std::deque<int>;
     using IndexIter = Index::const_iterator;
 
+    void runLocal();
     void sample(Index& accepted, Index& rejected);
     void write(Index& accepted, Index& rejected);
     bool acceptable(int pointId, GridKey key);
@@ -59,6 +60,7 @@ private:
     void writeEptFile(const std::string& filename, pdal::PointTableRef table,
         pdal::PointViewPtr view);
     void createChunk(const VoxelKey& key, pdal::PointViewPtr view);
+    void sortChunk(const VoxelKey& key, pdal::PointViewPtr view);
     void fillPointBuf(pdal::PointRef& point, std::vector<char>& buf);
 
     VoxelInfo m_vi;

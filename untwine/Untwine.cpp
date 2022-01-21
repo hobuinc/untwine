@@ -24,19 +24,12 @@
 namespace untwine
 {
 
-void fatal(const std::string& err)
-{
-    std::cerr << "untwine fatal error: " << err << "\n";
-    exit(-1);
-}
-
-
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
     programArgs.add("files,i", "Input files/directory", options.inputFiles);
     programArgs.add("output_dir,o", "Output directory/filename for single-file output",
         options.outputName);
-    programArgs.add("single_file", "Create a single output file", options.singleFile);
+    programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
     programArgs.add("clean_temp_dir", "Remove files from the temp directory",
         options.cleanTempDir, true);
@@ -51,6 +44,10 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
         options.stats);
+    programArgs.add("a_srs", "Assign output SRS",
+        options.a_srs, "");
+    programArgs.add("metadata", "Write PDAL metadata to VLR output",
+        options.metadata, false);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)
@@ -92,7 +89,7 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
     }
     catch (const pdal::arg_error& err)
     {
-        fatal(err.what());
+        throw FatalError(err.what());
     }
     return true;
 }
@@ -102,7 +99,7 @@ void createDirs(const Options& options)
     if (!options.singleFile)
     {
         if (!pdal::FileUtils::createDirectory(options.outputName))
-            fatal("Couldn't create output directory: " + options.outputName + "'.");
+            throw FatalError("Couldn't create output directory: " + options.outputName + "'.");
         pdal::FileUtils::deleteFile(options.outputName + "/ept.json");
         pdal::FileUtils::deleteDirectory(options.outputName + "/ept-data");
         pdal::FileUtils::deleteDirectory(options.outputName + "/ept-hierarchy");
@@ -112,11 +109,11 @@ void createDirs(const Options& options)
 
     if (pdal::FileUtils::fileExists(options.tempDir) &&
         !pdal::FileUtils::isDirectory(options.tempDir))
-        fatal("Can't use temp directory - exists as a regular or special file.");
+        throw FatalError("Can't use temp directory - exists as a regular or special file.");
     if (options.cleanTempDir)
         pdal::FileUtils::deleteDirectory(options.tempDir);
     if (!pdal::FileUtils::createDirectory(options.tempDir))
-        fatal("Couldn't create temp directory: '" + options.tempDir + "'.");
+        throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");
 }
 
 } // namespace untwine
@@ -136,15 +133,15 @@ int main(int argc, char *argv[])
 
     BaseInfo common;
     Options& options = common.opts;
-
-    if (!handleOptions(arglist, options))
-        return 0;
-    createDirs(options);
-
-    ProgressWriter progress(options.progressFd);
+    ProgressWriter progress;
 
     try
     {
+        if (!handleOptions(arglist, options))
+            return 0;
+        progress.setFd(options.progressFd);
+        createDirs(options);
+
         epf::Epf preflight(common);
         preflight.run(progress);
 
@@ -153,7 +150,28 @@ int main(int argc, char *argv[])
     }
     catch (const char *s)
     {
-        std::cerr << "Error: " << s << "\n";
+        progress.writeErrorMessage(std::string("Error: ") + s + "\n");
+        return -1;
+    }
+    catch (const pdal::pdal_error& err)
+    {
+        progress.writeErrorMessage(err.what());
+        return -1;
+    }
+    catch (const untwine::FatalError& err)
+    {
+        progress.writeErrorMessage(err.what());
+        return -1;
+    }
+    catch (const std::exception& ex)
+    {
+        progress.writeErrorMessage(ex.what());
+	return -1;
+    }
+    catch (...)
+    {
+	progress.writeErrorMessage("Unknown/unexpected exception.");
+	return -1;
     }
 
     return 0;

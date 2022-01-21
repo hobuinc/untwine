@@ -32,8 +32,13 @@ void BuPyramid::run(ProgressWriter& progress)
     progress.setPercent(.6);
     progress.setIncrement(.4 / count);
     m_manager.setProgress(&progress);
+    //ABELL - Not sure why this was being run in a separate thread. The current thread
+    // would block in join() anyway.
+    /**
     std::thread runner(&PyramidManager::run, &m_manager);
     runner.join();
+    **/
+    m_manager.run();
     if (!m_b.opts.singleFile)
         writeInfo();
 }
@@ -59,13 +64,15 @@ void BuPyramid::writeInfo()
     };
 
     std::ofstream out(m_b.opts.outputName + "/ept.json");
+    int maxdigits = std::numeric_limits<double>::max_digits10;
+    int basedigits = out.precision();
 
     out << "{\n";
 
     pdal::BOX3D& b = m_b.bounds;
 
     // Set fixed output for bounds output to get sufficient precision.
-    out << std::fixed;
+    out << std::fixed << std::setprecision(maxdigits);
     out << "\"bounds\": [" <<
         b.minx << ", " << b.miny << ", " << b.minz << ", " <<
         b.maxx << ", " << b.maxy << ", " << b.maxz << "],\n";
@@ -90,12 +97,14 @@ void BuPyramid::writeInfo()
         out << "\t{";
             out << "\"name\": \"" << fdi.name << "\", ";
             out << "\"type\": \"" << typeString(pdal::Dimension::base(fdi.type)) << "\", ";
+            out << std::fixed << std::setprecision(maxdigits);
             if (fdi.name == "X")
                 out << "\"scale\": " << m_b.scale[0] << ", \"offset\": " << m_b.offset[0] << ", ";
             if (fdi.name == "Y")
                 out << "\"scale\": " << m_b.scale[1] << ", \"offset\": " << m_b.offset[1] << ", ";
             if (fdi.name == "Z")
                 out << "\"scale\": " << m_b.scale[2] << ", \"offset\": " << m_b.offset[2] << ", ";
+            out << std::defaultfloat;
             out << "\"size\": " << pdal::Dimension::size(fdi.type);
             const Stats *stats = m_manager.stats(fdi.dim);
             if (stats)
@@ -115,11 +124,13 @@ void BuPyramid::writeInfo()
                     out << "], ";
                 }
                 out << "\"count\": " << m_manager.totalPoints() << ", ";
+                out << std::fixed << std::setprecision(maxdigits);
                 out << "\"maximum\": " << stats->maximum() << ", ";
                 out << "\"minimum\": " << stats->minimum() << ", ";
                 out << "\"mean\": " << stats->average() << ", ";
                 out << "\"stddev\": " << stats->stddev() << ", ";
                 out << "\"variance\": " << stats->variance();
+                out << std::defaultfloat;
             }
         out << "}";
         if (di + 1 != m_b.dimInfo.end())

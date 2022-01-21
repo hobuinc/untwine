@@ -43,11 +43,8 @@ void FileProcessor::run()
     pdal::Stage *s = factory.createStage(m_fi.driver);
     s->setOptions(opts);
 
-    pdal::StreamCallbackFilter f;
 
-    PointCount CountIncrement = 100000;
     PointCount count = 0;
-    PointCount limit = CountIncrement;
 
     // We need to move the data from the PointRef to some output buffer. We copy the data
     // to the end of the *last* output buffer we used in hopes that it's the right one.
@@ -57,7 +54,9 @@ void FileProcessor::run()
     // This is some random cell that ultimately won't get used, but it contains a buffer
     // into which we can write data.
     Cell *cell = m_cellMgr.get(VoxelKey());
-    f.setCallback([this, &count, &limit, &cell, &CountIncrement](pdal::PointRef& point)
+
+    pdal::StreamCallbackFilter f;
+    f.setCallback([this, &count, &cell](pdal::PointRef& point)
         {
             // Write the data into the point buffer in the cell.  This is the *last*
             // cell buffer that we used. We're hoping that it's the right one.
@@ -79,10 +78,10 @@ void FileProcessor::run()
             cell->advance();
             count++;
 
-            if (count == limit)
+            if (count == ProgressWriter::ChunkSize)
             {
-                m_progress.update(CountIncrement);
-                limit += CountIncrement;
+                m_progress.update();
+                count = 0;
             }
 
             return true;
@@ -99,10 +98,12 @@ void FileProcessor::run()
     }
     catch (const pdal::pdal_error& err)
     {
-        fatal(err.what());
+        throw FatalError(err.what());
     }
 
-    m_progress.update(count % CountIncrement);
+    // We normally call update for every CountIncrement points, but at the end, just
+    // tell the progress writer the number that we've done since the last update.
+    m_progress.update(count);
 }
 
 } // namespace epf

@@ -10,7 +10,13 @@ namespace untwine
 class ProgressWriter
 {
 public:
+    static const PointCount ChunkSize = 100'000;
+
+    ProgressWriter();
     ProgressWriter(int fd);
+
+    // Set the progress file descriptor.
+    void setFd(int fd);
 
     /// Set the increment to use on the next call to setIncrement.
     void setIncrement(double increment);
@@ -19,20 +25,24 @@ public:
 
     /// Write a message using the current increment.
     void writeIncrement(const std::string& message);
+    /// Write an error message.
+    void writeErrorMessage(const std::string& message);
     /// Write a message and set the current percentage.
     void write(double percent, const std::string& message);
 
-    void update(PointCount numProcessed);
-    // Utility fields
-    PointCount m_total;
-    PointCount m_threshold;
-    PointCount m_current;
+    // Point handling support.
+    void setPointIncrementer(PointCount total, int totalClicks);
+    void update(PointCount numProcessed = ChunkSize);
 
 private:
     std::mutex m_mutex;
     int m_progressFd;
     double m_percent; // Current percent.
     double m_increment; // Current increment.
+
+    PointCount m_pointIncrement;
+    PointCount m_nextClick;
+    PointCount m_current;
 
     void writeMessage(uint32_t percent, const std::string& message);
 };

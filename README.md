@@ -84,3 +84,12 @@ Options
   Generate a LAZ file with spatially arranged data and hierarchy information
   [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
 
+- progress_fd
+
+  File descriptor number of a pipe using the Untwine API to send progress and error messages.
+  [Default: -1]
+
+- progress_debug
+
+  Set to true to have progress messages written to standard output. Disabled if 'progress_fd'
+  is set to '1'. [Default: false]

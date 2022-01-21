@@ -32,11 +32,12 @@ struct Options
     bool singleFile;
     StringList inputFiles;
     std::string tempDir;
-    bool cleanTempDir;
+    bool preserveTempDir;
     bool doCube;
     size_t fileLimit;
     int level;
     int progressFd;
+    bool progressDebug;
     StringList dimNames;
     bool stats;
     std::string a_srs;

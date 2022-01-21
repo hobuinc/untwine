@@ -40,7 +40,6 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.fileLimit, (size_t)10000000);
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
-    programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
     programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always "
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
@@ -87,13 +86,6 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
         }
         if (options.singleFile)
             options.stats = true;
-
-        //
-        if (options.progressFd == 1 && options.progressDebug)
-        {
-            std::cerr << "'--progress_fd' set to 1. Disabling '--progressDebug'.\n";
-            options.progressDebug = false;
-        }
     }
     catch (const pdal::arg_error& err)
     {

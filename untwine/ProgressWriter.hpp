@@ -13,7 +13,7 @@ public:
     static const PointCount ChunkSize = 100'000;
 
     ProgressWriter();
-    ProgressWriter(int fd);
+    ProgressWriter(int fd, bool debug);
 
     // Set the progress file descriptor.
     void setFd(int fd);
@@ -36,7 +36,8 @@ public:
 
 private:
     std::mutex m_mutex;
-    int m_progressFd;
+    int m_fd;
+    bool m_debug;
     double m_percent; // Current percent.
     double m_increment; // Current increment.
 

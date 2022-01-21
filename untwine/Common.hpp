@@ -32,7 +32,7 @@ struct Options
     bool singleFile;
     StringList inputFiles;
     std::string tempDir;
-    bool preserveTempDir;
+    bool cleanTempDir;
     bool doCube;
     size_t fileLimit;
     int level;

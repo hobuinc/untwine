@@ -116,7 +116,7 @@ void createDirs(const Options& options)
     if (pdal::FileUtils::fileExists(options.tempDir) &&
         !pdal::FileUtils::isDirectory(options.tempDir))
         throw FatalError("Can't use temp directory - exists as a regular or special file.");
-    if (!options.preserveTempDir)
+    if (options.cleanTempDir)
         pdal::FileUtils::deleteDirectory(options.tempDir);
     if (!pdal::FileUtils::createDirectory(options.tempDir))
         throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");

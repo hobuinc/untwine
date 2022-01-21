@@ -16,13 +16,10 @@ namespace untwine
 ProgressWriter::ProgressWriter() : m_fd(-1), m_debug(false), m_percent(0.0), m_increment(.01)
 {}
 
-ProgressWriter::ProgressWriter(int fd, bool debug) :
-    m_fd(fd), m_debug(debug), m_percent(0.0), m_increment(.01)
-{}
-
-void ProgressWriter::setFd(int fd)
+void ProgressWriter::init(int fd, bool debug)
 {
     m_fd = fd;
+    m_debug = debug;
 }
 
 void ProgressWriter::setIncrement(double increment)
@@ -63,7 +60,7 @@ void ProgressWriter::write(double percent, const std::string& message)
 void ProgressWriter::writeMessage(uint32_t percent, const std::string& message)
 {
     if (m_debug)
-        std::cout << "Progress (" << percent << ") " << message << "\n";
+        std::cout << "Untwine progress (" << percent << "% done): " << message << "\n";
     if (m_fd < 0)
         return;
 

@@ -13,10 +13,9 @@ public:
     static const PointCount ChunkSize = 100'000;
 
     ProgressWriter();
-    ProgressWriter(int fd, bool debug);
 
-    // Set the progress file descriptor.
-    void setFd(int fd);
+    // Set the progress config..
+    void init(int fd = -1, bool debug = false);
 
     /// Set the increment to use on the next call to setIncrement.
     void setIncrement(double increment);

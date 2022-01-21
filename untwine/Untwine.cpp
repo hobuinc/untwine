@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     {
         if (!handleOptions(arglist, options))
             return 0;
-        progress.setFd(options.progressFd);
+        progress.init(options.progressFd, options.progressDebug);
         createDirs(options);
 
         epf::Epf preflight(common);

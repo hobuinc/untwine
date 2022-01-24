@@ -89,3 +89,12 @@ Options
   Normally untwine deletes its temporary directory where tiled data is written.  Set this
   to true to preserve an existing temporary directory and its contents. [Default: false]
 
+- progress_fd
+
+  File descriptor number of a pipe using the Untwine API to send progress and error messages.
+  [Default: -1]
+
+- progress_debug
+
+  Set to true to have progress messages written to standard output. Disabled if 'progress_fd'
+  is set to '1'. [Default: false]

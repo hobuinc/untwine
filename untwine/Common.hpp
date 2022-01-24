@@ -37,6 +37,7 @@ struct Options
     size_t fileLimit;
     int level;
     int progressFd;
+    bool progressDebug;
     StringList dimNames;
     bool stats;
     std::string a_srs;

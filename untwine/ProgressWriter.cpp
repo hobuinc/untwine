@@ -141,7 +141,7 @@ void ProgressWriter::setPointIncrementer(PointCount total, int totalClicks)
 // Write a message if the threshold has been reached.
 void ProgressWriter::update(PointCount count)
 {
-    if (m_progressFd < 0)
+    if (m_fd < 0)
         return;
 
     std::unique_lock<std::mutex> lock(m_mutex);

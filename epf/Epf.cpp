@@ -286,7 +286,7 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
     }
 
     // Determine a driver for each file and get a preview of the file.  If we couldn't
-    // Create a FileInfo object containing the file bounds, dimensions, filename and
+    // create a FileInfo object containing the file bounds, dimensions, filename and
     // associated driver.  Expand our grid by the bounds and file point count.
     for (std::string& filename : filenames)
     {
@@ -318,6 +318,10 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
 
         FileInfo fi;
         fi.bounds = qi.m_bounds;
+        if (fi.bounds.maxx <= fi.bounds.minx || fi.bounds.maxy <= fi.bounds.miny ||
+            fi.bounds.maxz <= fi.bounds.minz)
+            throw FatalError("Can't determine bounds for '" + filename +
+                "' from header information.");
         fi.numPoints = qi.m_pointCount;
         fi.filename = filename;
         fi.driver = driver;

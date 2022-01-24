@@ -31,8 +31,6 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.outputName);
     programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
-    programArgs.add("clean_temp_dir", "Remove files from the temp directory",
-        options.cleanTempDir, true);
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);
@@ -40,6 +38,7 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.fileLimit, (size_t)10000000);
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
+    programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
     programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always "
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
@@ -86,6 +85,13 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
         }
         if (options.singleFile)
             options.stats = true;
+
+        //
+        if (options.progressFd == 1 && options.progressDebug)
+        {
+            std::cerr << "'--progress_fd' set to 1. Disabling '--progressDebug'.\n";
+            options.progressDebug = false;
+        }
     }
     catch (const pdal::arg_error& err)
     {
@@ -139,7 +145,7 @@ int main(int argc, char *argv[])
     {
         if (!handleOptions(arglist, options))
             return 0;
-        progress.setFd(options.progressFd);
+        progress.init(options.progressFd, options.progressDebug);
         createDirs(options);
 
         epf::Epf preflight(common);

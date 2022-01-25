@@ -40,6 +40,12 @@ void ProgressWriter::writeIncrement(const std::string& message)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
+    writeIncrementRaw(message);
+}
+
+// Unlocked version - obtain lock before calling.
+void ProgressWriter::writeIncrementRaw(const std::string& message)
+{
     m_percent += m_increment;
     m_percent = (std::min)(1.0, m_percent);
 
@@ -135,6 +141,9 @@ void ProgressWriter::setPointIncrementer(PointCount total, int totalClicks)
 // Write a message if the threshold has been reached.
 void ProgressWriter::update(PointCount count)
 {
+    if (m_fd < 0)
+        return;
+
     std::unique_lock<std::mutex> lock(m_mutex);
 
     m_current += count;
@@ -142,8 +151,7 @@ void ProgressWriter::update(PointCount count)
     {
         m_nextClick += m_pointIncrement;
 
-        lock.unlock();
-        writeIncrement("Processed " + std::to_string(m_current) + " points");
+        writeIncrementRaw("Processed " + std::to_string(m_current) + " points");
     }
 }
 

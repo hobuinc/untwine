@@ -26,9 +26,9 @@ namespace untwine
 
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
-    programArgs.add("files,i", "Input files/directory", options.inputFiles);
     programArgs.add("output_dir,o", "Output directory/filename for single-file output",
-        options.outputName);
+        options.outputName).setPositional();
+    programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
     programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
@@ -68,7 +68,7 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
         if (help)
         {
-            std::cout << "Usage: untwine <options>\n";
+            std::cout << "Usage: untwine [output file/directory] <options>\n";
             programArgs.dump(std::cout, 2, 80);
         }
         if (help || version)
@@ -172,12 +172,12 @@ int main(int argc, char *argv[])
     catch (const std::exception& ex)
     {
         progress.writeErrorMessage(ex.what());
-	return -1;
+        return -1;
     }
     catch (...)
     {
-	progress.writeErrorMessage("Unknown/unexpected exception.");
-	return -1;
+        progress.writeErrorMessage("Unknown/unexpected exception.");
+        return -1;
     }
 
     return 0;

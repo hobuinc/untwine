@@ -44,6 +44,7 @@ private:
     PointCount m_nextClick;
     PointCount m_current;
 
+    void writeIncrementRaw(const std::string& message);
     void writeMessage(uint32_t percent, const std::string& message);
 };
 

@@ -285,6 +285,10 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
             filenames.push_back(filename);
     }
 
+    std::vector<double> xOffsets;
+    std::vector<double> yOffsets;
+    std::vector<double> zOffsets;
+
     // Determine a driver for each file and get a preview of the file.  If we couldn't
     // Create a FileInfo object containing the file bounds, dimensions, filename and
     // associated driver.  Expand our grid by the bounds and file point count.
@@ -315,6 +319,15 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         m = root.findChild("scale_z");
         if (m.valid())
             m_b.scale[2] = (std::max)(m_b.scale[2], m.value<double>());
+        m = root.findChild("offset_x");
+        if (m.valid())
+            xOffsets.push_back(m.value<double>());
+        m = root.findChild("offset_y");
+        if (m.valid())
+            yOffsets.push_back(m.value<double>());
+        m = root.findChild("offset_z");
+        if (m.valid())
+            zOffsets.push_back(m.value<double>());
 
         FileInfo fi;
         fi.bounds = qi.m_bounds;
@@ -340,9 +353,26 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         totalPoints += fi.numPoints;
     }
 
+    // If we had an offset from the input, choose one in the middle of the list of offsets.
+    if (xOffsets.size())
+    {
+        std::sort(xOffsets.begin(), xOffsets.end());
+        m_b.offset[0] = xOffsets[xOffsets.size() / 2];
+    }
+    if (yOffsets.size())
+    {
+        std::sort(yOffsets.begin(), yOffsets.end());
+        m_b.offset[1] = yOffsets[yOffsets.size() / 2];
+    }
+    if (zOffsets.size())
+    {
+        std::sort(zOffsets.begin(), zOffsets.end());
+        m_b.offset[2] = zOffsets[zOffsets.size() / 2];
+    }
 
+    // If we have LAS start capability, break apart file infos into chunks of size 5 million.
 #ifdef PDAL_LAS_START
-    PointCount ChunkSize = 5000000;
+    PointCount ChunkSize = 5'000'000;
     for (const FileInfo& fi : tempFileInfos)
     {
         if (fi.driver != "readers.las" || fi.numPoints < ChunkSize)

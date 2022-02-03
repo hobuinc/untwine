@@ -84,6 +84,11 @@ Options
   Generate a LAZ file with spatially arranged data and hierarchy information
   [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
 
+- preserve_temp_dir
+
+  Normally untwine deletes its temporary directory where tiled data is written.  Set this
+  to true to preserve an existing temporary directory and its contents. [Default: false]
+
 - progress_fd
 
   File descriptor number of a pipe using the Untwine API to send progress and error messages.

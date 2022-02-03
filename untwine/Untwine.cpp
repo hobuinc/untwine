@@ -31,6 +31,8 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
     programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
     programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
+    programArgs.add("preserve_temp_dir", "Remove files from the temp directory",
+        options.preserveTempDir);
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);
@@ -113,12 +115,12 @@ void createDirs(const Options& options)
         pdal::FileUtils::createDirectory(options.outputName + "/ept-hierarchy");
     }
 
-    if (pdal::FileUtils::fileExists(options.tempDir) &&
-        !pdal::FileUtils::isDirectory(options.tempDir))
+    bool tempExists = pdal::FileUtils::fileExists(options.tempDir);
+    if (tempExists && !pdal::FileUtils::isDirectory(options.tempDir))
         throw FatalError("Can't use temp directory - exists as a regular or special file.");
-    if (options.cleanTempDir)
+    if (!options.preserveTempDir)
         pdal::FileUtils::deleteDirectory(options.tempDir);
-    if (!pdal::FileUtils::createDirectory(options.tempDir))
+    if (!tempExists && !pdal::FileUtils::createDirectory(options.tempDir))
         throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");
 }
 

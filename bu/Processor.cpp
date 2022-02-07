@@ -64,46 +64,51 @@ void Processor::run()
 
 void Processor::runLocal()
 {
-    // If we don't merge small files into one, we'll end up trying to deal with too many
-    // open files later and run out of file descriptors.
-    for (int i = 0; i < 8; ++i)
-    {
-        OctantInfo& child = m_vi[i];
-        if (child.fileInfos().size() >= 4)
-            child.mergeSmallFiles(m_b.opts.tempDir, m_b.pointSize);
-    }
-
-    size_t totalPoints = 0;
-    size_t totalFileInfos = 0;
-    for (int i = 0; i < 8; ++i)
-    {
-        OctantInfo& child = m_vi[i];
-        totalFileInfos += child.fileInfos().size();
-        totalPoints += child.numPoints();
-        if (child.numPoints() < MinimumPoints)
-            m_vi.octant().appendFileInfos(child);
-    }
-
-    // It's possible that all the file infos have been moved above, but this is cheap.
-    if (totalPoints < MinimumTotalPoints)
-        for (int i = 0; i < 8; ++i)
-            m_vi.octant().appendFileInfos(m_vi[i]);
-
     // Accepted points are those that will go in this (the parent) cell.
     // Rejected points will remain in the child cell they were in previously.
     Index accepted;
     Index rejected;
 
-    // If the file infos haven't all been hoisted, sample.
-    if (m_vi.octant().fileInfos().size() != totalFileInfos)
-        sample(accepted, rejected);
-
+    sample(accepted, rejected);
     write(accepted, rejected);
 }
 
+int Processor::getCount(const VoxelKey& k)
+{
+    static std::unordered_map<VoxelKey, int> counts;
+
+    if (counts.empty())
+    {
+        std::ifstream in("counts3");
+        while (in)
+        {
+            std::string s;
+
+            std::getline(in, s);
+            if (s.empty())
+                continue;
+            StringList l = pdal::Utils::split2(s, ' ');
+            if (l.size() != 3)
+                continue;
+            StringList fk = pdal::Utils::split2(l[0], '-');
+            if (fk.size() != 4)
+                continue;
+            VoxelKey vk(std::stoi(fk[1]), std::stoi(fk[2]), std::stoi(fk[3]), std::stoi(fk[0]));
+            counts[vk] = std::stoi(l[2]);
+        }
+    }
+
+    int count = counts[k];
+    if (count == 0)
+        count = 16;
+    return count;
+}
 
 void Processor::sample(Index& accepted, Index& rejected)
 {
+    std::random_device rd;
+    std::mt19937 g(rd());
+
     int totalPoints = 0;
     for (int i = 0; i < 8; ++i)
     {
@@ -111,47 +116,17 @@ void Processor::sample(Index& accepted, Index& rejected)
         for (FileInfo& fi : child.fileInfos())
         {
             m_points.read(fi);
+
+            std::vector<int> index(fi.numPoints());
+            std::iota(index.begin(), index.end(), totalPoints);
+            std::shuffle(index.begin(), index.end(), g);
+            int keepCount = getCount(child.key());
+            rejected.insert(rejected.end(), index.begin(), index.begin() + keepCount);
+            accepted.insert(accepted.end(), index.begin() + keepCount, index.end());
             totalPoints += fi.numPoints();
         }
     }
 
-    std::deque<int> index(totalPoints);
-    std::iota(index.begin(), index.end(), 0);
-
-    std::random_device rd;
-    std::mt19937 g(rd());
-    /**
-    std::vector<int32_t> v{1234};
-    std::seed_seq seed(v.begin(), v.end());
-    std::mt19937 g(seed);
-    **/
-
-    //ABELL - This may not be the best way to do this. Probably better to work from some
-    //  point (center, whatever) out, but this is cheap because you don't have to do
-    //  any computation with the point data. And I would think you should still get good
-    //  output, but it may be more sparse. Seems you could fix that by just choosing a
-    //  smaller radius.  Should be tested.
-    std::shuffle(index.begin(), index.end(), g);
-
-    while (index.size())
-    {
-        int i = index.back();
-
-        const Point& p = m_points[i];
-        GridKey k = m_vi.gridKey(p);
-
-        // If we're accepting this point into this voxel from it's child, add it
-        // to the accepted list and also stick it in the grid.
-        if (acceptable(i, k))
-        {
-            accepted.push_back(i);
-            m_vi.grid().insert( {k, i} );
-        }
-        else
-            rejected.push_back(i);
-
-        index.pop_back();
-    }
 }
 
 

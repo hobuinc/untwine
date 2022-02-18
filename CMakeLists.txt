@@ -18,6 +18,8 @@ file(GLOB SRCS
     untwine/*.cpp
     epf/*.cpp
     bu/*.cpp
+    lazperf/*.cpp
+    lazperf/detail/*.cpp
 )
 
 add_executable(untwine ${SRCS})

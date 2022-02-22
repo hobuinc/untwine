@@ -33,7 +33,7 @@ namespace bu
 
 CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     m_lazVlr(b.pointFormatId, extraByteSize(), lazperf::VariableChunkSize),
-    m_ebVlr(extraByteSize()),
+    m_ebVlr(),
     m_wktVlr(b.srs.getWKT1())
 {
     m_f.open(b.opts.outputName, std::ios::out | std::ios::binary);
@@ -65,6 +65,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
         lazperf::vlr_header::Size + m_wktVlr.size();
     if (m_header.ebCount())
     {
+        addEbFields();
         m_header.vlr_count++;
         m_header.point_offset += (uint32_t)(lazperf::vlr_header::Size + m_ebVlr.size());
     }
@@ -82,6 +83,51 @@ int CopcSupport::extraByteSize() const
         if (fdi.extraDim)
             size += pdal::Dimension::size(fdi.type);
     return size;
+}
+
+void CopcSupport::addEbFields()
+{
+    using DT = pdal::Dimension::Type;
+
+    auto lasType = [](DT type) -> uint8_t
+    {
+        switch (type)
+        {
+        case DT::Unsigned8:
+            return 1;
+        case DT::Signed8:
+            return 2;
+        case DT::Unsigned16:
+            return 3;
+        case DT::Signed16:
+            return 4;
+        case DT::Unsigned32:
+            return 5;
+        case DT::Signed32:
+            return 6;
+        case DT::Unsigned64:
+            return 7;
+        case DT::Signed64:
+            return 8;
+        case DT::Float:
+            return 9;
+        case DT::Double:
+            return 10;
+        default:
+            return 0;
+        }
+    };
+
+    for (const FileDimInfo& fdi : m_b.dimInfo)
+    {
+        if (fdi.extraDim)
+        {
+            lazperf::eb_vlr::ebfield f;
+            f.data_type = lasType(fdi.type);
+            f.name = fdi.name;
+            m_ebVlr.addField(f);
+        }
+    }
 }
 
 /// \param  size  Size of the chunk in bytes

@@ -64,6 +64,7 @@ private:
     std::unordered_map<VoxelKey, Hierarchy> m_hierarchy;
 
     int extraByteSize() const;
+    void addEbFields();
     int numExtentItems() const;
     void setExtentsVlr(const StatsMap& stats);
     Hierarchy emitRoot(const VoxelKey& root, const CountMap& counts);

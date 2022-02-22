@@ -26,13 +26,13 @@ namespace untwine
 
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
-    programArgs.add("files,i", "Input files/directory", options.inputFiles);
     programArgs.add("output_dir,o", "Output directory/filename for single-file output",
-        options.outputName);
+        options.outputName).setPositional();
+    programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
     programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
-    programArgs.add("clean_temp_dir", "Remove files from the temp directory",
-        options.cleanTempDir, true);
+    programArgs.add("preserve_temp_dir", "Remove files from the temp directory",
+        options.preserveTempDir);
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);
@@ -40,6 +40,7 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.fileLimit, (size_t)10000000);
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
+    programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
     programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always "
         "loaded.", options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
@@ -69,7 +70,7 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
         if (help)
         {
-            std::cout << "Usage: untwine <options>\n";
+            std::cout << "Usage: untwine [output file/directory] <options>\n";
             programArgs.dump(std::cout, 2, 80);
         }
         if (help || version)
@@ -86,6 +87,13 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
         }
         if (options.singleFile)
             options.stats = true;
+
+        //
+        if (options.progressFd == 1 && options.progressDebug)
+        {
+            std::cerr << "'--progress_fd' set to 1. Disabling '--progressDebug'.\n";
+            options.progressDebug = false;
+        }
     }
     catch (const pdal::arg_error& err)
     {
@@ -107,12 +115,12 @@ void createDirs(const Options& options)
         pdal::FileUtils::createDirectory(options.outputName + "/ept-hierarchy");
     }
 
-    if (pdal::FileUtils::fileExists(options.tempDir) &&
-        !pdal::FileUtils::isDirectory(options.tempDir))
+    bool tempExists = pdal::FileUtils::fileExists(options.tempDir);
+    if (tempExists && !pdal::FileUtils::isDirectory(options.tempDir))
         throw FatalError("Can't use temp directory - exists as a regular or special file.");
-    if (options.cleanTempDir)
+    if (!options.preserveTempDir)
         pdal::FileUtils::deleteDirectory(options.tempDir);
-    if (!pdal::FileUtils::createDirectory(options.tempDir))
+    if (!tempExists && !pdal::FileUtils::createDirectory(options.tempDir))
         throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");
 }
 
@@ -139,7 +147,7 @@ int main(int argc, char *argv[])
     {
         if (!handleOptions(arglist, options))
             return 0;
-        progress.setFd(options.progressFd);
+        progress.init(options.progressFd, options.progressDebug);
         createDirs(options);
 
         epf::Epf preflight(common);
@@ -166,12 +174,12 @@ int main(int argc, char *argv[])
     catch (const std::exception& ex)
     {
         progress.writeErrorMessage(ex.what());
-	return -1;
+        return -1;
     }
     catch (...)
     {
-	progress.writeErrorMessage("Unknown/unexpected exception.");
-	return -1;
+        progress.writeErrorMessage("Unknown/unexpected exception.");
+        return -1;
     }
 
     return 0;

@@ -19,6 +19,7 @@
 #include <pdal/PDALUtils.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/io/BufferReader.hpp>
+#include <pdal/filters/SortFilter.hpp>
 #include <pdal/util/Algorithm.hpp>
 
 #include <lazperf/lazperf.hpp>
@@ -386,7 +387,7 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
 flush:
     try
     {
-        flushCompressed(table, view, o, stats);
+        flushCompressed(view, o, stats);
     }
     catch (pdal_error& err)
     {
@@ -414,8 +415,7 @@ void Processor::appendCompressed(pdal::PointViewPtr view, const DimInfoList& dim
     }
 }
 
-void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr view,
-    const OctantInfo& oi, IndexedStats& stats)
+void Processor::flushCompressed(pdal::PointViewPtr view, const OctantInfo& oi, IndexedStats& stats)
 {
     // For single file output we need the stats for
     if (m_b.opts.stats)
@@ -438,12 +438,11 @@ void Processor::flushCompressed(pdal::PointTableRef table, pdal::PointViewPtr vi
     else
     {
         std::string filename = m_b.opts.outputName + "/ept-data/" + oi.key().toString() + ".laz";
-        writeEptFile(filename, table, view);
+        writeEptFile(filename, view);
     }
 }
 
-void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef table,
-    pdal::PointViewPtr view)
+void Processor::writeEptFile(const std::string& filename, pdal::PointViewPtr view)
 {
     using namespace pdal;
 
@@ -454,7 +453,7 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef ta
 
     Stage *prev = &r;
 
-    if (table.layout()->hasDim(Dimension::Id::GpsTime))
+    if (view->layout()->hasDim(Dimension::Id::GpsTime))
     {
         Stage *f = factory.createStage("filters.sort");
         pdal::Options fopts;
@@ -485,23 +484,25 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointTableRef ta
     w->setOptions(wopts);
     w->setInput(*prev);
 
-    w->prepare(table);
-    w->execute(table);
+    w->prepare(view->table());
+    w->execute(view->table());
 }
 
-void Processor::sortChunk(const VoxelKey& key, pdal::PointViewPtr view)
+void Processor::sortChunk(pdal::PointViewPtr view)
 {
+    pdal::BufferReader r;
+    r.addView(view);
 
-    using namespace pdal;
-    auto cmp = [](const PointRef& p1, const PointRef& p2)
-    {
-        bool result = p1.compare(pdal::Dimension::Id::GpsTime, p2);
-        return result;
-    };
+    pdal::SortFilter s;
+    s.setInput(r);
+    pdal::Options o;
+    o.add("dimension", "GpsTime");
+    s.setOptions(o);
 
-    std::stable_sort(view->begin(), view->end(), cmp);
-
+    s.prepare(view->table());
+    s.execute(view->table());
 }
+
 void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 {
     using namespace pdal;
@@ -513,7 +514,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     }
 
     if (view->layout()->hasDim(Dimension::Id::GpsTime))
-        sortChunk(key, view);
+        sortChunk(view);
 
     PointLayoutPtr layout = view->layout();
 

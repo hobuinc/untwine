@@ -513,6 +513,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
         return;
     }
 
+    // Sort the chunk on GPS time.
     if (view->layout()->hasDim(Dimension::Id::GpsTime))
         sortChunk(view);
 

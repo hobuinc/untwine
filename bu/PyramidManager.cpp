@@ -78,7 +78,10 @@ void PyramidManager::run()
             m_queue.pop();
 
             if (m_error.size())
+            {
+                std::cerr << "Exception: " << m_error.what() << "\n";
                 throw FatalError(m_error);
+            }
         }
 
         if (o.key() == VoxelKey(0, 0, 0, 0))

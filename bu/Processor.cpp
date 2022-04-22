@@ -50,12 +50,14 @@ void Processor::run()
     }
     catch (const std::exception& ex)
     {
+        std::cerr << "Exception: " << ex.what() << "\n";
         m_manager.queueWithError(m_vi.octant(), ex.what());
         return;
     }
     catch (...)
     {
         std::string msg = std::string("Unexpected error processing ") + m_vi.key().toString() + ".";
+        std::cerr << "Exception: " << msg << "\n";
         m_manager.queueWithError(m_vi.octant(), msg);
         return;
     }

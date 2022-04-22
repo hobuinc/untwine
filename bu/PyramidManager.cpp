@@ -79,7 +79,7 @@ void PyramidManager::run()
 
             if (m_error.size())
             {
-                std::cerr << "Exception: " << m_error.what() << "\n";
+                std::cerr << "Exception: " << m_error << "\n";
                 throw FatalError(m_error);
             }
         }

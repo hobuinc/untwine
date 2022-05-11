@@ -196,7 +196,15 @@ void basic_file::Private::close()
 void basic_file::Private::writeHeader()
 {
     laz_vlr lazVlr(head14.pointFormat(), head14.ebCount(), chunk_size);
-    eb_vlr ebVlr(head14.ebCount());
+    eb_vlr ebVlr;
+
+    for (int i = 0; i < head14.ebCount(); ++i)
+    {
+        eb_vlr::ebfield field;
+
+        field.name = "FIELD_" + std::to_string(i);
+        ebVlr.addField(field);
+    }
 
     // Set the version number to 2 in order to write something reasonable.
     if (head14.version.minor < 2 || head14.version.minor > 4)
@@ -210,11 +218,11 @@ void basic_file::Private::writeHeader()
     {
         head14.vlr_count++;
         head14.point_format_id |= (1 << 7);
-        head14.point_offset += lazVlr.size() + lazVlr.header().Size;
+        head14.point_offset += (uint32_t)(lazVlr.size() + lazVlr.header().Size);
     }
     if (head14.ebCount())
     {
-        head14.point_offset += ebVlr.size() + ebVlr.header().Size;
+        head14.point_offset += uint32_t(ebVlr.size() + ebVlr.header().Size);
         head14.vlr_count++;
     }
 

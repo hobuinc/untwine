@@ -63,7 +63,7 @@ void BuPyramid::writeInfo()
         }
     };
 
-    std::ofstream out(m_b.opts.outputName + "/ept.json");
+    std::ofstream out(toNative(m_b.opts.outputName + "/ept.json"));
     int maxdigits = std::numeric_limits<double>::max_digits10;
 
     out << "{\n";

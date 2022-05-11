@@ -66,4 +66,29 @@ public:
 
 const std::string MetadataFilename {"info2.txt"};
 
+// We check both _WIN32 and _MSC_VER to deal with MinGW, which doesn't support the special
+// Windows wide character interfaces for streams.
+#if defined(_WIN32) && defined(_MSC_VER)
+inline std::wstring toNative(const std::string& in)
+{
+    if (in.empty())
+        return std::wstring();
+
+    int len = MultiByteToWideChar(CP_UTF8, 0, in.data(), in.length(), nullptr, 0);
+    std::wstring out(len, 0);
+    if (MultiByteToWideChar(CP_UTF8, 0, in.data(), in.length(), out.data(), len) == 0)
+    {
+        char buf[200] {};
+        len = FormatMessageA(0, 0, GetLastError(), 0, buf, 199, 0);
+        throw FatalError("Can't convert UTF8 to UTF16: " + std::string(buf, len));
+    }
+    return out;
+}
+#else
+inline std::string toNative(const std::string& in)
+{
+    return in;
+}
+#endif
+
 } // namespace untwine

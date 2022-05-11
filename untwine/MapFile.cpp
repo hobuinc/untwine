@@ -30,6 +30,7 @@
 
 // This is here so that things will work with older version of PDAL.
 
+#include "Common.hpp"
 #include "MapFile.hpp"
 
 namespace untwine

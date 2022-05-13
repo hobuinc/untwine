@@ -79,7 +79,7 @@ void PyramidManager::run()
 
             if (m_error.size())
             {
-                std::cerr << "Exception: " << m_error.what() << "\n";
+                std::cerr << "Exception: " << m_error << "\n";
                 throw FatalError(m_error);
             }
         }
@@ -234,7 +234,8 @@ std::deque<VoxelKey> PyramidManager::emitRoot(const VoxelKey& root)
     entries.push_back({root, m_written[root]});
     std::deque<VoxelKey> roots = emit(root, stopLevel, entries);
 
-    std::ofstream out(m_b.opts.outputName + "/ept-hierarchy/" + root.toString() + ".json");
+    std::string filename = m_b.opts.outputName + "/ept-hierarchy/" + root.toString() + ".json";
+    std::ofstream out(toNative(filename));
 
     out << "{\n";
 

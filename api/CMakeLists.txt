@@ -4,7 +4,7 @@ include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/../cmake/compiler_options.cmake)
 
 add_executable(qgt
-    QgisTest.cpp
+    QgisTest2.cpp
     QgisUntwine.cpp
 )
 

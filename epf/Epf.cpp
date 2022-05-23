@@ -20,6 +20,7 @@
 #include "../untwine/Las.hpp"
 
 #include <unordered_set>
+#include <filesystem>
 
 #include <pdal/pdal_features.hpp>
 #include <pdal/Dimension.hpp>

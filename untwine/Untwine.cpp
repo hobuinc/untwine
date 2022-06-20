@@ -127,7 +127,11 @@ void createDirs(const Options& options)
 } // namespace untwine
 
 
+#ifdef _WIN32
+int wmain( int argc, wchar_t *argv[ ], wchar_t *envp[ ] )
+#else
 int main(int argc, char *argv[])
+#endif
 {
     std::vector<std::string> arglist;
 

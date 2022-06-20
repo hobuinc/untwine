@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     argv++;
     argc--;
     while (argc--)
-        arglist.push_back(*argv++);
+        arglist.push_back(untwine::fromNative(*argv++));
 
     using namespace untwine;
 

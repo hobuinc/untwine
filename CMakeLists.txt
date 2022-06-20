@@ -30,10 +30,6 @@ endif()
 
 add_executable(untwine ${SRCS})
 
-if(MSVC)
-    set_target_properties(untwine PROPERTIES WIN32_EXECUTABLE TRUE)
-endif()
-
 untwine_target_compile_settings(untwine)
 
 target_include_directories(untwine

@@ -19,6 +19,7 @@
 #include <pdal/PDALUtils.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/io/BufferReader.hpp>
+#include <pdal/filters/SortFilter.hpp>
 #include <pdal/util/Algorithm.hpp>
 
 #include <lazperf/lazperf.hpp>
@@ -245,7 +246,7 @@ void Processor::writeBinOutput(Index& index)
     // pass.
     std::string filename = m_vi.key().toString() + ".bin";
     std::string fullFilename = m_b.opts.tempDir + "/" + filename;
-    std::ofstream out(fullFilename, std::ios::binary | std::ios::trunc);
+    std::ofstream out(toNative(fullFilename), std::ios::binary | std::ios::trunc);
     if (!out)
         throw FatalError("Couldn't open '" + fullFilename + "' for output.");
     for (size_t i = 0; i < index.size(); ++i)
@@ -416,8 +417,7 @@ void Processor::appendCompressed(pdal::PointViewPtr view, const DimInfoList& dim
     }
 }
 
-void Processor::flushCompressed(pdal::PointViewPtr view, const OctantInfo& oi,
-    IndexedStats& stats)
+void Processor::flushCompressed(pdal::PointViewPtr view, const OctantInfo& oi, IndexedStats& stats)
 {
     // For single file output we need the stats for
     if (m_b.opts.stats)
@@ -490,6 +490,21 @@ void Processor::writeEptFile(const std::string& filename, pdal::PointViewPtr vie
     w->execute(view->table());
 }
 
+void Processor::sortChunk(pdal::PointViewPtr view)
+{
+    pdal::BufferReader r;
+    r.addView(view);
+
+    pdal::SortFilter s;
+    s.setInput(r);
+    pdal::Options o;
+    o.add("dimension", "GpsTime");
+    s.setOptions(o);
+
+    s.prepare(view->table());
+    s.execute(view->table());
+}
+
 void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 {
     using namespace pdal;
@@ -502,9 +517,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 
     // Sort the chunk on GPS time.
     if (view->layout()->hasDim(Dimension::Id::GpsTime))
-        std::sort(view->begin(), view->end(),
-            [](const PointRef& p1, const PointRef& p2)
-                { return p1.compare(Dimension::Id::GpsTime, p2); });
+        sortChunk(view);
 
     PointLayoutPtr layout = view->layout();
 
@@ -524,7 +537,8 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 
     uint64_t location = m_manager.newChunk(key, chunk.size(), (uint32_t)view->size());
 
-    std::ofstream out(m_b.opts.outputName, std::ios::out | std::ios::in | std::ios::binary);
+    std::ofstream out(toNative(m_b.opts.outputName),
+        std::ios::out | std::ios::in | std::ios::binary);
     out.seekp(std::ofstream::pos_type(location));
     out.write(reinterpret_cast<const char *>(chunk.data()), chunk.size());
     out.close();

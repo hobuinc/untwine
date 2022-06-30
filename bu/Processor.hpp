@@ -58,6 +58,7 @@ private:
     void flushCompressed(pdal::PointViewPtr view, const OctantInfo& oi, IndexedStats& stats);
     void writeEptFile(const std::string& filename, pdal::PointViewPtr view);
     void createChunk(const VoxelKey& key, pdal::PointViewPtr view);
+    void sortChunk(pdal::PointViewPtr view);
     void fillPointBuf(pdal::PointRef& point, std::vector<char>& buf);
 
     VoxelInfo m_vi;

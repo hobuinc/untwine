@@ -22,6 +22,12 @@ file(GLOB SRCS
     lazperf/detail/*.cpp
 )
 
+
+if(MSVC)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+        /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup")
+endif()
+
 add_executable(untwine ${SRCS})
 
 untwine_target_compile_settings(untwine)

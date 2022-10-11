@@ -2,17 +2,17 @@
 ===============================================================================
 
   FILE:  field_rgb14.cpp
-  
+
   CONTENTS:
-    
+
 
   PROGRAMMERS:
 
     martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
     uday.karan@gmail.com - Hobu, Inc.
-  
+
   COPYRIGHT:
-  
+
     (c) 2007-2014, martin isenburg, rapidlasso - tools to catch reality
     (c) 2014, Uday Verma, Hobu, Inc.
 
@@ -22,9 +22,9 @@
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
+
   CHANGE HISTORY:
-  
+
 ===============================================================================
 */
 
@@ -55,9 +55,9 @@ unsigned int color_diff_bits_1_4(const las::rgb14& color, const las::rgb14& last
         (flag_diff(a.g, b.g, 0xFF00) << 3) |
         (flag_diff(a.b, b.b, 0x00FF) << 4) |
         (flag_diff(a.b, b.b, 0xFF00) << 5) |
-        ((flag_diff(b.r, b.g, 0x00FF) |
-          flag_diff(b.r, b.b, 0x00FF) |
-          flag_diff(b.r, b.g, 0xFF00) |
+        ((flag_diff(b.r, b.g, 0x00FF) ||
+          flag_diff(b.r, b.b, 0x00FF) ||
+          flag_diff(b.r, b.g, 0xFF00) ||
           flag_diff(b.r, b.b, 0xFF00)) << 6);
     return r;
 }

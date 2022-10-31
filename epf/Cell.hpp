@@ -58,7 +58,7 @@ public:
         { std::copy(b.data(), b.data() + m_pointSize, m_pos); }
     void advance();
 
-//private:
+private:
     DataVecPtr m_buf;
     VoxelKey m_key;
     uint8_t *m_pos;

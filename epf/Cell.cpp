@@ -32,7 +32,6 @@ void Cell::write()
 void Cell::initialize(const Cell *exclude)
 {
     m_buf = m_cellMgr->getBuffer(exclude);
-    //ABELL - review this.
     m_pos = m_buf->data();
     m_endPos = m_pos + m_pointSize * (BufSize / m_pointSize);
 }
@@ -85,11 +84,9 @@ DataVecPtr CellMgr::getBuffer(const Cell *exclude)
 void CellMgr::flush(const Cell *exclude)
 {
     CellMap::iterator it = m_cells.end();
+
     if (exclude)
-    {
         it = m_cells.find(exclude->key());
-        assert(it != m_cells.end());
-    }
 
     // If there was no exclude cell just clear the cells.
     // Otherwise, save the exclude cell, clear the list, and reinsert.

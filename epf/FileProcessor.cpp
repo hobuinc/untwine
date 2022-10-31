@@ -68,6 +68,9 @@ void FileProcessor::run()
             VoxelKey cellIndex = m_grid.key(p.x(), p.y(), p.z());
             if (cellIndex != cell->key())
             {
+                // Make sure that we exclude the current cell from any potential flush so
+                // that no other thread can claim its data buffer and overwrite it before
+                // we have a chance to copy from it in copyPoint().
                 cell = m_cellMgr.get(cellIndex, cell);
                 cell->copyPoint(p);
             }

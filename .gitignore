@@ -1,4 +1,4 @@
-# MacOS 
+# MacOS
 .DS_Store
 
 # Prerequisites
@@ -33,3 +33,6 @@
 *.exe
 *.out
 *.app
+
+# Cmake
+build

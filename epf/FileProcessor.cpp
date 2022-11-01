@@ -30,7 +30,6 @@ FileProcessor::FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& g
 
 void FileProcessor::run()
 {
-
     pdal::Options opts;
     opts.add("filename", m_fi.filename);
     opts.add("count", m_fi.numPoints);
@@ -42,7 +41,6 @@ void FileProcessor::run()
     pdal::StageFactory factory;
     pdal::Stage *s = factory.createStage(m_fi.driver);
     s->setOptions(opts);
-
 
     PointCount count = 0;
 
@@ -70,7 +68,10 @@ void FileProcessor::run()
             VoxelKey cellIndex = m_grid.key(p.x(), p.y(), p.z());
             if (cellIndex != cell->key())
             {
-                cell = m_cellMgr.get(cellIndex);
+                // Make sure that we exclude the current cell from any potential flush so
+                // that no other thread can claim its data buffer and overwrite it before
+                // we have a chance to copy from it in copyPoint().
+                cell = m_cellMgr.get(cellIndex, cell);
                 cell->copyPoint(p);
             }
             // Advance the cell - move the buffer pointer so when we refer to the cell's

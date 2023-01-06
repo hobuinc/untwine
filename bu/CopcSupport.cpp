@@ -36,7 +36,7 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
 {
 
     if (b.opts.a_srs.size())
-        m_wktVlr = b.opts.a_srs;
+        m_wktVlr = pdal::SpatialReference(b.opts.a_srs).getWKT();
     else
         m_wktVlr = b.srs.getWKT();
 

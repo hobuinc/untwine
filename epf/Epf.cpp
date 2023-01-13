@@ -19,8 +19,9 @@
 #include "../untwine/Common.hpp"
 #include "../untwine/Las.hpp"
 
-#include <unordered_set>
+#include <cmath>
 #include <filesystem>
+#include <unordered_set>
 
 #include <pdal/pdal_features.hpp>
 #include <pdal/Dimension.hpp>
@@ -303,19 +304,16 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     m_b.scale[1] = calcScale(m_b.scale[1], m_b.trueBounds.miny, m_b.trueBounds.maxy);
     m_b.scale[2] = calcScale(m_b.scale[2], m_b.trueBounds.minz, m_b.trueBounds.maxz);
 
-    // Find an offset such that (offset - min) / scale is close to an integer. This helps
-    // to eliminate warning messages in lasinfo that complain because of being unable
-    // to write nominal double values precisely using a 32-bit integer.
-    // The hope is also that raw input values are written as the same raw values
-    // on output. This may not be possible if the input files have different scaling or
-    // incompatible offsets.
+    // The hope is that raw input values are written as the same raw values
+    // on output. This may not be possible if the input files have different
+    // scaling or incompatible offsets.
     auto calcOffset = [](double minval, double maxval, double scale)
     {
         double interval = maxval - minval;
         double spacings = interval / scale;  // Number of quantized values in our range.
         double halfspacings = spacings / 2;  // Half of that number.
         double offset = (int32_t)halfspacings * scale; // Round to an int value and scale down.
-        return minval + offset;              // Add the base (min) value.
+        return std::round(minval + offset);  // Add the base (min) value and round to an integer.
     };
 
     m_b.offset[0] = calcOffset(m_b.trueBounds.minx, m_b.trueBounds.maxx, m_b.scale[0]);

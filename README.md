@@ -12,8 +12,18 @@ License
 Untwine is licensed under the GPLv3. Commercial licensing is possible by contacting
 Hobu, Inc. for pricing.
 
+Installation
+------------
+
+Untwine is available on `conda-forge` ([here](https://anaconda.org/conda-forge/untwine)) and can be installed using `conda`
+
+```
+conda install -c conda-forge untwine
+```
+
+
 Building Untwine:
---------
+-----------------
 
 The following steps will build the `untwine` executable:
 ```

@@ -33,6 +33,7 @@
 ****************************************************************************/
 #pragma once
 
+#include <cstdint>
 #include <cstring>
 
 #include "portable_endian.hpp"

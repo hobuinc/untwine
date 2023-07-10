@@ -580,13 +580,13 @@ void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf)
         return i;
     };
 
-    double x = (point.getFieldAs<double>(Id::X) - m_b.offset[0]) / m_b.scale[0];
-    double y = (point.getFieldAs<double>(Id::Y) - m_b.offset[1]) / m_b.scale[1];
-    double z = (point.getFieldAs<double>(Id::Z) - m_b.offset[2]) / m_b.scale[2];
+    int32_t x = converter((point.getFieldAs<double>(Id::X) - m_b.offset[0]) / m_b.scale[0], Id::X);
+    int32_t y = converter((point.getFieldAs<double>(Id::Y) - m_b.offset[1]) / m_b.scale[1], Id::Y);
+    int32_t z = converter((point.getFieldAs<double>(Id::Z) - m_b.offset[2]) / m_b.scale[2], Id::Z);
 
-    ostream << converter(x, Id::X);
-    ostream << converter(y, Id::Y);
-    ostream << converter(z, Id::Z);
+    ostream << x;
+    ostream << y;
+    ostream << z;
 
     ostream << point.getFieldAs<uint16_t>(Id::Intensity);
 

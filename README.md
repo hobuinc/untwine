@@ -58,6 +58,10 @@ Options
 
   Output directory. [Required]
 
+- a_srs
+
+  Assign an output SRS. Example `--a_srs EPSG:2056`
+  
 - dims
 
   List of dimensions to load. X, Y and Z are always loaded. Limiting the dimensions can

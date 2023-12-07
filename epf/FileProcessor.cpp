@@ -23,6 +23,31 @@ namespace untwine
 namespace epf
 {
 
+namespace
+{
+
+// The dimension IDs need to come from the *source* layout because it's possible in the
+// case of user-defined dimensions that the IDs could vary for the same-named dimension
+// in different input files. The "dim" field represents the ID of the dimension
+// we're reading from. "offset" is the corresponding notion in the output packed point data.
+void setDimensions(pdal::PointLayoutPtr layout, FileInfo& fi, int& classflagsOffset)
+{
+    for (FileDimInfo& di : fi.dimInfo)
+    {
+        di.dim = layout->findDim(di.name);
+        assert(di.dim != pdal::Dimension::Id::Unknown);
+
+        // If we have a bit offset, then we're really writing to the classflags field in the
+        // output point. Fetch that offset and set it. We will probably do this several
+        // times (once for each bit), but the value should always be the same.
+        if (di.shift != -1)
+            classflagsOffset = di.offset;
+    }
+}
+
+} // unnamed namespace
+
+
 FileProcessor::FileProcessor(const FileInfo& fi, size_t pointSize, const Grid& grid,
         Writer *writer, ProgressWriter& progress) :
     m_fi(fi), m_cellMgr(pointSize, writer), m_grid(grid), m_progress(progress)
@@ -42,6 +67,7 @@ void FileProcessor::run()
     pdal::Stage *s = factory.createStage(m_fi.driver);
     s->setOptions(opts);
 
+    int classflagsOffset;
     PointCount count = 0;
 
     // We need to move the data from the PointRef to some output buffer. We copy the data
@@ -54,14 +80,24 @@ void FileProcessor::run()
     Cell *cell = m_cellMgr.get(VoxelKey());
 
     pdal::StreamCallbackFilter f;
-    f.setCallback([this, &count, &cell](pdal::PointRef& point)
+    f.setCallback([this, &count, &cell, &classflagsOffset](pdal::PointRef& point)
         {
             // Write the data into the point buffer in the cell.  This is the *last*
             // cell buffer that we used. We're hoping that it's the right one.
             Point p = cell->point();
+            uint8_t untwineBits = 0;
             for (const FileDimInfo& fdi : m_fi.dimInfo)
-                point.getField(reinterpret_cast<char *>(p.data() + fdi.offset),
-                    fdi.dim, fdi.type);
+            {
+                if (fdi.shift == -1)
+                    point.getField(reinterpret_cast<char *>(p.data() + fdi.offset),
+                        fdi.dim, fdi.type);
+                else
+                    untwineBits |= (point.getFieldAs<uint8_t>(fdi.dim) << fdi.shift);
+            }
+
+            // We pack all the bitfields into classflags.
+            if (untwineBits)
+                memcpy(p.data() + classflagsOffset, &untwineBits, 1);
 
             // Find the actual cell that this point belongs in. If it's not the one
             // we chose, copy the data to the correct cell.
@@ -95,6 +131,7 @@ void FileProcessor::run()
     try
     {
         f.prepare(t);
+        setDimensions(t.layout(), m_fi, classflagsOffset);
         f.execute(t);
     }
     catch (const pdal::pdal_error& err)

@@ -17,7 +17,6 @@
 #include "Reprocessor.hpp"
 #include "Writer.hpp"
 #include "../untwine/Common.hpp"
-#include "../untwine/Las.hpp"
 
 #include <cmath>
 #include <filesystem>
@@ -31,7 +30,6 @@
 #include <pdal/util/Bounds.hpp>
 #include <pdal/util/FileUtils.hpp>
 #include <pdal/util/ProgramArgs.hpp>
-
 
 namespace
 {
@@ -100,6 +98,24 @@ std::vector<std::string> directoryList(const std::string& dir)
 }
 #endif
 
+pdal::Dimension::Type getDimensionType(const std::string& name)
+{
+    using namespace pdal;
+
+    if (name == untwine::UntwineBitsDimName)
+        return untwine::UntwineBitsType;
+
+    Dimension::Type type = Dimension::Type::Double;
+    try
+    {
+        type = Dimension::defaultType(Dimension::id(name));
+    }
+    catch (pdal_error&)
+    {}
+
+    return type;
+}
+
 } // unnamed namespace
 
 namespace untwine
@@ -116,7 +132,6 @@ Epf::Epf(BaseInfo& common) : m_b(common), m_pool(NumFileProcessors)
 
 Epf::~Epf()
 {}
-
 
 void Epf::run(ProgressWriter& progress)
 {
@@ -148,21 +163,15 @@ void Epf::run(ProgressWriter& progress)
         for (const FileDimInfo& fdi : fi.dimInfo)
             allDimNames.insert(fdi.name);
 
+    // Create an OUTPUT layout.
     // Register the dimensions, either as the default type or double if we don't know
     // what it is.
     PointLayoutPtr layout(new PointLayout());
-    for (const std::string& dimName : allDimNames)
+    for (std::string dimName : allDimNames)
     {
-        Dimension::Type type;
-        try
-        {
-            type = Dimension::defaultType(Dimension::id(dimName));
-        }
-        catch (pdal::pdal_error&)
-        {
-            type = Dimension::Type::Double;
-        }
-        layout->registerOrAssignDim(dimName, type);
+        if (isUntwineBitsDim(dimName))
+            dimName = UntwineBitsDimName;
+        layout->registerOrAssignDim(dimName, getDimensionType(dimName));
     }
     layout->finalize();
 
@@ -171,9 +180,20 @@ void Epf::run(ProgressWriter& progress)
     {
         for (FileDimInfo& di : fi.dimInfo)
         {
-            di.dim = layout->findDim(di.name);
-            di.type = layout->dimType(di.dim);
-            di.offset = layout->dimOffset(di.dim);
+            // If this dimension is one of the bit dimensions, set the shift and offset accordingly.
+            int bitPos = getUntwineBitPos(di.name);
+            if (bitPos != -1)
+            {
+                di.type = UntwineBitsType;
+                di.offset = layout->dimOffset(layout->findDim(UntwineBitsDimName));
+                di.shift = bitPos;
+            }
+            else
+            {
+                Dimension::Id dim = layout->findDim(di.name);
+                di.type = layout->dimType(dim);
+                di.offset = layout->dimOffset(dim);
+            }
         }
     }
 
@@ -274,15 +294,12 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
     else
         m_b.pointFormatId = 6;
 
-    const Dimension::IdList& lasDims = pdrfDims(m_b.pointFormatId);
     for (Dimension::Id id : layout->dims())
     {
         FileDimInfo di;
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
-        di.dim = id;
-        di.extraDim = !Utils::contains(lasDims, id);
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }

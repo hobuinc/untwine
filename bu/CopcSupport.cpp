@@ -24,7 +24,6 @@
 
 #include "../untwine/Common.hpp"
 #include "../untwine/FileDimInfo.hpp"
-#include "../untwine/Las.hpp"
 
 namespace untwine
 {

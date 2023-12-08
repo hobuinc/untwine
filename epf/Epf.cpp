@@ -169,6 +169,8 @@ void Epf::run(ProgressWriter& progress)
     PointLayoutPtr layout(new PointLayout());
     for (std::string dimName : allDimNames)
     {
+        // If this is a "bit" dimension, don't add it, but instead register the proxy
+        // untwine bits dimension.
         if (isUntwineBitsDim(dimName))
             dimName = UntwineBitsDimName;
         layout->registerOrAssignDim(dimName, getDimensionType(dimName));
@@ -391,6 +393,8 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
 
         QuickInfo qi = s->preview();
 
+        // Detect LAS input with LAS version < 4 so that we can handle the legacy
+        // classification bits.
         if (!qi.valid())
             throw FatalError("Couldn't get quick info for '" + filename + "'.");
 
@@ -420,6 +424,16 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         fi.numPoints = qi.m_pointCount;
         fi.filename = filename;
         fi.driver = driver;
+
+        // Detect LAS input with LAS version < 4 so that we can handle the legacy
+        // classification bits.
+        if (driver == "readers.las")
+        {
+            pdal::MetadataNode minor = root.findChild("minor_version");
+            pdal::MetadataNode major = root.findChild("major_version");
+            if (minor.valid() && major.valid())
+                fi.fileVersion = 10 * major.value<int>() + minor.value<int>();
+        }
 
         // Accept dimension names if there are no limits or this name is in the list
         // of desired dimensions.

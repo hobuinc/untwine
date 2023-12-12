@@ -302,6 +302,7 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         di.name = layout->dimName(id);
         di.type = layout->dimType(id);
         di.offset = layout->dimOffset(id);
+        di.extraDim = isExtraDim(di.name);
         m_b.pointSize += pdal::Dimension::size(di.type);
         m_b.dimInfo.push_back(di);
     }

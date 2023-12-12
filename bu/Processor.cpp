@@ -344,7 +344,7 @@ Processor::writeOctantCompressed(const OctantInfo& o, Index& index, IndexIter po
             else
                 stats.push_back({fdi.dim, Stats(fdi.name, Stats::EnumType::NoEnum, false)});
         }
-        if (isExtraDim(fdi))
+        if (fdi.extraDim)
             m_extraDims.push_back(DimType(fdi.dim, fdi.type));
     }
     table.finalize();

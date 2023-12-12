@@ -105,7 +105,7 @@ inline int getUntwineBitPos(const std::string& s)
     return it->second;
 }
 
-inline bool isExtraDim(const FileDimInfo& fdi)
+inline bool isExtraDim(const std::string& name)
 {
     using namespace pdal;
     using D = Dimension::Id;
@@ -130,10 +130,11 @@ inline bool isExtraDim(const FileDimInfo& fdi)
         D::Infrared
     };
 
-    for (Dimension::Id id : lasDims)
-        if (fdi.dim == id)
+    D id = Dimension::id(name);
+    for (Dimension::Id lasId : lasDims)
+        if (lasId == id)
             return false;
-    return (fdi.name != UntwineBitsDimName);
+    return (name != UntwineBitsDimName);
 }
 
 const std::string MetadataFilename {"info2.txt"};

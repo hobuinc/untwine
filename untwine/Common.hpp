@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <array>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -47,6 +48,7 @@ struct Options
     bool stats;
     std::string a_srs;
     bool metadata;
+    bool forwardAll;
 };
 
 struct BaseInfo
@@ -54,6 +56,8 @@ struct BaseInfo
 public:
     BaseInfo()
     {};
+
+    bool forwardAll() const {return opts.forwardAll && opts.inputFiles.size() == 1;}
 
     Options opts;
     pdal::BOX3D bounds;
@@ -63,10 +67,18 @@ public:
     DimInfoList dimInfo;
     pdal::SpatialReference srs;
     int pointFormatId;
+    uint16_t globalEncoding {0};
+    uint16_t creationYear {1};
+    uint16_t creationDoy {1};
+    uint16_t fileSourceId {0};
+    std::string systemId;
+    std::string generatingSoftware { "Untwine" };
 
     using d3 = std::array<double, 3>;
     d3 scale { -1.0, -1.0, -1.0 };
-    d3 offset {};
+    d3 offset { std::numeric_limits<double>::quiet_NaN(),
+                std::numeric_limits<double>::quiet_NaN(),
+                std::numeric_limits<double>::quiet_NaN()};
 };
 
 // We make a special dimension to store the bits (class flags, scanner channel, scan dir, eofl).

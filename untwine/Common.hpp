@@ -48,7 +48,6 @@ struct Options
     bool stats;
     std::string a_srs;
     bool metadata;
-    bool forwardAll;
 };
 
 struct BaseInfo
@@ -57,7 +56,7 @@ public:
     BaseInfo()
     {};
 
-    bool forwardAll() const {return opts.forwardAll && opts.inputFiles.size() == 1;}
+    bool preserveHeaderFields() const {return opts.singleFile && opts.inputFiles.size() == 1;}
 
     Options opts;
     pdal::BOX3D bounds;

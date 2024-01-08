@@ -336,8 +336,8 @@ void Epf::fillMetadata(const pdal::PointLayoutPtr layout)
         return std::round(minval + offset);  // Add the base (min) value and round to an integer.
     };
 
-    // Preserve offsets if we have them and --forward_all is used
-    if (!m_b.forwardAll() ||
+    // Preserve offsets if we have them and --single_file with single input is used
+    if (!m_b.preserveHeaderFields() ||
             std::isnan(m_b.offset[0]) ||
             std::isnan(m_b.offset[1]) ||
             std::isnan(m_b.offset[2]))
@@ -427,7 +427,7 @@ PointCount Epf::createFileInfo(const StringList& input, StringList dimNames,
         if (m.valid())
             zOffsets.push_back(m.value<double>());
 
-        if (m_b.forwardAll())
+        if (m_b.preserveHeaderFields())
         {
             m = root.findChild("global_encoding");
             if (m.valid())

@@ -49,8 +49,6 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.a_srs, "");
     programArgs.add("metadata", "Write PDAL metadata to VLR output",
         options.metadata, false);
-    programArgs.add("forward_all", "Preserve header fields of source LAS/LAZ file. Only "
-        "applicable for single input and output files.", options.forwardAll, false);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)

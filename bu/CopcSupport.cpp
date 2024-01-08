@@ -46,11 +46,8 @@ CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
     m_header.file_source_id = m_b.fileSourceId;
     m_header.creation.day = m_b.creationDoy;
     m_header.creation.year = m_b.creationYear;
-//    m_b.systemId.copy(m_header.system_identifier, 32);
-//    m_b.generatingSoftware.copy(m_header.generating_software, 32);
-    std::strncpy(m_header.system_identifier, m_b.systemId.c_str(), 32);
-    std::strncpy(m_header.generating_software, m_b.generatingSoftware.c_str(), 32);
-
+    m_b.systemId.copy(m_header.system_identifier, 32);
+    m_b.generatingSoftware.copy(m_header.generating_software, 32);
 
     m_header.header_size = lazperf::header14::Size;
     m_header.point_format_id = m_b.pointFormatId;

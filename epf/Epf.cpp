@@ -34,70 +34,6 @@
 namespace
 {
 
-// PDAL's directoryList had a bug, so we've imported a working
-// version here so that we can still use older PDAL releases.
-
-#ifndef __APPLE_CC__
-std::vector<std::string> directoryList(const std::string& dir)
-{
-    namespace fs = std::filesystem;
-
-    std::vector<std::string> files;
-
-    try
-    {
-        fs::directory_iterator it(untwine::toNative(dir));
-        fs::directory_iterator end;
-        while (it != end)
-        {
-            files.push_back(untwine::fromNative(it->path()));
-            it++;
-        }
-    }
-    catch (fs::filesystem_error&)
-    {
-        files.clear();
-    }
-    return files;
-}
-#else
-
-#include <dirent.h>
-
-// Provide simple opendir/readdir solution for OSX because directory_iterator is
-// not available until OSX 10.15
-std::vector<std::string> directoryList(const std::string& dir)
-{
-
-    DIR *dpdf;
-    struct dirent *epdf;
-
-    std::vector<std::string> files;
-    dpdf = opendir(dir.c_str());
-    if (dpdf != NULL){
-       while ((epdf = readdir(dpdf))){
-            std::string name = untwine::fromNative(epdf->d_name);
-            // Skip paths
-            if (pdal::Utils::iequals(name, ".") ||
-                pdal::Utils::iequals(name, ".."))
-            {
-                continue;
-            }
-            else
-            {
-                // we expect the path + name
-                std::string p = dir + "/" + untwine::fromNative(epdf->d_name);
-                files.push_back(p);
-           }
-       }
-    }
-    closedir(dpdf);
-
-    return files;
-
-}
-#endif
-
 pdal::Dimension::Type getDimensionType(const std::string& name)
 {
     using namespace pdal;
@@ -138,9 +74,6 @@ void Epf::run(ProgressWriter& progress)
     using namespace pdal;
 
     BOX3D totalBounds;
-
-    if (pdal::FileUtils::fileExists(m_b.opts.tempDir + "/" + MetadataFilename))
-        throw FatalError("Output directory already contains EPT data.");
 
     m_grid.setCubic(m_b.opts.doCube);
 

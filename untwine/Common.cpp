@@ -32,6 +32,8 @@
 
 #ifndef _WIN32
 #include <fcntl.h>
+#else
+#include <io.h>
 #endif
 
 #include <filesystem>

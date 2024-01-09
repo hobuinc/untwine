@@ -34,6 +34,8 @@
 #include <fcntl.h>
 #endif
 
+#include <filesystem>
+
 namespace untwine
 {
 
@@ -149,9 +151,12 @@ std::vector<std::string> directoryList(const std::string& dir)
     DIR *dpdf = opendir(dir.c_str());
     if (dpdf)
     {
-        struct dirent *epdf;
-        while (epdf = readdir(dpdf))
+        while (true)
         {
+            struct dirent *epdf = readdir(dpdf);
+            if (!epdf)
+                break;
+
             std::string name = untwine::fromNative(epdf->d_name);
             // Skip paths
             if (!pdal::Utils::iequals(name, ".") &&

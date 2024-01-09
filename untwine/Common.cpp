@@ -30,12 +30,11 @@
 
 #include "Common.hpp"
 
-#ifndef _WIN32
-#include <fcntl.h>
-#else
+#ifdef _WIN32
 #include <io.h>
 #endif
 
+#include <fcntl.h>
 #include <filesystem>
 
 namespace untwine

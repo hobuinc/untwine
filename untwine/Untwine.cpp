@@ -175,7 +175,6 @@ int main(int argc, char *argv[])
     }
     catch (const untwine::FatalError& err)
     {
-        std::cerr << "FATAL ERROR: " << err.what() << "!\n";
         progress.writeErrorMessage(err.what());
         return -1;
     }

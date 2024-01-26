@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.5)
-project(Untwine VERSION 1.1.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.16...3.27)
+
+project(Untwine VERSION 1.2.0 LANGUAGES CXX)
 include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
 

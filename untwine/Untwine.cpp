@@ -31,8 +31,6 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
     programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
     programArgs.add("single_file,s", "Create a single output file", options.singleFile);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
-    programArgs.add("preserve_temp_dir", "Remove files from the temp directory",
-        options.preserveTempDir);
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
         options.level, -1);

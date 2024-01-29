@@ -2,6 +2,10 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <io.h>
+#else
+#include <unistd.h>
+#include <sys/mman.h>
 #endif
 
 #include <stdint.h>
@@ -38,7 +42,6 @@ struct Options
     bool singleFile;
     StringList inputFiles;
     std::string tempDir;
-    bool preserveTempDir;
     bool doCube;
     size_t fileLimit;
     int level;
@@ -148,8 +151,6 @@ inline bool isExtraDim(const std::string& name)
     return (name != UntwineBitsDimName);
 }
 
-const std::string MetadataFilename {"info2.txt"};
-
 // We check both _WIN32 and _MSC_VER to deal with MinGW, which doesn't support the special
 // Windows wide character interfaces for streams.
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -197,5 +198,50 @@ inline std::string fromNative(const std::string& in)
     return in;
 }
 #endif
+
+//ABELL - This exists here because older version of PDAL don't have it and the QGIS
+//  crew wanted things to work with older versions of PDAL.
+/**
+  Context info for mapping a file.
+*/
+struct MapContext
+{
+public:
+    MapContext() : m_fd(-1), m_addr(nullptr)
+    {}
+
+    void *addr() const
+    { return m_addr; }
+    std::string what() const
+    { return m_error; }
+
+    int m_fd;
+    size_t m_size;
+    void *m_addr;
+    std::string m_error;
+#ifdef _WIN32
+    HANDLE m_handle;
+#endif
+};
+
+/**
+  Map a file to memory.
+  \param filename  Filename to map.
+  \param readOnly  Must be true at this time.
+  \param pos       Starting position of file to map.
+  \param size      Number of bytes in file to map.
+  \return  MapContext.  addr() gets the mapped address.  what() gets
+      any error message.  addr() returns nullptr on error.
+*/
+MapContext mapFile(const std::string& filename, bool readOnly, size_t pos, size_t size);
+
+/**
+  Unmap a previously mapped file.
+  \param ctx  Previously returned MapContext
+  \return  MapContext indicating current state of the file mapping.
+*/
+MapContext unmapFile(MapContext ctx);
+
+std::vector<std::string> directoryList(const std::string& dir);
 
 } // namespace untwine

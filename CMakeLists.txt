@@ -25,10 +25,10 @@ file(GLOB SRCS
     bu/*.cpp
 )
 
-if(MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-        /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup")
-endif()
+#if(MSVC)
+#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
+#        /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup")
+#endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 

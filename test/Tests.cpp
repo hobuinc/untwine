@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <TestConfig.hpp>
 #include <pdal/util/Utils.hpp>
 #include <gtest/gtest.h>
@@ -57,9 +56,10 @@ std::filesystem::path outfile(const std::string& path = {})
 }
 
 
-int runUntwine(const std::string& in, const std::string& out)
+int runUntwine(const std::filesystem::path& in, const std::filesystem::path& out)
 {
-    std::string cmd = binpath("untwine").string() + " --files=" + in + " " + out;
+    std::string cmd = binpath("untwine").generic_string() +
+        " --files=" + in.generic_string() + " " + out.generic_string();
 
     std::string output;
     return pdal::Utils::run_shell_command(cmd, output);
@@ -235,10 +235,10 @@ void verifyStats(const Stats& s1, const Stats& s2)
 }
 
 
-void verifyStats(const std::string& file1, const std::string& file2)
+void verifyStats(const std::filesystem::path& file1, const std::filesystem::path& file2)
 {
-    lazperf::reader::named_file f1(file1);
-    lazperf::reader::named_file f2(file2);
+    lazperf::reader::named_file f1(file1.generic_string());
+    lazperf::reader::named_file f2(file2.generic_string());
 
     size_t pc1 = f1.header().point_count;
     size_t pc2 = f2.header().point_count;

@@ -26,10 +26,10 @@ namespace untwine
 
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
 {
-    programArgs.add("output_dir,o", "Output directory/filename for single-file output",
-        options.outputName).setPositional();
+    programArgs.add("output_dir,o", "Output filename", options.outputName).setPositional();
+    programArgs.addSynonym("output_dir", "output_file");
     programArgs.add("files,i", "Input files/directory", options.inputFiles).setPositional();
-    programArgs.add("single_file,s", "Create a single output file", options.singleFile);
+    programArgs.add("single_file,s", "Deprecated and ingored.", options.dummy);
     tempArg = &(programArgs.add("temp_dir", "Temp directory", options.tempDir));
     programArgs.add("cube", "Make a cube, rather than a rectangular solid", options.doCube, true);
     programArgs.add("level", "Set an initial tree level, rather than guess based on data",
@@ -78,18 +78,10 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
 
         if (!tempArg->set())
         {
-            if (options.singleFile)
-                options.tempDir = options.outputName + "_tmp";
-            else
-            {
-                throw FatalError("This version of Untwine does not support EPT output.");
-                //options.tempDir = options.outputName + "/temp";
-            }
+            options.tempDir = options.outputName + "_tmp";
         }
-        if (options.singleFile)
-            options.stats = true;
+        options.stats = true;
 
-        //
         if (options.progressFd == 1 && options.progressDebug)
         {
             std::cerr << "'--progress_fd' set to 1. Disabling '--progressDebug'.\n";

@@ -39,7 +39,6 @@ public:
 struct Options
 {
     std::string outputName;
-    bool singleFile;
     StringList inputFiles;
     std::string tempDir;
     bool doCube;
@@ -51,6 +50,7 @@ struct Options
     bool stats;
     std::string a_srs;
     bool metadata;
+    bool dummy;
 };
 
 struct BaseInfo
@@ -59,7 +59,8 @@ public:
     BaseInfo()
     {};
 
-    bool preserveHeaderFields() const {return opts.singleFile && opts.inputFiles.size() == 1;}
+    bool preserveHeaderFields() const
+        {return opts.inputFiles.size() == 1; }
 
     Options opts;
     pdal::BOX3D bounds;

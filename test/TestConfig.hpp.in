@@ -1,0 +1,24 @@
+#ifndef UNITTEST_TESTCONFIG_INCLUDED
+#define UNITTEST_TESTCONFIG_INCLUDED
+
+#define UNITTEST_TESTCONFIG_DATA_PATH "@CMAKE_SOURCE_DIR@/test/data/"
+#define UNITTEST_TESTCONFIG_CONFIGURED_PATH "@CMAKE_BINARY_DIR@/test/data/"
+#define UNITTEST_TESTCONFIG_BINARY_PATH "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@/"
+
+#include <string>
+
+namespace TestConfig
+{
+
+inline std::string dataPath()
+    { return UNITTEST_TESTCONFIG_DATA_PATH; }
+
+inline std::string configuredPath()
+    { return UNITTEST_TESTCONFIG_CONFIGURED_PATH; }
+
+inline std::string binaryPath()
+    { return UNITTEST_TESTCONFIG_BINARY_PATH; }
+
+}
+
+#endif

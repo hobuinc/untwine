@@ -1,10 +1,7 @@
 /*
 ===============================================================================
 
-  FILE:  io.cpp
-
-  CONTENTS:
-    LAZ io
+  FILE:  readers.cpp
 
   PROGRAMMERS:
 
@@ -402,6 +399,11 @@ uint64_t basic_file::pointCount() const
 laz_vlr basic_file::lazVlr() const
 {
     return p_->laz;
+}
+
+eb_vlr basic_file::ebVlr() const
+{
+    return p_->eb;
 }
 
 std::vector<char> basic_file::vlrData(const std::string& user_id, uint16_t record_id)

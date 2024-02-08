@@ -1,6 +1,7 @@
 #include <TestConfig.hpp>
 #include <pdal/util/Utils.hpp>
 #include <gtest/gtest.h>
+#include <filesystem>
 
 #include <lazperf/readers.hpp>
 #include <lazperf/las.hpp>

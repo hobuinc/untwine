@@ -25,11 +25,6 @@ file(GLOB SRCS
     bu/*.cpp
 )
 
-#if(MSVC)
-#    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-#        /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup")
-#endif()
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 add_executable(untwine ${SRCS} ${LAZPERF_SRCS})
@@ -47,6 +42,12 @@ target_link_libraries(untwine
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
 )
+if(MSVC)
+    target_link_options(untwine
+        PRIVATE
+            /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup"
+    )
+endif()
 
 install(TARGETS untwine DESTINATION bin)
 

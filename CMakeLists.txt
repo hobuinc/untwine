@@ -14,20 +14,20 @@ set_package_properties(Threads PROPERTIES DESCRIPTION
 
 configure_file(untwine/Config.hpp.in include/Config.hpp)
 
-file(GLOB SRCS
-    untwine/*.cpp
-    epf/*.cpp
-    bu/*.cpp
+file(GLOB LAZPERF_SRCS
     lazperf/*.cpp
     lazperf/detail/*.cpp
 )
 
-if(MSVC)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} \
-        /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup")
-endif()
+file(GLOB SRCS
+    untwine/*.cpp
+    epf/*.cpp
+    bu/*.cpp
+)
 
-add_executable(untwine ${SRCS})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
+
+add_executable(untwine ${SRCS} ${LAZPERF_SRCS})
 
 untwine_target_compile_settings(untwine)
 
@@ -42,5 +42,17 @@ target_link_libraries(untwine
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
 )
+if (MSVC)
+    target_link_options(untwine
+        PRIVATE
+            /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup
+    )
+endif()
 
 install(TARGETS untwine DESTINATION bin)
+
+#-----------------
+
+enable_testing()
+add_subdirectory(test)
+

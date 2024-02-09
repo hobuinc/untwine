@@ -42,10 +42,10 @@ target_link_libraries(untwine
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
 )
-if(MSVC)
+if (MSVC)
     target_link_options(untwine
         PRIVATE
-            /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup"
+            /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup
     )
 endif()
 

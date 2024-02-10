@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
-project(Untwine VERSION 1.3.0 LANGUAGES CXX)
+project(Untwine VERSION 1.3.1 LANGUAGES CXX)
 include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
+
+option(WITH_TESTS
+    "Choose if Untwine unit tests should be built" TRUE)
+add_feature_info("Unit tests" WITH_TESTS "Untwine unit tests")
+
 
 find_package(PDAL REQUIRED)
 if ((PDAL_VERSION_MAJOR EQUAL 1) AND (PDAL_VERSION_MINOR LESS 7))
@@ -53,6 +58,9 @@ install(TARGETS untwine DESTINATION bin)
 
 #-----------------
 
-enable_testing()
-add_subdirectory(test)
+if (WITH_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
 

@@ -57,9 +57,7 @@ void Epf::run(ProgressWriter& progress)
 
     m_grid.setCubic(m_b.opts.doCube);
 
-    // Create the file infos. As each info is created, the N x N x N grid is expanded to
-    // hold all the points. If the number of points seems too large, N is expanded to N + 1.
-    // The correct N is often wrong, especially for some areas where things are more dense.
+    // Create the file infos.
     std::vector<FileInfo> fileInfos;
     createFileInfos(m_b.opts.inputFiles, fileInfos);
 
@@ -71,8 +69,10 @@ void Epf::run(ProgressWriter& progress)
     m_b.srs = determineSrs(fileInfos);
 
 
-    // Setup grid and point count.
-    uint64_t totalPoints = 0;
+    // Setup grid and point count. For each file info the N x N x N grid is expanded to
+    // hold all the points. If the number of points seems too large, N is expanded to N + 1.
+    // The correct N is often wrong, especially for some areas where things are more dense.
+    PointCount totalPoints = 0;
     for (const FileInfo& info : fileInfos)
     {
         m_grid.expand(info.bounds, info.numPoints);

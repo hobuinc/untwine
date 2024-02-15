@@ -240,10 +240,10 @@ private:
                 d = unpack<uint32_t>(buf);
                 break;
             case Type::Signed64:
-                d = unpack<int64_t>(buf);
+                d = (double)unpack<int64_t>(buf);
                 break;
             case Type::Unsigned64:
-                d = unpack<uint64_t>(buf);
+                d = (double)unpack<uint64_t>(buf);
                 break;
             case Type::Float:
                 d = unpack<float>(buf);
@@ -335,7 +335,7 @@ TEST(Untwine, t1)
 {
     std::filesystem::remove(outfile());
 
-    std::string filename = datapath("autzen_trim.laz");
+    std::filesystem::path filename = datapath("autzen_trim.laz");
     runUntwine(filename, outfile());
 //    verify(outfile());
     verifyStats(filename, outfile());

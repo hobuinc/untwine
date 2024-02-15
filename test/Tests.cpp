@@ -112,9 +112,31 @@ struct Stats
     {
         auto ebSize = [](pdal::Dimension::Type type)
         {
-            static const std::array<int, 11> sizes { 0, 1, 1, 2, 2, 4, 4, 8, 8, 4, 8 };
-
-            return sizes[(int)type];
+            switch (type)
+    	    {
+		    case pdal::Dimension::Type::Unsigned8:
+                return 1;
+		    case pdal::Dimension::Type::Signed8:
+                return 1;
+		    case pdal::Dimension::Type::Unsigned16:
+                return 2;
+		    case pdal::Dimension::Type::Signed16:
+                return 2;
+		    case pdal::Dimension::Type::Unsigned32:
+                return 4;
+		    case pdal::Dimension::Type::Signed32:
+                return 4;
+		    case pdal::Dimension::Type::Unsigned64:
+                return 8;
+		    case pdal::Dimension::Type::Signed64:
+                return 8;
+		    case pdal::Dimension::Type::Float:
+                return 4;
+		    case pdal::Dimension::Type::Double:
+                return 8;
+            default:
+                return 0;
+            }
         };
 
         if (pdrf_ > 5)
@@ -197,7 +219,6 @@ private:
 
         double d = 0;
 
-        // Not worrying about byte order.
         switch (type)
         {
             case Type::Unsigned8:

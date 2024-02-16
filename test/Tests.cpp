@@ -353,8 +353,8 @@ TEST(Untwine, t2)
     runUntwine(filename, outfile());
     verifyStats(filename, outfile());
 
-    lazperf::reader::named_file f1(filename);
-    lazperf::reader::named_file f2(outfile());
+    lazperf::reader::named_file f1(filename.generic_string());
+    lazperf::reader::named_file f2(outfile().generic_string());
     lazperf::eb_vlr vlr1 = f1.ebVlr();
     lazperf::eb_vlr vlr2 = f2.ebVlr();
 

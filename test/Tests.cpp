@@ -367,6 +367,8 @@ TEST(Untwine, t2)
         EXPECT_EQ(f1.data_type, f2.data_type);
         EXPECT_EQ(f1.name, f2.name);
     }
+    f1.close();
+    f2.close();
 
     std::filesystem::remove(outfile());
 }

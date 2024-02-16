@@ -41,6 +41,7 @@ protected:
     ~basic_file();
 
     bool open(std::istream& in);
+    void close();
 
 public:
     LAZPERF_EXPORT uint64_t pointCount() const;
@@ -84,6 +85,8 @@ class named_file : public basic_file
 public:
     LAZPERF_EXPORT named_file(const std::string& filename);
     LAZPERF_EXPORT ~named_file();
+
+    LAZPERF_EXPORT void close();
 
 private:
     std::unique_ptr<Private> p_;

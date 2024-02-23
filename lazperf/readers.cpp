@@ -86,6 +86,13 @@ struct named_file::Private
     Private(const std::string& filename) : f(filename, std::ios::binary)
     {}
 
+    ~Private()
+    { close(); }
+
+    void close()
+    { f.close(); }
+
+
     std::ifstream f;
 };
 
@@ -443,6 +450,11 @@ named_file::named_file(const std::string& filename) : p_(new Private(filename))
 
 named_file::~named_file()
 {}
+
+void named_file::close()
+{
+    p_->close();
+}
 
 // Chunk decompressor
 

@@ -42,15 +42,9 @@ std::filesystem::path temppath(const std::string& path = {})
     return out;
 }
 
-
-std::filesystem::path bigfile()
-{
-    return datapath("autzen_trim.laz");
-}
-
 std::filesystem::path outfile(const std::string& path = {})
 {
-    std::string filename = "untwine_test.tmp";
+    std::string filename = "untwine_test.copc.laz";
     if (!path.empty())
         filename = path;
     return temppath(filename);
@@ -78,16 +72,24 @@ bool verify()
     return true;
 }
 
+struct EbInfo
+{
+    std::string name;
+    int size;
+
+};
+
 struct Stats
 {
     int pdrf_;
-    int eb1size_;
-    int eb2size_;
-    int eb3size_;
+    pdal::Dimension::Type eb1type_;
+    pdal::Dimension::Type eb2type_;
+    pdal::Dimension::Type eb3type_;
     std::array<Summary, 13> summary_;
 
-    Stats(int pdrf, int eb1size = 0, int eb2size = 0, int eb3size = 0) :
-        pdrf_(pdrf), eb1size_(eb1size), eb2size_(eb2size), eb3size_(eb3size)
+    Stats(int pdrf, pdal::Dimension::Type eb1type, pdal::Dimension::Type eb2type,
+            pdal::Dimension::Type eb3type) :
+        pdrf_(pdrf), eb1type_(eb1type), eb2type_(eb2type), eb3type_(eb3type)
     {}
 
     static const int X = 0;
@@ -108,26 +110,55 @@ struct Stats
 
     void accumulate(char *buf)
     {
+        auto ebSize = [](pdal::Dimension::Type type)
+        {
+            switch (type)
+    	    {
+		    case pdal::Dimension::Type::Unsigned8:
+                return 1;
+		    case pdal::Dimension::Type::Signed8:
+                return 1;
+		    case pdal::Dimension::Type::Unsigned16:
+                return 2;
+		    case pdal::Dimension::Type::Signed16:
+                return 2;
+		    case pdal::Dimension::Type::Unsigned32:
+                return 4;
+		    case pdal::Dimension::Type::Signed32:
+                return 4;
+		    case pdal::Dimension::Type::Unsigned64:
+                return 8;
+		    case pdal::Dimension::Type::Signed64:
+                return 8;
+		    case pdal::Dimension::Type::Float:
+                return 4;
+		    case pdal::Dimension::Type::Double:
+                return 8;
+            default:
+                return 0;
+            }
+        };
+
         if (pdrf_ > 5)
             accumulate((lazperf::las::point14 *)buf);
         else
             accumulate((lazperf::las::point10 *)buf);
         buf += lazperf::baseCount(pdrf_);
 
-        if (eb1size_)
+        if (eb1type_ != pdal::Dimension::Type::None)
         {
-            summary_[Eb1].insert(fetchEb(buf, eb1size_));
-            buf += eb1size_;
+            summary_[Eb1].insert(fetchEb(buf, eb1type_));
+            buf += ebSize(eb1type_);
         }
-        if (eb2size_)
+        if (eb2type_ != pdal::Dimension::Type::None)
         {
-            summary_[Eb2].insert(fetchEb(buf, eb2size_));
-            buf += eb2size_;
+            summary_[Eb2].insert(fetchEb(buf, eb2type_));
+            buf += ebSize(eb2type_);
         }
-        if (eb3size_)
+        if (eb3type_ != pdal::Dimension::Type::None)
         {
-            summary_[Eb3].insert(fetchEb(buf, eb3size_));
-            buf += eb3size_;
+            summary_[Eb3].insert(fetchEb(buf, eb3type_));
+            buf += ebSize(eb2type_);
         }
     }
 
@@ -181,28 +212,46 @@ struct Stats
     friend bool operator==(const Stats& s1, const Stats& s2);
 
 private:
-    static double fetchEb(char *buf, int ebsize)
+    static double fetchEb(char *buf, pdal::Dimension::Type type)
     {
-        uint16_t s;
-        uint32_t i;
-        double d;
+        using namespace pdal::Dimension;
+        using namespace lazperf::utils;
 
-        // Not worrying about byte order.
-        switch (ebsize)
+        double d = 0;
+
+        switch (type)
         {
-            case 1:
-                d = *buf;
+            case Type::Unsigned8:
+                d = (uint8_t)*buf;
                 break;
-            case 2:
-                memcpy(&s, buf, 2);
-                d = s;
+            case Type::Signed8:
+                d = (int8_t)*buf;
                 break;
-            case 4:
-                memcpy(&i, buf, 4);
-                d = i;
+            case Type::Signed16:
+                d = unpack<int16_t>(buf);
                 break;
-            case 8:
-                memcpy(&d, buf, 8);
+            case Type::Unsigned16:
+                d = unpack<uint16_t>(buf);
+                break;
+            case Type::Signed32:
+                d = unpack<int32_t>(buf);
+                break;
+            case Type::Unsigned32:
+                d = unpack<uint32_t>(buf);
+                break;
+            case Type::Signed64:
+                d = (double)unpack<int64_t>(buf);
+                break;
+            case Type::Unsigned64:
+                d = (double)unpack<uint64_t>(buf);
+                break;
+            case Type::Float:
+                d = unpack<float>(buf);
+                break;
+            case Type::Double:
+                d = unpack<double>(buf);
+                break;
+            default:
                 break;
         }
         return d;
@@ -223,7 +272,8 @@ void verifyStats(const Stats& s1, const Stats& s2)
 
     for (size_t i = 0; i < s1.summary_.size(); ++i)
     {
-        if ((s1.pdrf_ == 0 || s1.pdrf_ == 1) && (i == Stats::Red || i == Stats::Green || i == Stats::Blue))
+        if ((s1.pdrf_ == 0 || s1.pdrf_ == 1) &&
+            (i == Stats::Red || i == Stats::Green || i == Stats::Blue))
             continue;
         if ((s1.pdrf_ == 0 || s1.pdrf_ == 2) && i == Stats::GpsTime)
             continue;
@@ -231,7 +281,7 @@ void verifyStats(const Stats& s1, const Stats& s2)
         test(s1.summary_[i].minimum(), s2.summary_[i].minimum(), 1E-7, "minimum", dim);
         test(s1.summary_[i].maximum(), s2.summary_[i].maximum(), 1E-7, "maximum", dim);
         test(s1.summary_[i].average(), s2.summary_[i].average(), 1E-5, "average", dim);
-        test(s1.summary_[i].variance(), s2.summary_[i].variance(), .1, "variance", dim);
+        test(s1.summary_[i].stddev(), s2.summary_[i].stddev(), 1E-5, "stddev", dim);
     }
 }
 
@@ -245,25 +295,29 @@ void verifyStats(const std::filesystem::path& file1, const std::filesystem::path
     size_t pc2 = f2.header().point_count;
     ASSERT_EQ(pc1, pc2);
 
-    auto ebSize = [](const lazperf::eb_vlr& vlr, size_t pos) -> int
+    auto ebType = [](const lazperf::eb_vlr& vlr, size_t pos) -> pdal::Dimension::Type
     {
-        // This is a list of the sizes of the LAS data types.
-        static const std::array<int, 10> sizes { 1, 1, 2, 2, 4, 4, 8, 8, 4, 8 };
+        using namespace pdal::Dimension;
+
+        static const std::array<Type, 11> types { Type::None, Type::Unsigned8, Type::Signed8,
+            Type::Unsigned16, Type::Signed16, Type::Unsigned32, Type::Signed32, Type::Unsigned64,
+            Type::Signed64, Type::Float, Type::Double };
 
         if (pos >= vlr.items.size())
-            return 0;
+            return Type::None;
 
-        int type = vlr.items[pos].data_type;
-        if (type < 1 || type > 10)
-            return 0;
-        return sizes[--type];
+        int itype = vlr.items[pos].data_type;
+        if (itype < 1 || itype > 10)
+            return Type::None;
+
+        return types[itype];
     };
 
     lazperf::eb_vlr vlr = f1.ebVlr();
-    Stats s1(f1.header().point_format_id, ebSize(vlr, 0), ebSize(vlr, 1), ebSize(vlr, 2));
+    Stats s1(f1.header().point_format_id, ebType(vlr, 0), ebType(vlr, 1), ebType(vlr, 2));
 
     vlr = f2.ebVlr();
-    Stats s2(f2.header().point_format_id, ebSize(vlr, 0), ebSize(vlr, 1), ebSize(vlr, 2));
+    Stats s2(f2.header().point_format_id, ebType(vlr, 0), ebType(vlr, 1), ebType(vlr, 2));
 
     char buf[1000];
     for (size_t i = 0; i < pc1; ++i)
@@ -281,9 +335,40 @@ TEST(Untwine, t1)
 {
     std::filesystem::remove(outfile());
 
-    runUntwine(bigfile(), outfile());
+    std::filesystem::path filename = datapath("autzen_trim.laz");
+    runUntwine(filename, outfile());
 //    verify(outfile());
-    verifyStats(bigfile(), outfile());
+    verifyStats(filename, outfile());
+
+    std::filesystem::remove(outfile());
+}
+
+// Verfiy extra bytes fields are written correctly and the types match the input.
+// (Issue 155)
+TEST(Untwine, t2)
+{
+    std::filesystem::remove(outfile());
+
+    std::filesystem::path filename = datapath("eb.laz");
+    runUntwine(filename, outfile());
+    verifyStats(filename, outfile());
+
+    lazperf::reader::named_file f1(filename.generic_string());
+    lazperf::reader::named_file f2(outfile().generic_string());
+    lazperf::eb_vlr vlr1 = f1.ebVlr();
+    lazperf::eb_vlr vlr2 = f2.ebVlr();
+
+    EXPECT_EQ(vlr1.items.size(), vlr2.items.size());
+    for (size_t i = 0; i < vlr1.items.size(); ++i)
+    {
+        const lazperf::eb_vlr::ebfield& f1 = vlr1.items[i];
+        const lazperf::eb_vlr::ebfield& f2 = vlr2.items[i];
+
+        EXPECT_EQ(f1.data_type, f2.data_type);
+        EXPECT_EQ(f1.name, f2.name);
+    }
+    f1.close();
+    f2.close();
 
     std::filesystem::remove(outfile());
 }

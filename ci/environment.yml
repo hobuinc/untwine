@@ -1,0 +1,12 @@
+name: untwine
+channels:
+  - conda-forge
+dependencies:
+  - conda
+  - mamba
+  - compilers
+  - pdal
+  - ninja
+  - cmake
+  - ccache
+

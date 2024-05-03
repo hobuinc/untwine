@@ -12,14 +12,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: mamba-org/setup-micromamba@v1
       with:
-        channels: conda-forge
-        auto-update-conda: true
+        init-shell: bash
+        environment-file: ci/environment.yml
+        environment-name: "pdal-build"
+        cache-environment: true
+        cache-downloads: true
 
     - name: Setup
       shell: bash -l {0}
       run: |
+          mkdir build
           source ./ci/linux/setup.sh
 
     - name: CMake

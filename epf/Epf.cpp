@@ -466,6 +466,7 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
         fi.dimInfo.push_back(FileDimInfo(name, type));
     }
 
+    std::vector<FileInfo> fileInfos;
     // If we have LAS start capability, break apart file info into chunks of size 5 million.
 #ifdef PDAL_LAS_START
     PointCount ChunkSize = 5'000'000;
@@ -473,7 +474,6 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
     PointCount remaining = fi.numPoints;
     PointId start = 0;
 
-    std::vector<FileInfo> fileInfos;
     while (remaining)
     {
         FileInfo lasFi(fi);
@@ -485,7 +485,7 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
         remaining -= lasFi.numPoints;
     }
 #else
-    fileInfos.push_back(fileInfo);
+    fileInfos.push_back(fi);
 #endif
     return fileInfos;
 }

@@ -68,7 +68,6 @@ void Epf::run(ProgressWriter& progress)
     determineOffset(fileInfos);
     m_b.srs = determineSrs(fileInfos);
 
-
     // Setup grid and point count. For each file info the N x N x N grid is expanded to
     // hold all the points. If the number of points seems too large, N is expanded to N + 1.
     // The correct N is often wrong, especially for some areas where things are more dense.

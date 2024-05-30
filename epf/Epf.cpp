@@ -68,7 +68,6 @@ void Epf::run(ProgressWriter& progress)
     determineOffset(fileInfos);
     m_b.srs = determineSrs(fileInfos);
 
-
     // Setup grid and point count. For each file info the N x N x N grid is expanded to
     // hold all the points. If the number of points seems too large, N is expanded to N + 1.
     // The correct N is often wrong, especially for some areas where things are more dense.
@@ -466,6 +465,7 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
         fi.dimInfo.push_back(FileDimInfo(name, type));
     }
 
+    std::vector<FileInfo> fileInfos;
     // If we have LAS start capability, break apart file info into chunks of size 5 million.
 #ifdef PDAL_LAS_START
     PointCount ChunkSize = 5'000'000;
@@ -473,7 +473,6 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
     PointCount remaining = fi.numPoints;
     PointId start = 0;
 
-    std::vector<FileInfo> fileInfos;
     while (remaining)
     {
         FileInfo lasFi(fi);
@@ -485,7 +484,7 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
         remaining -= lasFi.numPoints;
     }
 #else
-    fileInfos.push_back(fileInfo);
+    fileInfos.push_back(fi);
 #endif
     return fileInfos;
 }

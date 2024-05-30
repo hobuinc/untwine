@@ -42,15 +42,17 @@ target_include_directories(untwine
         ${PDAL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}
 )
+
 target_link_libraries(untwine
     PRIVATE
         ${CMAKE_THREAD_LIBS_INIT}
         ${PDAL_LIBRARIES}
 )
+
 if (MSVC)
     target_link_options(untwine
         PRIVATE
-            /SUBSYSTEM:WINDOWS /ENTRY:wmainCRTStartup
+            /SUBSYSTEM:CONSOLE /ENTRY:wmainCRTStartup
     )
 endif()
 

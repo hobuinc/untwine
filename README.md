@@ -61,7 +61,11 @@ Options
 - a_srs
 
   Assign an output SRS. Example `--a_srs EPSG:2056`
-  
+
+- no_srs
+
+  Don't read the SLR VLRs. This is only applicable to las files. [Default: false]
+
 - dims
 
   List of dimensions to load. X, Y and Z are always loaded. Limiting the dimensions can

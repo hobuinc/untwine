@@ -286,7 +286,8 @@ void Epf::createFileInfos(const StringList& input, std::vector<FileInfo>& fileIn
 
         pdal::Options opts;
         opts.add("filename", filename);
-        opts.add("nosrs", m_b.opts.no_srs);
+        if (driver == "readers.las")
+            opts.add("nosrs", m_b.opts.no_srs);
         s->setOptions(opts);
 
         FileInfo fi;

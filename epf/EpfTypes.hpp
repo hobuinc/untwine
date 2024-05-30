@@ -48,7 +48,7 @@ struct FileInfo
 
     std::string filename;
     std::string driver;
-    bool no_srs = false;
+    bool no_srs;
     DimInfoList dimInfo;
     uint64_t numPoints;
     uint64_t start;

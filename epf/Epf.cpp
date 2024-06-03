@@ -285,11 +285,14 @@ void Epf::createFileInfos(const StringList& input, std::vector<FileInfo>& fileIn
 
         pdal::Options opts;
         opts.add("filename", filename);
+        if (driver == "readers.las")
+            opts.add("nosrs", m_b.opts.no_srs);
         s->setOptions(opts);
 
         FileInfo fi;
         fi.filename = filename;
         fi.driver = driver;
+        fi.no_srs = m_b.opts.no_srs;
         if (driver == "readers.las")
         {
             const std::vector<FileInfo>& infos = processLas(*dynamic_cast<LasReader *>(s), fi);

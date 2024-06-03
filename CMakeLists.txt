@@ -8,10 +8,7 @@ option(WITH_TESTS
 add_feature_info("Unit tests" WITH_TESTS "Untwine unit tests")
 
 
-find_package(PDAL REQUIRED)
-if ((PDAL_VERSION_MAJOR EQUAL 1) AND (PDAL_VERSION_MINOR LESS 7))
-  message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 1.7 or higher.")
-endif()
+find_package(PDAL REQUIRED 2.6)
 
 find_package(Threads)
 set_package_properties(Threads PROPERTIES DESCRIPTION

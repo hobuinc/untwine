@@ -3,15 +3,15 @@ project(Untwine VERSION 1.3.2 LANGUAGES CXX)
 include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
 
-option(WITH_TESTS
-    "Choose if Untwine unit tests should be built" TRUE)
-add_feature_info("Unit tests" WITH_TESTS "Untwine unit tests")
+option(BUILD_TESTING "Chose if Untwine unit tests should be built" OFF)
+add_feature_info("Unit tests" BUILD_TESTING "Untwine unit tests")
 
-
-find_package(PDAL REQUIRED)
-if ((PDAL_VERSION_MAJOR EQUAL 1) AND (PDAL_VERSION_MINOR LESS 7))
-  message(FATAL_ERROR "PDAL version is too old (${PDAL_VERSION}). Use 1.7 or higher.")
+if(DEFINED WITH_TESTS)
+  message(DEPRECATION "WITH_TESTS has been replaced with the standard CMake BUILD_TESTING variable")
+  set(BUILD_TESTING ${WITH_TESTS})
 endif()
+
+find_package(PDAL REQUIRED CONFIG 2.6)
 
 find_package(Threads)
 set_package_properties(Threads PROPERTIES DESCRIPTION
@@ -58,9 +58,7 @@ endif()
 
 install(TARGETS untwine DESTINATION bin)
 
-#-----------------
-
-if (WITH_TESTS)
+if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()

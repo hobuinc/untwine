@@ -8,7 +8,7 @@ option(WITH_TESTS
 add_feature_info("Unit tests" WITH_TESTS "Untwine unit tests")
 
 
-find_package(PDAL REQUIRED 2.6)
+find_package(PDAL REQUIRED CONFIG 2.6)
 
 find_package(Threads)
 set_package_properties(Threads PROPERTIES DESCRIPTION

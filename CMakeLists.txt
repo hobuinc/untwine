@@ -3,10 +3,14 @@ project(Untwine VERSION 1.3.2 LANGUAGES CXX)
 include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
 
-option(WITH_TESTS
-    "Choose if Untwine unit tests should be built" TRUE)
-add_feature_info("Unit tests" WITH_TESTS "Untwine unit tests")
+option(BUILD_TESTING "Chose if Untwine unit tests should be built" OFF)
+add_feature_info("Unit tests" BUILD_TESTING "Untwine unit tests")
 
+if(DEFINED WITH_TESTS)
+  message(DEPRECATION "WITH_TESTS has been replaced with the standard CMake BUILD_TESTING variable")
+  set(BUILD_TESTING ${WITH_TESTS})
+endif()
+include(CTest)
 
 find_package(PDAL REQUIRED CONFIG 2.6)
 

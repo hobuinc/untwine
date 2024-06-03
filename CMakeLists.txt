@@ -59,9 +59,7 @@ endif()
 
 install(TARGETS untwine DESTINATION bin)
 
-#-----------------
-
-if (WITH_TESTS)
+if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()

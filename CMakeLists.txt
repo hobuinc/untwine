@@ -10,7 +10,6 @@ if(DEFINED WITH_TESTS)
   message(DEPRECATION "WITH_TESTS has been replaced with the standard CMake BUILD_TESTING variable")
   set(BUILD_TESTING ${WITH_TESTS})
 endif()
-include(CTest)
 
 find_package(PDAL REQUIRED CONFIG 2.6)
 

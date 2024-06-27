@@ -20,7 +20,7 @@ inline std::vector<std::string> directoryList(const std::string& dir)
 
     try
     {
-        fs::directory_iterator it(untwine::toNative(dir));
+        fs::directory_iterator it(toNative(dir));
         fs::directory_iterator end;
         while (it != end)
         {

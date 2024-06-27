@@ -30,6 +30,20 @@ file(GLOB SRCS
     bu/*.cpp
 )
 
+# MINGW must come before WIN32 test
+# APPLE must come before LINUX test
+if (MINGW)
+    set(UNTWINE_OS_DIR untwine/mingw)
+elseif (WIN32)
+    set(UNTWINE_OS_DIR untwine/windows)
+elseif (APPLE)
+    set(UNTWINE_OS_DIR untwine/osx)
+elseif (LINUX)
+    set(UNTWINE_OS_DIR untwine/generic)
+else()
+    message(FATAL_ERROR "OS not supported")
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 
 add_executable(untwine ${SRCS} ${LAZPERF_SRCS})
@@ -38,6 +52,7 @@ untwine_target_compile_settings(untwine)
 
 target_include_directories(untwine
     PRIVATE
+        ${UNTWINE_OS_DIR}
         ${CMAKE_CURRENT_BINARY_DIR}/include
         ${PDAL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}

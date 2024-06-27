@@ -27,6 +27,7 @@
 
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
+#include "stringconv.hpp"
 
 namespace untwine
 {
@@ -245,7 +246,7 @@ void Processor::writeBinOutput(Index& index)
     // pass.
     std::string filename = m_vi.key().toString() + ".bin";
     std::string fullFilename = m_b.opts.tempDir + "/" + filename;
-    std::ofstream out(toNative(fullFilename), std::ios::binary | std::ios::trunc);
+    std::ofstream out(os::toNative(fullFilename), std::ios::binary | std::ios::trunc);
     if (!out)
         throw FatalError("Couldn't open '" + fullFilename + "' for output.");
     for (size_t i = 0; i < index.size(); ++i)
@@ -482,7 +483,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
 
     uint64_t location = m_manager.newChunk(key, chunk.size(), (uint32_t)view->size());
 
-    std::ofstream out(toNative(m_b.opts.outputName),
+    std::ofstream out(os::toNative(m_b.opts.outputName),
         std::ios::out | std::ios::in | std::ios::binary);
     out.seekp(std::ofstream::pos_type(location));
     out.write(reinterpret_cast<const char *>(chunk.data()), chunk.size());

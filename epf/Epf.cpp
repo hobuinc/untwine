@@ -253,8 +253,6 @@ void Epf::fillMetadata(const pdal::PointLayout& layout)
         m_b.offset[2] = calcOffset(m_b.trueBounds.minz, m_b.trueBounds.maxz, m_b.scale[2]);
     }
 
-    std::cerr << "Scale = " << m_b.scale[0] << "/" << m_b.scale[1] << "/" << m_b.scale[2] << "!\n";
-    std::cerr << "Offset = " << m_b.offset[0] << "/" << m_b.offset[1] << "/" << m_b.offset[2] << "!\n";
     exit(0);
 }
 
@@ -441,8 +439,6 @@ std::vector<FileInfo> Epf::processLas(pdal::LasReader& r, FileInfo fi)
     fi.bounds = h.getBounds();
     fi.numPoints = h.pointCount();
 
-
-std::cerr << "Scale x/y/z = " << h.scaleX() << "/" << h.scaleY() << "/" << h.scaleZ() << "!\n";
     m_b.scale[0] = (std::max)(m_b.scale[0], h.scaleX());
     m_b.scale[1] = (std::max)(m_b.scale[1], h.scaleY());
     m_b.scale[2] = (std::max)(m_b.scale[2], h.scaleZ());

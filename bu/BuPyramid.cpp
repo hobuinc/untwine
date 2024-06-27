@@ -13,7 +13,8 @@
 #include "OctantInfo.hpp"
 #include "../untwine/Common.hpp"
 #include "../untwine/ProgressWriter.hpp"
-#include "dirlist.hpp"
+
+#include <dirlist.hpp>  //untwine/os
 
 namespace untwine
 {

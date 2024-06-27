@@ -33,7 +33,7 @@
 #include <pdal/util/FileUtils.hpp>
 #include <pdal/util/ProgramArgs.hpp>
 
-#include "dirlist.hpp"
+#include <dirlist.hpp>  // untwine/os
 
 namespace untwine
 {

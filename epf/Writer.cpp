@@ -19,7 +19,8 @@
 #include "Epf.hpp"
 #include "../untwine/Common.hpp"
 #include "../untwine/VoxelKey.hpp"
-#include "stringconv.hpp"
+
+#include <stringconv.hpp>  // untwine/os
 
 using namespace pdal;
 

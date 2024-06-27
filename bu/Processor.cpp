@@ -27,7 +27,8 @@
 
 #include "Processor.hpp"
 #include "PyramidManager.hpp"
-#include "stringconv.hpp"
+
+#include <stringconv.hpp>  // untwine/os
 
 namespace untwine
 {

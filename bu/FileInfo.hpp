@@ -14,7 +14,7 @@
 
 #include <list>
 
-#include "mapfile.hpp"
+#include <mapfile.hpp>  // untwine/os
 
 namespace untwine
 {

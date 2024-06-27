@@ -22,8 +22,9 @@
 
 #include "../epf/Epf.hpp"
 #include "../bu/BuPyramid.hpp"
-#include "dirlist.hpp"
-#include "stringconv.hpp"
+
+#include <dirlist.hpp>    // untwine/os
+#include <stringconv.hpp> // untwine/os
 
 namespace untwine
 {

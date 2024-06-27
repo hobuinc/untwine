@@ -14,7 +14,8 @@
 
 #include "../untwine/Common.hpp"
 #include "../untwine/Point.hpp"
-#include "mapfile.hpp"
+
+#include <mapfile.hpp>  // untwine/os
 
 #include "FileInfo.hpp"
 

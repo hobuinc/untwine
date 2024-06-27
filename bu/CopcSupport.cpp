@@ -24,7 +24,8 @@
 
 #include "../untwine/Common.hpp"
 #include "../untwine/FileDimInfo.hpp"
-#include "stringconv.hpp"
+
+#include <stringconv.hpp>  // untwine/os
 
 namespace untwine
 {

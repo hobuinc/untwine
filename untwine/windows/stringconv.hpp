@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Windows.h>
+
 namespace untwine
 {
 namespace os

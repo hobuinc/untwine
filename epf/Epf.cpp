@@ -252,8 +252,6 @@ void Epf::fillMetadata(const pdal::PointLayout& layout)
         m_b.offset[1] = calcOffset(m_b.trueBounds.miny, m_b.trueBounds.maxy, m_b.scale[1]);
         m_b.offset[2] = calcOffset(m_b.trueBounds.minz, m_b.trueBounds.maxz, m_b.scale[2]);
     }
-
-    exit(0);
 }
 
 void Epf::createFileInfos(const StringList& input, std::vector<FileInfo>& fileInfos)

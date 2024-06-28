@@ -17,7 +17,7 @@ inline bool writeMessage(int fd, int32_t msgId, uint32_t percent, const std::str
     return true;
 }
 
-inline bool writeErrorMessage(int fd, nt32_t msgId, const std::string& message)
+inline bool writeErrorMessage(int fd, int32_t msgId, const std::string& message)
 {
     DWORD numWritten;
     HANDLE h = reinterpret_cast<HANDLE>((intptr_t)fd);

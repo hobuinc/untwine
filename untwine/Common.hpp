@@ -1,13 +1,5 @@
 #pragma once
 
-#ifdef _WIN32
-#include <Windows.h>
-#include <io.h>
-#else
-#include <unistd.h>
-#include <sys/mman.h>
-#endif
-
 #include <stdint.h>
 #include <array>
 #include <limits>
@@ -18,6 +10,7 @@
 #include <pdal/SpatialReference.hpp>
 #include <pdal/util/Bounds.hpp>
 
+#include "FatalError.hpp"
 #include "FileDimInfo.hpp"
 
 namespace untwine
@@ -28,13 +21,6 @@ const int CellCount = 128;
 
 using PointCount = uint64_t;
 using StringList = std::vector<std::string>;
-
-class  FatalError : public std::runtime_error
-{
-public:
-    inline FatalError(std::string const& msg) : std::runtime_error(msg)
-        {}
-};
 
 struct Options
 {

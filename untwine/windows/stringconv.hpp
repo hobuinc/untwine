@@ -2,6 +2,8 @@
 
 #include <Windows.h>
 
+#include <FatalError.hpp>
+
 namespace untwine
 {
 namespace os

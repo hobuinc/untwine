@@ -2,6 +2,9 @@
 
 #include <Windows.h>
 #include <io.h>
+#include <fcntl.h>
+
+#include <stringconv.h>
 
 namespace untwine
 {

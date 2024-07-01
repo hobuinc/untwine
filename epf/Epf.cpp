@@ -281,6 +281,9 @@ void Epf::createFileInfos(const StringList& input, std::vector<FileInfo>& fileIn
         std::string driver = factory.inferReaderDriver(filename);
         if (driver.empty())
             throw FatalError("Can't infer reader for '" + filename + "'.");
+        // Use LAS reader for COPC files.
+        if (driver == "readers.copc")
+            driver = "readers.las";
         Stage *s = factory.createStage(driver);
 
         pdal::Options opts;

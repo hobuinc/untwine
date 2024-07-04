@@ -23,6 +23,9 @@
 #include "../epf/Epf.hpp"
 #include "../bu/BuPyramid.hpp"
 
+#include <dirlist.hpp>    // untwine/os
+#include <stringconv.hpp> // untwine/os
+
 namespace untwine
 {
 
@@ -114,7 +117,7 @@ void cleanup(const std::string& dir, bool rmdir)
     std::regex re("[0-9]+-[0-9]+-[0-9]+-[0-9]+.bin");
     std::smatch sm;
 
-    const std::vector<std::string>& files = directoryList(dir);
+    const std::vector<std::string>& files = os::directoryList(dir);
     for (const std::string& f : files)
         if (std::regex_match(f, sm, re))
             pdal::FileUtils::deleteFile(dir + "/" + f);
@@ -136,7 +139,7 @@ int main(int argc, char *argv[])
     argv++;
     argc--;
     while (argc--)
-        arglist.push_back(untwine::fromNative(*argv++));
+        arglist.push_back(untwine::os::fromNative(*argv++));
 
     using namespace untwine;
 

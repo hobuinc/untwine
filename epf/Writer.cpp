@@ -20,6 +20,8 @@
 #include "../untwine/Common.hpp"
 #include "../untwine/VoxelKey.hpp"
 
+#include <stringconv.hpp>  // untwine/os
+
 using namespace pdal;
 
 namespace untwine
@@ -144,7 +146,7 @@ void Writer::run()
 
         // Open the file. Write the data. Stick the buffer back on the cache.
         // Remove the key from the active key list.
-        std::ofstream out(toNative(path(wd.key)), std::ios::app | std::ios::binary);
+        std::ofstream out(os::toNative(path(wd.key)), std::ios::app | std::ios::binary);
         out.write(reinterpret_cast<const char *>(wd.data->data()), wd.dataSize);
         out.close();
 

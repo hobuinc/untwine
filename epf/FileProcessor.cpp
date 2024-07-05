@@ -136,6 +136,7 @@ void FileProcessor::run()
     if (m_fi.driver == "readers.las")
     {
         opts.add("nosrs", m_fi.no_srs);
+        opts.add("use_eb_vlr", "true");
 #ifdef PDAL_LAS_START
         opts.add("start", m_fi.start);
 #endif

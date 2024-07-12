@@ -1,6 +1,6 @@
 # Untwine
 
-Untwine is software from [Hobu, Inc.](https://hobu.co) for creating [Entwine Point Tile](https://entwine.io/entwine-point-tile.html)  (EPT) 
+Untwine is software from [Hobu, Inc.](https://hobu.co) for creating [Entwine Point Tile](https://entwine.io/entwine-point-tile.html)  (EPT)
 or [Cloud Optimized Point Cloud](https://copc.io/) (COPC) web services from [PDAL](https://pdal.io)-readable point cloud data sources. It
 provides an alternative processing approach than the [Entwine](https://entwine.io)
 software, but the output is expected to be compatible EPT/COPC.
@@ -54,9 +54,9 @@ Options
 
   Input files or directories containing input files. [Required]
 
-- output_dir
+- output_file
 
-  Output directory. [Required]
+  Output file. [Required]
 
 - a_srs
 

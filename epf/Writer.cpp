@@ -153,7 +153,7 @@ void Writer::run()
         std::lock_guard<std::mutex> lock(m_mutex);
         if (!out)
         {
-            m_pool.setError("Failure writing to '" + path(wd.key) + "'.");
+            m_pool.setError("EPF Failure writing to '" + path(wd.key) + "'.");
             m_stop = true;
         }
         else

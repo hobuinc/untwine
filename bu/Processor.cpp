@@ -52,14 +52,12 @@ void Processor::run()
     }
     catch (const std::exception& ex)
     {
-        std::cerr << "Exception: " << ex.what() << "\n";
         m_manager.queueWithError(m_vi.octant(), ex.what());
         return;
     }
     catch (...)
     {
         std::string msg = std::string("Unexpected error processing ") + m_vi.key().toString() + ".";
-        std::cerr << "Exception: " << msg << "\n";
         m_manager.queueWithError(m_vi.octant(), msg);
         return;
     }
@@ -490,7 +488,7 @@ void Processor::createChunk(const VoxelKey& key, pdal::PointViewPtr view)
     out.write(reinterpret_cast<const char *>(chunk.data()), chunk.size());
     out.close();
     if (!out)
-        throw FatalError("Failure writing to '" + m_b.opts.outputName + "'.");
+        throw FatalError("Failure writing to file '" + m_b.opts.outputName + "'.");
 }
 
 void Processor::fillPointBuf(pdal::PointRef& point, std::vector<char>& buf,

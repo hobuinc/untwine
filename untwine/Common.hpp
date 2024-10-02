@@ -112,7 +112,7 @@ inline bool isExtraDim(const std::string& name)
     using namespace pdal;
     using D = Dimension::Id;
 
-    static const std::array<Dimension::Id, 16> lasDims
+    static const std::array<Dimension::Id, 15> lasDims
     {
         D::X,
         D::Y,
@@ -120,7 +120,6 @@ inline bool isExtraDim(const std::string& name)
         D::Intensity,
         D::ReturnNumber,
         D::NumberOfReturns,
-        D::ReturnNumber,
         D::Classification,
         D::UserData,
         D::ScanAngleRank,

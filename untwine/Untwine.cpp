@@ -110,16 +110,6 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
     return true;
 }
 
-bool createDirs(const Options& options)
-{
-    bool tempExists = pdal::FileUtils::fileExists(options.tempDir);
-    if (tempExists && !pdal::FileUtils::isDirectory(options.tempDir))
-        throw FatalError("Can't use temp directory - exists as a regular or special file.");
-    if (!tempExists && !pdal::FileUtils::createDirectory(options.tempDir))
-        throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");
-    return tempExists;
-}
-
 void cleanup(const std::string& dir, bool rmdir)
 {
     std::regex re("[0-9]+-[0-9]+-[0-9]+-[0-9]+.bin");
@@ -131,6 +121,19 @@ void cleanup(const std::string& dir, bool rmdir)
             pdal::FileUtils::deleteFile(dir + "/" + f);
     if (rmdir)
         pdal::FileUtils::deleteDirectory(dir);
+}
+
+bool createDirs(const Options& options)
+{
+    bool tempExists = pdal::FileUtils::fileExists(options.tempDir);
+    if (tempExists)
+        cleanup(options.tempDir, false);
+
+    if (tempExists && !pdal::FileUtils::isDirectory(options.tempDir))
+        throw FatalError("Can't use temp directory - exists as a regular or special file.");
+    if (!tempExists && !pdal::FileUtils::createDirectory(options.tempDir))
+        throw FatalError("Couldn't create temp directory: '" + options.tempDir + "'.");
+    return tempExists;
 }
 
 } // namespace untwine

@@ -18,10 +18,12 @@
 
 #include "Common.hpp"
 #include "Config.hpp"
+#include "FileInfo.hpp"
 #include "ProgressWriter.hpp"
 
-#include "../epf/Epf.hpp"
-#include "../bu/BuPyramid.hpp"
+#include "bu/BuPyramid.hpp"
+#include "epf/Epf.hpp"
+#include "prep/FilePrep.hpp"
 
 #include <dirlist.hpp>    // untwine/os
 #include <stringconv.hpp> // untwine/os
@@ -164,8 +166,11 @@ int main(int argc, char *argv[])
         progress.init(options.progressFd, options.progressDebug);
         tempDirExists = createDirs(options);
 
+        prep::FilePrep filePrep(common);
+        std::vector<FileInfo> fileInfos = filePrep.run();
+
         epf::Epf preflight(common);
-        preflight.run(progress);
+        preflight.run(progress, fileInfos);
 
         bu::BuPyramid builder(common);
         builder.run(progress);

@@ -26,6 +26,7 @@ file(GLOB LAZPERF_SRCS
 
 file(GLOB SRCS
     untwine/*.cpp
+    prep/*.cpp
     epf/*.cpp
     bu/*.cpp
 )

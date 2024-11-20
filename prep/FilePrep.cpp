@@ -50,7 +50,7 @@ std::vector<FileInfo> FilePrep::run()
     m_b.numPoints = 0;
     for (const FileInfo& info : fileInfos)
     {
-        m_b.trueBounds.grow(info.bounds);
+        m_trueBounds.grow(info.bounds);
         m_b.numPoints += info.numPoints;
     }
 
@@ -95,9 +95,9 @@ std::vector<FileInfo> FilePrep::run()
 
 void FilePrep::determineBounds()
 {
+    m_b.bounds = m_trueBounds;
     if (m_b.opts.doCube)
     {
-        m_b.bounds = m_b.trueBounds;
         double side =
             (std::max)(
             (std::max)(m_b.bounds.maxx - m_b.bounds.minx, m_b.bounds.maxy - m_b.bounds.miny),
@@ -106,18 +106,9 @@ void FilePrep::determineBounds()
         m_b.bounds.maxy = m_b.bounds.miny + side;
         m_b.bounds.maxz = m_b.bounds.minz + side;
     }
-    else
-        m_b.bounds = m_b.trueBounds;
 
     // Expand bounds to make sure that the octree will contain all points once output LAS scaling
     // is applied.
-    m_b.trueBounds.minx -= m_b.xform.scale.x;
-    m_b.trueBounds.miny -= m_b.xform.scale.y;
-    m_b.trueBounds.minz -= m_b.xform.scale.z;
-    m_b.trueBounds.maxx += m_b.xform.scale.x;
-    m_b.trueBounds.maxy += m_b.xform.scale.y;
-    m_b.trueBounds.maxz += m_b.xform.scale.z;
-
     m_b.bounds.minx -= m_b.xform.scale.x;
     m_b.bounds.miny -= m_b.xform.scale.y;
     m_b.bounds.minz -= m_b.xform.scale.z;
@@ -307,9 +298,9 @@ void FilePrep::determineOffsetFromBounds()
         return std::round(minval + offset);  // Add the base (min) value and round to an integer.
     };
 
-    m_b.xform.offset.x = calcOffset(m_b.trueBounds.minx, m_b.trueBounds.maxx, m_b.xform.scale.x);
-    m_b.xform.offset.y = calcOffset(m_b.trueBounds.miny, m_b.trueBounds.maxy, m_b.xform.scale.y);
-    m_b.xform.offset.z = calcOffset(m_b.trueBounds.minz, m_b.trueBounds.maxz, m_b.xform.scale.z);
+    m_b.xform.offset.x = calcOffset(m_trueBounds.minx, m_trueBounds.maxx, m_b.xform.scale.x);
+    m_b.xform.offset.y = calcOffset(m_trueBounds.miny, m_trueBounds.maxy, m_b.xform.scale.y);
+    m_b.xform.offset.z = calcOffset(m_trueBounds.minz, m_trueBounds.maxz, m_b.xform.scale.z);
 }
 
 bool FilePrep::determineOffsetFromInfos(const std::vector<FileInfo>& infos)
@@ -368,9 +359,9 @@ void FilePrep::determineScale(const std::vector<FileInfo>& infos)
         return std::pow(10, (std::max)(power, -4.0));
     };
 
-    m_b.xform.scale.x = calcScale(m_b.xform.scale.x, m_b.trueBounds.minx, m_b.trueBounds.maxx);
-    m_b.xform.scale.y = calcScale(m_b.xform.scale.y, m_b.trueBounds.miny, m_b.trueBounds.maxy);
-    m_b.xform.scale.z = calcScale(m_b.xform.scale.z, m_b.trueBounds.minz, m_b.trueBounds.maxz);
+    m_b.xform.scale.x = calcScale(m_b.xform.scale.x, m_trueBounds.minx, m_trueBounds.maxx);
+    m_b.xform.scale.y = calcScale(m_b.xform.scale.y, m_trueBounds.miny, m_trueBounds.maxy);
+    m_b.xform.scale.z = calcScale(m_b.xform.scale.z, m_trueBounds.minz, m_trueBounds.maxz);
 }
 
 void FilePrep::determineSrs(const std::vector<FileInfo>& infos)

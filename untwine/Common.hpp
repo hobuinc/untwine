@@ -73,7 +73,6 @@ public:
 
     Options opts;
     pdal::BOX3D bounds;
-    pdal::BOX3D trueBounds;
     size_t pointSize;
     std::string outputFile;
     DimInfoList dimInfo;

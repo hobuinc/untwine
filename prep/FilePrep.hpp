@@ -14,6 +14,8 @@
 
 #include <vector>
 
+#include <pdal/util/Bounds.hpp>
+
 #include "untwine/Common.hpp"
 
 namespace pdal
@@ -58,6 +60,7 @@ private:
     void calcCreationDay();
 
     BaseInfo& m_b;
+    pdal::BOX3D m_trueBounds;
 };
 
 } // namespace prep

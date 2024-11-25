@@ -353,7 +353,7 @@ void FilePrep::determineScale(const std::vector<FileInfo>& infos)
         // 2 billion is a little less than the int limit.  We center the data around 0 with the
         // offset, so we're applying the scale to half the range of the data.
         double val = high / 2 - low / 2;
-        double power = std::ceil(std::log10(val / 2000000000.0));
+        double power = std::ceil(std::log10(val / 2'000'000'000.0));
 
         // Set an arbitrary limit on scale of 1e10-4.
         return std::pow(10, (std::max)(power, -4.0));

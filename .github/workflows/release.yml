@@ -33,22 +33,22 @@ jobs:
         cache-environment: true
         cache-downloads: true
 
-     - name: Setup
-       shell: bash -l {0}
-       run: |
-           mkdir build
+    - name: Setup
+      shell: bash -l {0}
+      run: |
+          mkdir build
 
-     - name: CMake
-       shell: bash -l {0}
+    - name: CMake
+      shell: bash -l {0}
 
-       run: |
-         cmake   -G "Ninja"  \
+      run: |
+        cmake   -G "Ninja"  \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
               -DBUILD_TESTING=ON \
               -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
               ..
 
-       working-directory: ./build
+      working-directory: ./build
 
     - name: Generate source distribution
       shell: bash -l {0}

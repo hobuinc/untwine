@@ -36,3 +36,6 @@
 
 # Cmake
 build
+
+# vim
+*.sw[a-z]

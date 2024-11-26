@@ -28,7 +28,7 @@ jobs:
     - uses: mamba-org/setup-micromamba@v2
       with:
         init-shell: bash
-        environment-file: "ci/current-environment.yml"
+        environment-file: "ci/environment.yml"
         environment-name: "untwine"
         cache-environment: true
         cache-downloads: true

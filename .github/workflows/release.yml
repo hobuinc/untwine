@@ -130,7 +130,7 @@ jobs:
                 ..
 
           ninja install
-          export UNTWINE_VERSION=$(untwine --version | sed 's/.*(\(.*\))/\1/)'
+          export UNTWINE_VERSION=$(untwine --version | sed 's/.*(\(.*\))/\1/)')
           if [ $GITHUB_REF_NAME == $UNTWINE_VERSION ]; then
             echo "Tagged version equals tree version. All good."
           else

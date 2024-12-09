@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-project(Untwine VERSION 1.4.0 LANGUAGES CXX)
+project(Untwine VERSION 1.5.0 LANGUAGES CXX)
 include(FeatureSummary)
 include(${PROJECT_SOURCE_DIR}/cmake/compiler_options.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/cpack.cmake)
 
 option(BUILD_TESTING "Chose if Untwine unit tests should be built" OFF)
 add_feature_info("Unit tests" BUILD_TESTING "Untwine unit tests")
@@ -77,5 +78,10 @@ if (BUILD_TESTING)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+#
+# CPACK
+#
+add_custom_target(dist COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 
 

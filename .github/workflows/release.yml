@@ -141,7 +141,7 @@ jobs:
   release:
     name: Gather and attach release
     runs-on: ubuntu-latest
-    needs: build
+    needs: test
     permissions:
       contents: write
     steps:

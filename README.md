@@ -41,75 +41,74 @@ Example:
 --------
 
 ```
-untwine --files=some_directory --output_dir=output_directory
+untwine -i=some_directory_of_input_files -o=output_filename
 ```
 
 Options
 -------
 
-- files
+- `-i` or `--files`
 
   Input files or directories containing input files. [Required]
 
-- output_file
+- `-o` or `--output_dir`
 
   Output file. [Required]
 
-- a_srs
+- `--help`
+
+  Usage help
+
+- `--a_srs`
 
   Assign an output SRS. Example `--a_srs EPSG:2056`
 
-- no_srs
+- `--no_srs`
 
   Don't read the SLR VLRs. This is only applicable to las files. [Default: false]
 
-- dims
+- `--dims`
 
   List of dimensions to load. X, Y and Z are always loaded. Limiting the dimensions can
   speed runtime and reduce temporary disk use.
 
-- temp_dir
+- `--temp_dir`
 
   Directory in which to place tiled output. If not provided, temporary files are placed
   in 'output_dir'/temp.
 
-- cube
+- `--cube`
 
   Create a voxel structure where each voxel is a cube. If false, the voxel structure is
   a rectangular solid that encloses the points. [Default: true]
 
-- level
+- `--level`
 
   Level to use when initially tiling points.  If not provided, an initial level is
   determined from the data. [Default: none].
 
-- file_limit
+- `--file_limit`
 
   Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
   for debugging. [Default: no limit]
 
-- stats
+- `--stats`
 
   Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output
   Min/max stats are always generated when generating single-file output.
   [Default: false]
 
-- single_file
-
-  Generate a LAZ file with spatially arranged data and hierarchy information
-  [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
-
-- preserve_temp_dir
-
-  Normally untwine deletes its temporary directory where tiled data is written.  Set this
-  to true to preserve an existing temporary directory and its contents. [Default: false]
-
-- progress_fd
+- `--progress_fd`
 
   File descriptor number of a pipe using the Untwine API to send progress and error messages.
   [Default: -1]
 
-- progress_debug
+- `--progress_debug`
 
   Set to true to have progress messages written to standard output. Disabled if 'progress_fd'
   is set to '1'. [Default: false]
+
+- `-s` or `-- single_file`
+
+  **Deprecated and ingored.** Generate a LAZ file with spatially arranged data and hierarchy information
+  [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]

@@ -47,7 +47,7 @@ untwine -i some_directory_of_input_files -o output_filename
 or
 
 ```
-untwine --files=some_directory_of_input_files --output_dir=output_filename
+untwine --files=some_directory_of_input_files --output_file=output_filename
 ```
 
 

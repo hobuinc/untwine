@@ -348,7 +348,7 @@ void FilePrep::determineScale(const std::vector<FileInfo>& infos)
     if (m_b.xform.scale.x != 0.0 && m_b.xform.scale.y != 0.0 && m_b.xform.scale.z != 0.0)
         return;
 
-    auto calcScale = [](double scale, double low, double high)
+    auto calcScale = [](double low, double high)
     {
         // 2 billion is a little less than the int limit.  We center the data around 0 with the
         // offset, so we're applying the scale to half the range of the data.
@@ -359,9 +359,9 @@ void FilePrep::determineScale(const std::vector<FileInfo>& infos)
         return std::pow(10, (std::max)(power, -4.0));
     };
 
-    m_b.xform.scale.x = calcScale(m_b.xform.scale.x, m_trueBounds.minx, m_trueBounds.maxx);
-    m_b.xform.scale.y = calcScale(m_b.xform.scale.y, m_trueBounds.miny, m_trueBounds.maxy);
-    m_b.xform.scale.z = calcScale(m_b.xform.scale.z, m_trueBounds.minz, m_trueBounds.maxz);
+    m_b.xform.scale.x = calcScale(m_trueBounds.minx, m_trueBounds.maxx);
+    m_b.xform.scale.y = calcScale(m_trueBounds.miny, m_trueBounds.maxy);
+    m_b.xform.scale.z = calcScale(m_trueBounds.minz, m_trueBounds.maxz);
 }
 
 void FilePrep::determineSrs(const std::vector<FileInfo>& infos)

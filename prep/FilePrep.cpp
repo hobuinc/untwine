@@ -403,6 +403,8 @@ std::vector<FileInfo> FilePrep::processLas(pdal::LasReader& r, FileInfo fi)
     fi.xform.offset.y = h.offsetY();
     fi.xform.offset.z = h.offsetZ();
 
+    fi.srs = h.srs();
+
     if (m_b.preserveHeaderFields())
     {
         m_b.globalEncoding = h.globalEncoding();
@@ -460,6 +462,7 @@ FileInfo FilePrep::processGeneric(pdal::Stage& s, FileInfo fi)
 
     fi.bounds = qi.m_bounds;
     fi.numPoints = qi.m_pointCount;
+    fi.srs = qi.m_srs;
 
     for (const std::string& name : qi.m_dimNames)
         fi.dimInfo.push_back(FileDimInfo(name));

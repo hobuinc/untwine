@@ -90,7 +90,7 @@ struct named_file::Private
 // The chunk table itself is at the end of the point chunks. It has its own
 // header that consists of a version number and a chunk count. The chunk table entries
 // are compressed with an integer compressor.
-// 
+//
 // A chunk table entry is created after each chunk of points has been created and written.
 // If the chunks are variable size, the chunk table entries consist of a count followed by
 // an "offset".  The count is the number of points in the chunk. The offset is the the number
@@ -111,8 +111,9 @@ bool basic_file::Private::open(std::ostream& out, const header12& h, uint32_t cs
 
     if (compressed())
     {
-        // Seek past the chunk table offset.
-        out.seekp(sizeof(uint64_t), std::ios_base::cur);
+        // Reserve 8 bytes for the chunk table offset.
+        const uint64_t dummy = 0;
+        out.write(reinterpret_cast<const char*>(&dummy), sizeof(uint64_t));
     }
     stream.reset(new OutFileStream(out));
     return true;
@@ -169,14 +170,14 @@ void basic_file::Private::writePoint(const char *p)
                 head12.ebCount());
             chunk_point_num = 0;
         }
-        else if ((chunk_point_num == chunk_size) && (chunk_size != VariableChunkSize))
+        else if ((chunk_point_num == chunk_size) && !laz_vlr::variableChunks(chunk_size))
             newChunk();
 
         // now write the point
         pcompressor->compress(p);
         chunk_point_num++;
-        head14.point_count_14++;
     }
+    head14.point_count_14++;
     updateMinMax(*(reinterpret_cast<const las::point10*>(p)));
 }
 
@@ -184,7 +185,8 @@ void basic_file::Private::close()
 {
     if (compressed())
     {
-        pcompressor->done();
+        if (pcompressor)
+            pcompressor->done();
         chunks.push_back({ chunk_point_num, (uint64_t)f->tellp() });
     }
 
@@ -222,7 +224,7 @@ void basic_file::Private::writeHeader()
     }
     if (head14.ebCount())
     {
-        head14.point_offset += uint32_t(ebVlr.size() + ebVlr.header().Size);
+        head14.point_offset += (uint32_t)(ebVlr.size() + ebVlr.header().Size);
         head14.vlr_count++;
     }
 
@@ -285,7 +287,7 @@ void basic_file::Private::writeChunkTable()
     OutFileStream w(*f);
     OutCbStream outStream(w.cb());
 
-    compress_chunk_table(w.cb(), chunks, chunk_size == VariableChunkSize);
+    compress_chunk_table(w.cb(), chunks, laz_vlr::variableChunks(chunk_size));
     // go back to where we're supposed to write chunk table offset
     f->seekp(head12.point_offset);
     f->write(reinterpret_cast<char*>(&chunk_table_offset), sizeof(chunk_table_offset));
@@ -320,7 +322,7 @@ uint64_t basic_file::firstChunkOffset() const
 
 uint64_t basic_file::newChunk()
 {
-    assert(p_->chunk_size == VariableChunkSize);
+    assert(laz_vlr::variableChunks(p_->chunk_size));
     return p_->newChunk();
 }
 
@@ -387,7 +389,7 @@ named_file::named_file(const std::string& filename, const named_file::config& c)
     p_(new Private(basic_file::p_.get()))
 {
     p_->open(filename, c);
-}    
+}
 
 named_file::~named_file()
 {}

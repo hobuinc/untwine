@@ -38,6 +38,8 @@
 namespace lazperf
 {
 
+#pragma warning (push)
+#pragma warning (disable: 4251)
 struct LAZPERF_EXPORT vlr_header
 {
     uint16_t reserved;
@@ -101,6 +103,8 @@ public:
         uint16_t version;
     };
 
+    static constexpr uint32_t VariableChunkSize = (std::numeric_limits<uint32_t>::max)();
+
     uint16_t compressor;
     uint16_t coder;
     uint8_t ver_major;
@@ -108,8 +112,8 @@ public:
     uint16_t revision;
     uint32_t options;
     uint32_t chunk_size;
-    uint64_t num_points;
-    uint64_t num_bytes;
+    uint64_t num_points;    // This is *not* the number of points. It's garbage.
+    uint64_t num_bytes;     // This is *not* the number of bytes. It's garbage.
     std::vector<laz_item> items;
 
     laz_vlr();
@@ -125,6 +129,8 @@ public:
     virtual uint64_t size() const;
     virtual vlr_header header() const;
     virtual evlr_header eheader() const;
+    bool variableChunks() const;
+    static bool variableChunks(uint32_t chunk_size);
 
     laz_vlr(const char *vlrdata);
 };
@@ -212,6 +218,7 @@ public:
     virtual vlr_header header() const;
     virtual evlr_header eheader() const;
 };
+#pragma warning (pop)
 
 } // namesapce lazperf
 

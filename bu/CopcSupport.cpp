@@ -33,7 +33,7 @@ namespace bu
 {
 
 CopcSupport::CopcSupport(const BaseInfo& b) : m_b(b),
-    m_lazVlr(b.pointFormatId, extraByteSize(), lazperf::VariableChunkSize)
+    m_lazVlr(b.pointFormatId, extraByteSize(), lazperf::laz_vlr::VariableChunkSize)
 {
 
     if (b.opts.a_srs.size())

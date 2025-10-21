@@ -3,6 +3,9 @@
 
   FILE:  readers.cpp
 
+  CONTENTS:
+    LAZ reader
+
   PROGRAMMERS:
 
     martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
@@ -92,7 +95,6 @@ struct named_file::Private
     void close()
     { f.close(); }
 
-
     std::ifstream f;
 };
 
@@ -160,7 +162,7 @@ bool basic_file::Private::loadHeader()
         f->seekg(0);
         head14.read(*f);
     }
-    if (head12.version.minor < 2 || head12.version.minor > 4)
+    else if (head12.version.minor > 4)
         return false;
 
     if (head12.compressed())
@@ -251,7 +253,7 @@ bool basic_file::Private::extractVlr(const std::string& user_id, uint16_t record
     // Extract EB VLR
     else if (user_id == "LASF_Spec" && record_id == 4)
     {
-        eb.read(*f, (int)data_length);
+        eb.read(*f, (uint32_t) data_length);
         return true;
     }
     return false;
@@ -310,6 +312,14 @@ void basic_file::Private::parseChunkTable()
     if (chunk_table_header.version != 0)
         throw error("Bad chunk table. Invalid version.");
 
+    if (chunk_table_header.chunk_count == 0)
+    {
+        if (pointCount() != 0)
+            throw error("Missing chunk table.");
+
+        return;
+    }
+
     // Allocate enough room for the chunk table plus one because of the crazy way that
     // the chunk table is written. Once it is fixed up, we resize back to the correct size.
     chunks.resize(chunk_table_header.chunk_count + 1);
@@ -333,7 +343,7 @@ void basic_file::Private::parseChunkTable()
     {
         uint32_t count;
 
-        if (laz.chunk_size == VariableChunkSize)
+        if (laz.variableChunks())
         {
             count = decomp.decompress(decoder, prev_count, 0);
             prev_count = count;
@@ -342,7 +352,7 @@ void basic_file::Private::parseChunkTable()
         {
             if (total_points < laz.chunk_size)
             {
-                count = (uint32_t)total_points;
+                count = (uint32_t) total_points;
                 assert(i == chunk_table_header.chunk_count - 1);
             }
             else

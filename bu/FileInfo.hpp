@@ -51,8 +51,8 @@ public:
 
 private:
     std::string m_filename;
-    int m_numPoints;
-    int m_start;
+    int m_numPoints {0};
+    int m_start {0};
     untwine::os::MapContext m_ctx;
 };
 using FileInfoList = std::list<FileInfo>;

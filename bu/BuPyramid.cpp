@@ -98,7 +98,7 @@ size_t BuPyramid::queueWork()
         // Stick an OctantInfo for this file in the 'have' list.
         OctantInfo o(k);
         o.appendFileInfo(f);
-        have.push_back(o);
+        have.emplace_back(std::move(o));
 
         // Walk up the tree and make sure that we're populated for all children necessary
         // to process to the top level.

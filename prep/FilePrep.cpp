@@ -140,7 +140,7 @@ void FilePrep::fillMetadata(const pdal::PointLayout& layout)
         di.offset = layout.dimOffset(id);
         di.extraDim = isExtraDim(di.name);
         m_b.pointSize += pdal::Dimension::size(di.type);
-        m_b.dimInfo.push_back(di);
+        m_b.dimInfo.emplace_back(std::move(di));
     }
 }
 
@@ -196,7 +196,7 @@ void FilePrep::createFileInfos(const StringList& input, std::vector<FileInfo>& f
             fileInfos.insert(fileInfos.begin(), infos.begin(), infos.end());
         }
         else
-            fileInfos.push_back(processGeneric(*s, fi));
+            fileInfos.emplace_back(processGeneric(*s, std::move(fi)));
     }
 }
 

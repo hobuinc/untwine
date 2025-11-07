@@ -98,7 +98,7 @@ void ThreadPool::work()
             {
                 if (m_verbose)
                     std::cout << "Exception in pool task: " << err << std::endl;
-                m_errors.push_back(err);
+                m_errors.emplace_back(std::move(err));
             }
             lock.unlock();
 

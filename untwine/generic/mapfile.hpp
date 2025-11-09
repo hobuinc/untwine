@@ -18,7 +18,7 @@ namespace os
 struct MapContext
 {
 public:
-    MapContext() : m_fd(-1), m_addr(nullptr)
+    MapContext()
     {}
 
     void *addr() const
@@ -26,9 +26,9 @@ public:
     std::string what() const
     { return m_error; }
 
-    int m_fd;
-    size_t m_size;
-    void *m_addr;
+    int m_fd { -1};
+    size_t m_size {0};
+    void *m_addr {nullptr};
     std::string m_error;
 };
 

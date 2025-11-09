@@ -61,7 +61,7 @@ private:
     ThreadPool m_pool;
     uint64_t m_totalPoints;
     StatsMap m_stats;
-    ProgressWriter *m_progress;
+    ProgressWriter *m_progress {nullptr};
     CopcSupport m_copc;
     std::string m_error;
     //

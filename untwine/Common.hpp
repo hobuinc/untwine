@@ -73,11 +73,11 @@ public:
 
     Options opts;
     pdal::BOX3D bounds;
-    size_t pointSize;
+    size_t pointSize {0};
     std::string outputFile;
     DimInfoList dimInfo;
     pdal::SpatialReference srs;
-    int pointFormatId;
+    int pointFormatId {0};
     uint16_t globalEncoding {0};
     uint16_t creationYear {1};
     uint16_t creationDoy {1};
@@ -88,7 +88,7 @@ public:
                       { std::numeric_limits<double>::quiet_NaN(),    // offset
                         std::numeric_limits<double>::quiet_NaN(),
                         std::numeric_limits<double>::quiet_NaN() } };
-    uint64_t numPoints;
+    uint64_t numPoints {0};
 };
 
 // We make a special dimension to store the bits (class flags, scanner channel, scan dir, eofl).

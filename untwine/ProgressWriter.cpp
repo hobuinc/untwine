@@ -8,7 +8,7 @@
 namespace untwine
 {
 
-ProgressWriter::ProgressWriter() : m_fd(-1), m_debug(false), m_percent(0.0), m_increment(.01)
+ProgressWriter::ProgressWriter()
 {}
 
 void ProgressWriter::init(int fd, bool debug)

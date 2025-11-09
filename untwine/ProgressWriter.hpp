@@ -35,14 +35,14 @@ public:
 
 private:
     std::mutex m_mutex;
-    int m_fd;
-    bool m_debug;
-    double m_percent; // Current percent.
-    double m_increment; // Current increment.
+    int m_fd {-1};
+    bool m_debug {false};
+    double m_percent {0}; // Current percent.
+    double m_increment {.01}; // Current increment.
 
-    PointCount m_pointIncrement;
-    PointCount m_nextClick;
-    PointCount m_current;
+    PointCount m_pointIncrement {0};
+    PointCount m_nextClick {0};
+    PointCount m_current {0};
 
     void writeIncrementRaw(const std::string& message);
     void writeMessage(uint32_t percent, const std::string& message);

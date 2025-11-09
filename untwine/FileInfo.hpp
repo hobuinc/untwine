@@ -24,21 +24,20 @@ namespace untwine
 
 struct FileInfo
 {
-    FileInfo() :
-        numPoints(0), start(0), untwineBitsOffset(-1), fileVersion(0)
+    FileInfo()
     {}
 
     std::string filename;
     std::string driver;
-    bool no_srs;
+    bool no_srs {true};
     DimInfoList dimInfo;
-    uint64_t numPoints;
-    uint64_t start;
+    uint64_t numPoints {0};
+    uint64_t start {0};
     pdal::BOX3D bounds;
     pdal::SpatialReference srs;
-    int untwineBitsOffset;
+    int untwineBitsOffset {-1};
     // Currently only set for LAS files.
-    int fileVersion;
+    int fileVersion {0};
     Transform xform;
 
     bool valid() const

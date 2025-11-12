@@ -79,9 +79,11 @@ void PyramidManager::run()
 
             if (m_error.size())
             {
+                // copy error before unlocking the mutex
+                const std::string error = m_error;
                 lock.unlock();
                 m_pool.join();
-                throw FatalError(m_error);
+                throw FatalError(error);
             }
         }
 

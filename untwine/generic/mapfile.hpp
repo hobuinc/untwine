@@ -42,7 +42,7 @@ inline MapContext mapFile(const std::string& filename, bool readOnly, size_t pos
         return ctx;
     }
 
-    ctx.m_fd = ::open(filename.data(), readOnly ? O_RDONLY : O_RDWR);
+    ctx.m_fd = ::open(filename.data(), O_RDONLY);
 
     if (ctx.m_fd == -1)
     {

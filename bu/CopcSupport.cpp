@@ -152,7 +152,7 @@ uint64_t CopcSupport::newChunk(const VoxelKey& key, int32_t size, int32_t count)
 
     uint64_t chunkStart = m_pointPos;
     m_pointPos += size;
-    assert(count <= (std::numeric_limits<int32_t>::max)() && count >= 0);
+    assert(count >= 0);
     m_chunkTable.push_back({(uint64_t)count, (uint64_t)size});
     m_header.point_count += count;
     m_header.point_count_14 += count;

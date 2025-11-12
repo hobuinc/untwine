@@ -32,15 +32,9 @@ public:
     std::string m_error;
 };
 
-inline MapContext mapFile(const std::string& filename, bool readOnly, size_t pos, size_t size)
+inline MapContext mapFile(const std::string& filename, size_t pos, size_t size)
 {
     MapContext ctx;
-
-    if (!readOnly)
-    {
-        ctx.m_error = "readOnly must be true.";
-        return ctx;
-    }
 
     ctx.m_fd = ::open(filename.data(), O_RDONLY);
 

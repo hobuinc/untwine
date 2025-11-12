@@ -34,17 +34,11 @@ public:
     HANDLE m_handle;
 };
 
-inline MapContext mapFile(const std::string& filename, bool readOnly, size_t pos, size_t size)
+inline MapContext mapFile(const std::string& filename, size_t pos, size_t size)
 {
     MapContext ctx;
 
-    if (!readOnly)
-    {
-        ctx.m_error = "readOnly must be true.";
-        return ctx;
-    }
-
-    ctx.m_fd = ::_open(toNative(filename).data(), readOnly ? _O_RDONLY : _O_RDWR);
+    ctx.m_fd = ::_open(toNative(filename).data(), _O_RDONLY);
 
     if (ctx.m_fd == -1)
     {

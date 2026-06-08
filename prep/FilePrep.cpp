@@ -205,15 +205,12 @@ void FilePrep::filterDims(std::vector<FileInfo>& infos, StringList allowedDims)
     if (allowedDims.empty())
         return;
 
-    // If there are some dim names specified, make sure they contain X, Y and Z and that
-    // they're all uppercase.
-    for (std::string& d : allowedDims)
-        d = pdal::Utils::toupper(d);
+    // Ensure requested dimensions contain X, Y and Z.
     for (const std::string xyz : { "X", "Y", "Z" })
         if (!pdal::Utils::contains(allowedDims, xyz))
             allowedDims.push_back(xyz);
 
-    // Remove dimensions not in the allowed list.
+    // Remove dimensions not explicitly requested.
     for (FileInfo& info : infos)
         for (auto it = info.dimInfo.begin(); it != info.dimInfo.end(); ++it)
         {

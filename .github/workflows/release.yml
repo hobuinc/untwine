@@ -30,8 +30,6 @@ jobs:
         init-shell: bash
         environment-file: "ci/environment.yml"
         environment-name: "untwine"
-        cache-environment: true
-        cache-downloads: true
 
     - name: Setup
       shell: bash -l {0}
@@ -112,8 +110,6 @@ jobs:
          init-shell: bash
          environment-file: "./release/Untwine-${{ github.ref_name }}-src/ci/environment.yml"
          environment-name: "untwine"
-         cache-environment: true
-         cache-downloads: true
 
      - name: Confirm release
        shell: bash -l {0}

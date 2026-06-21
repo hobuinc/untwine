@@ -16,6 +16,8 @@
 #include "OctantInfo.hpp"
 #include "../untwine/Common.hpp"
 
+#include <stringconv.hpp>  // untwine/os
+
 namespace untwine
 {
 namespace bu
@@ -26,7 +28,7 @@ void OctantInfo::mergeSmallFiles(const std::string tempDir, size_t pointSize)
     std::string baseFilename = key().toString() + "_merge.bin";
     std::string filename = tempDir + "/" + baseFilename;
 
-    std::ofstream out(filename, std::ios::binary | std::ios::trunc);
+    std::ofstream out(os::toNative(filename), std::ios::binary | std::ios::trunc);
     if (!out)
         throw FatalError("Couldn't open temporary merge file '" + filename + "'.");
 
@@ -41,7 +43,7 @@ void OctantInfo::mergeSmallFiles(const std::string tempDir, size_t pointSize)
         {
             size_t bytes = numPoints * pointSize;
             filename = tempDir + "/" + fi.filename();
-            std::ifstream in(filename, std::ios::binary);
+            std::ifstream in(os::toNative(filename), std::ios::binary);
             if (!in)
                 throw FatalError("Couldn't open file '" + filename + "' to merge.");
             in.read(buf.data(), bytes);

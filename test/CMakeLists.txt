@@ -26,11 +26,13 @@ macro(UNTWINE_ADD_TEST _name)
         ${LAZPERF_SRCS}
     )
     untwine_target_compile_settings(${_name})
+    # Vendored gtest must precede external include dirs (PDAL_INCLUDE_DIRS is
+    # the whole install prefix, which may contain a different gtest version).
     target_include_directories(${_name} PRIVATE
+        gtest/include
         ${PROJECT_SOURCE_DIR}
         ${PDAL_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
-        gtest/include
     )
     set_property(TARGET ${_name} PROPERTY FOLDER "Tests")
     target_link_libraries(${_name}

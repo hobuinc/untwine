@@ -99,6 +99,11 @@ Options
   Only read 'file_limit' input files even if more exist in the 'files' list. Used primarily
   for debugging. [Default: no limit]
 
+- `--threads`
+
+  Number of worker threads used for tiling and sampling. Memory use scales with the thread
+  count. [Default: 0, meaning the number of hardware threads]
+
 - `--stats`
 
   Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output

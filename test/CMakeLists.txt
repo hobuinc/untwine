@@ -7,6 +7,10 @@ option(gtest_force_shared_crt "Always use shared Visual C++ run-time DLL" ON)
 
 add_subdirectory(gtest)
 
+# Keep vendored gtest on the -I path so a stray system gtest can't shadow it.
+set_target_properties(gtest gtest_main PROPERTIES
+    INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "")
+
 ###############################################################################
 # Add a test target.
 # _name The driver name.

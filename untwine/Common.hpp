@@ -30,6 +30,8 @@ struct Options
     bool doCube;
     size_t fileLimit;
     int level;
+    // Worker threads. Resolved to a positive value by handleOptions().
+    int numThreads {0};
     int progressFd;
     bool progressDebug;
     StringList dimNames;

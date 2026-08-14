@@ -28,8 +28,8 @@ namespace untwine
 namespace bu
 {
 
-PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(10), m_totalPoints(0),
-    m_copc(m_b)
+PyramidManager::PyramidManager(const BaseInfo& b) : m_b(b), m_pool(m_b.opts.numThreads),
+    m_totalPoints(0), m_copc(m_b)
 {}
 
 PyramidManager::~PyramidManager()

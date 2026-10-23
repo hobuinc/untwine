@@ -118,10 +118,11 @@ inline int getUntwineBitPos(const std::string& s)
         {"KeyPoint", 1},
         {"Withheld", 2},
         {"Overlap", 3},
-        {"ScanChannel", 5},
+        {"ScanChannel", 4},
         {"ScanDirectionFlag", 6},
         {"EdgeOfFlightLine", 7},
-        {"ClassFlags", 0}
+        {"ClassFlags", 0}  // The 4 classflag bits map to the first 4 bits in this list:
+                           // Synthetic, KeyPoint, Withheld and Overlap
     };
     auto it = positions.find(s);
     if (it == positions.end())

@@ -124,3 +124,20 @@ Options
 
   **Deprecated and ingored.** Generate a LAZ file with spatially arranged data and hierarchy information
   [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
+
+### Staging buffers
+
+`--buffer_size` sets each staging buffer's capacity in bytes (default `40960`).
+`--buffer_count` sets the maximum number of staging buffers (default `1000`),
+which must exceed the resolved worker thread count. Buffers are allocated lazily.
+For example:
+
+```
+untwine output.copc.laz input.laz --buffer_size=1048576 --buffer_count=4096
+```
+
+Larger buffers can reduce staging write overhead, while larger pools allow more
+partially filled buffers to remain active. Both can increase memory use. The pool
+maximum (`buffer_size * buffer_count`) is not a process memory limit: readers,
+processing and other allocations also consume memory. Each buffer must fit at
+least one internal point record; unused trailing bytes do not hold partial records.

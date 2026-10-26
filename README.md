@@ -104,6 +104,16 @@ Options
   Number of worker threads used for tiling and sampling. Memory use scales with the thread
   count. [Default: 0, meaning the number of hardware threads]
 
+- `--buffer_size`
+
+  Capacity of each staging buffer in bytes. Must hold at least one internal point
+  record. [Default: 40960]
+
+- `--buffer_count`
+
+  Maximum number of staging buffers, allocated lazily. Must exceed the resolved
+  worker thread count. [Default: 1000]
+
 - `--stats`
 
   Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output
@@ -127,10 +137,7 @@ Options
 
 ### Staging buffers
 
-`--buffer_size` sets each staging buffer's capacity in bytes (default `40960`).
-`--buffer_count` sets the maximum number of staging buffers (default `1000`),
-which must exceed the resolved worker thread count. Buffers are allocated lazily.
-For example:
+The buffer size and count can be tuned together. For example:
 
 ```
 untwine output.copc.laz input.laz --buffer_size=1048576 --buffer_count=4096

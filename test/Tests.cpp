@@ -3,8 +3,6 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <fstream>
-#include <limits>
-#include <algorithm>
 #include <lazperf/writers.hpp>
 
 #include <lazperf/readers.hpp>
@@ -62,6 +60,17 @@ int runUntwine(const std::filesystem::path& in, const std::filesystem::path& out
 
     std::string output;
     return pdal::Utils::run_shell_command(cmd, output);
+}
+
+int runBuffers(const std::string& args, const std::filesystem::path& out, std::string& log)
+{
+    std::filesystem::remove_all(out.generic_string() + "_tmp");
+    std::string command = "\"" + binpath("untwine").generic_string() +
+        "\" \"" + out.generic_string() + "\" " + args + " 2>&1";
+#ifdef _WIN32
+    command = "\"" + command + "\"";
+#endif
+    return pdal::Utils::run_shell_command(command, log);
 }
 
 } // unnamed namespace
@@ -377,22 +386,6 @@ TEST(Untwine, t2)
     std::filesystem::remove(outfile());
 }
 
-} // namespace test
-} // namespace untwine
-
-namespace
-{
-int runBuffers(const std::string& args, const std::filesystem::path& out, std::string& log)
-{
-    std::filesystem::remove_all(out.generic_string() + "_tmp");
-    std::string command = "\"" + binpath("untwine").generic_string() +
-        "\" \"" + out.generic_string() + "\" " + args + " 2>&1";
-#ifdef _WIN32
-    command = "\"" + command + "\"";
-#endif
-    return pdal::Utils::run_shell_command(command, log);
-}
-
 TEST(Buffers, conversions)
 {
     const auto in = datapath("eb.laz");
@@ -407,7 +400,7 @@ TEST(Buffers, conversions)
         std::string log;
         ASSERT_EQ(runBuffers("--threads=2 --files=\"" + in.generic_string() + "\"" +
             setting, outfile(), log), 0) << log;
-        untwine::test::verifyStats(in, outfile());
+        verifyStats(in, outfile());
     }
 }
 
@@ -424,7 +417,10 @@ TEST(Buffers, invalidNumericLeavesOutputUntouched)
     for (const auto& setting : settings)
     {
         SCOPED_TRACE(setting);
-        { std::ofstream out(outfile()); out << "keep output"; }
+        {
+            std::ofstream out(outfile());
+            out << "keep output";
+        }
         std::string log;
         EXPECT_NE(runBuffers("--threads=2 --files=\"" + datapath("eb.laz").generic_string() +
             "\" " + setting, outfile(), log), 0);
@@ -451,6 +447,9 @@ TEST(Buffers, reprocessingPreservesPointsAndFlags)
     config.pdrf = 6;
     config.minor_version = 4;
     config.scale = {0.01, 0.01, 0.01};
+
+    // Exceed MaxPointsPerNode (100000) in the cluster to force reprocessing.
+    // The final, distant point expands the bounds so the cluster shares one voxel.
     const size_t count = 100257;
     {
         lazperf::writer::named_file writer(in.generic_string(), config);
@@ -498,7 +497,6 @@ TEST(Buffers, reprocessingPreservesPointsAndFlags)
         }
     }
 }
-}
 
 TEST(Buffers, multipleInputs)
 {
@@ -525,5 +523,8 @@ TEST(Buffers, exactlyOneInternalRecord)
     ASSERT_GT(recordSize, 1u);
     ASSERT_EQ(runBuffers(args + " --buffer_size=" + std::to_string(recordSize),
         outfile(), log), 0) << log;
-    untwine::test::verifyStats(in, outfile());
+    verifyStats(in, outfile());
 }
+
+} // namespace test
+} // namespace untwine

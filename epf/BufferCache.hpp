@@ -28,7 +28,8 @@ namespace epf
 class BufferCache
 {
 public:
-    BufferCache() : m_count(0)
+    BufferCache(size_t bufferSize, size_t bufferCount) :
+        m_bufferSize(bufferSize), m_bufferCount(bufferCount), m_count(0)
     {}
 
     DataVecPtr fetch(std::unique_lock<std::mutex>& lock, bool nonblock);
@@ -37,7 +38,9 @@ public:
 private:
     std::deque<DataVecPtr> m_buffers;
     std::condition_variable m_cv;
-    int m_count;
+    size_t m_bufferSize;
+    size_t m_bufferCount;
+    size_t m_count;
 };
 
 } // namespace epf

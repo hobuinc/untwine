@@ -15,6 +15,7 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include <regex>
+#include <limits>
 #include <thread>
 
 #include "Common.hpp"
@@ -24,6 +25,7 @@
 
 #include "bu/BuPyramid.hpp"
 #include "epf/Epf.hpp"
+#include "epf/EpfTypes.hpp"
 #include "prep/FilePrep.hpp"
 
 #include <dirlist.hpp>    // untwine/os
@@ -32,10 +34,11 @@
 namespace untwine
 {
 
-// Must stay below epf::MaxBuffers so a processor can always claim a buffer.
+// The buffer pool must exceed the resolved processor count.
 const int MaxThreads = 512;
 
-void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
+void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg,
+    std::string& bufferSize, std::string& bufferCount)
 {
     programArgs.add("output_dir,o", "Output filename", options.outputName).setPositional();
     programArgs.addSynonym("output_dir", "output_file");
@@ -49,6 +52,11 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.fileLimit, (size_t)10000000);
     programArgs.add("threads", "Number of worker threads to use. 0 uses the number of "
         "hardware threads available.", options.numThreads, 0);
+    programArgs.add("buffer_size", "Staging buffer size in bytes (default 40960). Larger values can reduce "
+        "write overhead at the cost of memory.",
+        bufferSize, "40960");
+    programArgs.add("buffer_count", "Maximum staging buffers (default 1000); must exceed worker threads. "
+        "The pool maximum is not a process memory limit.", bufferCount, "1000");
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
     programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
@@ -69,7 +77,8 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
     pdal::ProgramArgs programArgs;
     pdal::Arg *tempArg;
 
-    addArgs(programArgs, options, tempArg);
+    std::string bufferSize, bufferCount;
+    addArgs(programArgs, options, tempArg, bufferSize, bufferCount);
     try
     {
         bool version;
@@ -85,11 +94,46 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
         {
             std::cout << "Usage: untwine output file <options>\n";
             programArgs.dump(std::cout, 2, 80);
+            std::cout << "Example: untwine output.copc.laz input.laz "
+                "--buffer_size=1048576 --buffer_count=4096\n";
         }
         if (help || version)
             return false;
 
         programArgs.parse(arglist);
+
+        // Parse decimal strings explicitly: unsigned parsers may accept negative values.
+        auto parseBufferValue = [](const std::string& text, const std::string& name)
+        {
+            size_t value = 0;
+            for (char c : text)
+            {
+                if (c < '0' || c > '9' ||
+                    value > ((std::numeric_limits<size_t>::max)() - (c - '0')) / 10)
+                    throw FatalError("Invalid --" + name + ": expected a positive integer within size_t range.");
+                value = value * 10 + (c - '0');
+            }
+            if (!value)
+                throw FatalError("Invalid --" + name + ": expected a positive integer.");
+            return value;
+        };
+        options.bufferSize = parseBufferValue(bufferSize, "buffer_size");
+        options.bufferCount = parseBufferValue(bufferCount, "buffer_count");
+        if (options.bufferSize > epf::DataVec().max_size() ||
+            options.bufferCount > (std::numeric_limits<size_t>::max)() / options.bufferSize)
+            throw FatalError("Invalid --buffer_size/--buffer_count: buffer allocation size overflow.");
+
+        // 0 means "use the hardware concurrency". The pools take an unsigned count, so a
+        // non-positive value must never escape here.
+        if (options.numThreads <= 0)
+            options.numThreads = (int)std::thread::hardware_concurrency();
+        if (options.numThreads <= 0)
+            options.numThreads = 8;
+        if (options.numThreads > MaxThreads)
+            options.numThreads = MaxThreads;
+
+        if (options.bufferCount <= static_cast<size_t>(options.numThreads))
+            throw FatalError("--buffer_count must exceed the resolved number of worker threads.");
 
         // Make sure the output file can be opened so that we can provide an early error if
         // there's a problem.
@@ -104,15 +148,6 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             options.tempDir = options.outputName + "_tmp";
         }
         options.stats = true;
-
-        // 0 means "use the hardware concurrency". The pools take an unsigned count, so a
-        // non-positive value must never escape here.
-        if (options.numThreads <= 0)
-            options.numThreads = (int)std::thread::hardware_concurrency();
-        if (options.numThreads <= 0)
-            options.numThreads = 8;
-        if (options.numThreads > MaxThreads)
-            options.numThreads = MaxThreads;
 
         if (options.progressFd == 1 && options.progressDebug)
         {
@@ -186,6 +221,10 @@ int main(int argc, char *argv[])
 
         prep::FilePrep filePrep(common);
         std::vector<FileInfo> fileInfos = filePrep.run();
+
+        if (options.bufferSize < common.pointSize)
+            throw FatalError("--buffer_size must hold at least one internal point record (" +
+                std::to_string(common.pointSize) + " bytes).");
 
         epf::Epf preflight(common);
         preflight.run(progress, fileInfos);

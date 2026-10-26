@@ -2,6 +2,8 @@
 #include <pdal/util/Utils.hpp>
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <fstream>
+#include <lazperf/writers.hpp>
 
 #include <lazperf/readers.hpp>
 #include <lazperf/las.hpp>
@@ -58,6 +60,17 @@ int runUntwine(const std::filesystem::path& in, const std::filesystem::path& out
 
     std::string output;
     return pdal::Utils::run_shell_command(cmd, output);
+}
+
+int runBuffers(const std::string& args, const std::filesystem::path& out, std::string& log)
+{
+    std::filesystem::remove_all(out.generic_string() + "_tmp");
+    std::string command = "\"" + binpath("untwine").generic_string() +
+        "\" \"" + out.generic_string() + "\" " + args + " 2>&1";
+#ifdef _WIN32
+    command = "\"" + command + "\"";
+#endif
+    return pdal::Utils::run_shell_command(command, log);
 }
 
 } // unnamed namespace
@@ -371,6 +384,146 @@ TEST(Untwine, t2)
     f2.close();
 
     std::filesystem::remove(outfile());
+}
+
+TEST(Buffers, conversions)
+{
+    const auto in = datapath("eb.laz");
+    const std::vector<std::string> settings {
+        "", " --buffer_size=40960 --buffer_count=1000",
+        " --buffer_size=1031 --buffer_count=3",
+        " --buffer_size=1048577 --buffer_count=4096"
+    };
+    for (const auto& setting : settings)
+    {
+        SCOPED_TRACE(setting);
+        std::string log;
+        ASSERT_EQ(runBuffers("--threads=2 --files=\"" + in.generic_string() + "\"" +
+            setting, outfile(), log), 0) << log;
+        verifyStats(in, outfile());
+    }
+}
+
+TEST(Buffers, invalidNumericLeavesOutputUntouched)
+{
+    const std::vector<std::string> settings {
+        "--buffer_size=0", "--buffer_size=-1", "--buffer_size=abc", "--buffer_count=0",
+        "--buffer_count=-1", "--buffer_size=18446744073709551616",
+        "--buffer_count=18446744073709551616",
+        "--buffer_size=18446744073709551615", "--buffer_count=18446744073709551615",
+        "--buffer_size=9223372036854775807 --buffer_count=3",
+        "--buffer_count=2", "--buffer_count=1"
+    };
+    for (const auto& setting : settings)
+    {
+        SCOPED_TRACE(setting);
+        {
+            std::ofstream out(outfile());
+            out << "keep output";
+        }
+        std::string log;
+        EXPECT_NE(runBuffers("--threads=2 --files=\"" + datapath("eb.laz").generic_string() +
+            "\" " + setting, outfile(), log), 0);
+        EXPECT_TRUE(log.find("Invalid --buffer") != std::string::npos ||
+            log.find("--buffer_count must exceed") != std::string::npos) << log;
+        std::ifstream out(outfile());
+        std::string text((std::istreambuf_iterator<char>(out)), {});
+        EXPECT_EQ(text, "keep output");
+    }
+}
+
+TEST(Buffers, recordTooLarge)
+{
+    std::string log;
+    EXPECT_NE(runBuffers("--threads=2 --buffer_count=3 --buffer_size=1 --files=\"" +
+        datapath("eb.laz").generic_string() + "\"", outfile(), log), 0);
+    EXPECT_NE(log.find("record"), std::string::npos) << log;
+}
+
+TEST(Buffers, reprocessingPreservesPointsAndFlags)
+{
+    auto in = temppath("flags.laz");
+    lazperf::writer::named_file::config config;
+    config.pdrf = 6;
+    config.minor_version = 4;
+    config.scale = {0.01, 0.01, 0.01};
+
+    // Exceed MaxPointsPerNode (100000) in the cluster to force reprocessing.
+    // The final, distant point expands the bounds so the cluster shares one voxel.
+    const size_t count = 100257;
+    {
+        lazperf::writer::named_file writer(in.generic_string(), config);
+        for (size_t i = 0; i < count; ++i)
+        {
+            lazperf::las::point14 point {};
+            point.setX(i + 1 == count ? 100000 : i % 101);
+            point.setY(i + 1 == count ? 100000 : (i / 101) % 101);
+            point.setZ(i + 1 == count ? 100000 : i % 37);
+            point.setGpsTime(double(i));
+            point.setReturns(0x11);
+            point.setFlags(i % 256);
+            point.setClassification(i % 32);
+            writer.writePoint(reinterpret_cast<const char *>(&point));
+        }
+        writer.close();
+    }
+    for (const auto& setting : {std::string("--buffer_size=1031 --buffer_count=3"),
+        std::string("--buffer_size=1048577 --buffer_count=4096")})
+    {
+        std::string log;
+        ASSERT_EQ(runBuffers("--threads=2 --level=0 --progress_debug --files=\"" + in.generic_string() +
+            "\" " + setting, outfile(), log), 0) << log;
+        EXPECT_NE(log.find("Reprocessed voxel"), std::string::npos) << log;
+        lazperf::reader::named_file reader(outfile().generic_string());
+        ASSERT_EQ(reader.pointCount(), count);
+        std::vector<bool> seen(count);
+        for (size_t n = 0; n < count; ++n)
+        {
+            char bytes[30];
+            reader.readPoint(bytes);
+            lazperf::las::point14 point(bytes);
+            size_t i = size_t(point.gpsTime());
+            ASSERT_LT(i, count);
+            EXPECT_FALSE(seen[i]);
+            seen[i] = true;
+            EXPECT_EQ(point.flags(), i % 256);
+            EXPECT_EQ(point.classification(), i % 32);
+            EXPECT_NEAR(point.x() * reader.header().scale.x + reader.header().offset.x,
+                (i + 1 == count ? 100000 : i % 101) * 0.01, 0.005);
+            EXPECT_NEAR(point.y() * reader.header().scale.y + reader.header().offset.y,
+                (i + 1 == count ? 100000 : (i / 101) % 101) * 0.01, 0.005);
+            EXPECT_NEAR(point.z() * reader.header().scale.z + reader.header().offset.z,
+                (i + 1 == count ? 100000 : i % 37) * 0.01, 0.005);
+        }
+    }
+}
+
+TEST(Buffers, multipleInputs)
+{
+    std::string log;
+    const auto in = datapath("eb.laz");
+    ASSERT_EQ(runBuffers("--threads=2 --buffer_count=3 --buffer_size=1031 "
+        "--files=\"" + in.generic_string() + "\" --files=\"" + in.generic_string() + "\"",
+        outfile(), log), 0) << log;
+    lazperf::reader::named_file input(in.generic_string());
+    lazperf::reader::named_file output(outfile().generic_string());
+    EXPECT_EQ(output.pointCount(), input.pointCount() * 2);
+}
+
+TEST(Buffers, exactlyOneInternalRecord)
+{
+    const auto in = datapath("eb.laz");
+    std::string log;
+    const std::string args = "--threads=2 --buffer_count=3 --files=\"" +
+        in.generic_string() + "\"";
+    ASSERT_NE(runBuffers(args + " --buffer_size=1", outfile(), log), 0);
+    const auto start = log.find("record (");
+    ASSERT_NE(start, std::string::npos) << log;
+    const size_t recordSize = std::stoull(log.substr(start + 8));
+    ASSERT_GT(recordSize, 1u);
+    ASSERT_EQ(runBuffers(args + " --buffer_size=" + std::to_string(recordSize),
+        outfile(), log), 0) << log;
+    verifyStats(in, outfile());
 }
 
 } // namespace test

@@ -104,6 +104,16 @@ Options
   Number of worker threads used for tiling and sampling. Memory use scales with the thread
   count. [Default: 0, meaning the number of hardware threads]
 
+- `--buffer_size`
+
+  Capacity of each staging buffer in bytes. Must hold at least one internal point
+  record. [Default: 40960]
+
+- `--buffer_count`
+
+  Maximum number of staging buffers, allocated lazily. Must exceed the resolved
+  worker thread count. [Default: 1000]
+
 - `--stats`
 
   Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output
@@ -124,3 +134,17 @@ Options
 
   **Deprecated and ingored.** Generate a LAZ file with spatially arranged data and hierarchy information
   [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
+
+### Staging buffers
+
+The buffer size and count can be tuned together. For example:
+
+```
+untwine output.copc.laz input.laz --buffer_size=1048576 --buffer_count=4096
+```
+
+Larger buffers can reduce staging write overhead, while larger pools allow more
+partially filled buffers to remain active. Both can increase memory use. The pool
+maximum (`buffer_size * buffer_count`) is not a process memory limit: readers,
+processing and other allocations also consume memory. Each buffer must fit at
+least one internal point record; unused trailing bytes do not hold partial records.

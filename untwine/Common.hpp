@@ -32,6 +32,8 @@ struct Options
     int level;
     // Worker threads. Resolved to a positive value by handleOptions().
     int numThreads {0};
+    size_t bufferSize {40960};
+    size_t bufferCount {1000};
     int progressFd;
     bool progressDebug;
     StringList dimNames;

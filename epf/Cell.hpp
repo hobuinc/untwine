@@ -41,7 +41,6 @@ public:
     Cell(const VoxelKey& key, int pointSize, Writer *writer, CellMgr *mgr, const Cell *lastCell) :
         m_key(key), m_pointSize(pointSize), m_writer(writer), m_cellMgr(mgr)
     {
-        assert(pointSize < BufSize);
         initialize(lastCell);
     }
     ~Cell()

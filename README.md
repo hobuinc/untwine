@@ -106,13 +106,13 @@ Options
 
 - `--buffer_size`
 
-  Capacity of each staging buffer in bytes. Must hold at least one internal point
-  record. [Default: 40960]
+  Capacity of each [staging buffer](#staging-buffers) in bytes. Must
+  be at least as large as the expanded data for a single point.  [Default: 40960]
 
 - `--buffer_count`
 
-  Maximum number of staging buffers, allocated lazily. Must exceed the resolved
-  worker thread count. [Default: 1000]
+  Maximum number of [staging buffers](#staging-buffers). Must exceed the
+  resolved worker thread count. (see[Default: 1000]
 
 - `--stats`
 
@@ -137,14 +137,10 @@ Options
 
 ### Staging buffers
 
-The buffer size and count can be tuned together. For example:
+Staging buffers hold points belonging to a specific voxel before being
+written to a temporary data file. When a buffer becomes full, it is written
+to a temporary output file. Larger buffers can reduce
+the number of data writes. More buffers can allow data from a larger number
+of voxels to be stored before a write is required.  Increasing buffer size or
+count increases memory use.
 
-```
-untwine output.copc.laz input.laz --buffer_size=1048576 --buffer_count=4096
-```
-
-Larger buffers can reduce staging write overhead, while larger pools allow more
-partially filled buffers to remain active. Both can increase memory use. The pool
-maximum (`buffer_size * buffer_count`) is not a process memory limit: readers,
-processing and other allocations also consume memory. Each buffer must fit at
-least one internal point record; unused trailing bytes do not hold partial records.

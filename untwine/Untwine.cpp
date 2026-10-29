@@ -34,9 +34,6 @@
 namespace untwine
 {
 
-// The buffer pool must exceed the resolved processor count.
-const int MaxThreads = 512;
-
 void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg,
     std::string& bufferSize, std::string& bufferCount)
 {
@@ -50,26 +47,22 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.level, -1);
     programArgs.add("file_limit", "Only load 'file_limit' files, even if more exist",
         options.fileLimit, (size_t)10000000);
-    programArgs.add("threads", "Number of worker threads to use. 0 uses the number of "
-        "hardware threads available.", options.numThreads, 0);
-    programArgs.add("buffer_size", "Staging buffer size in bytes (default 40960). Larger values can reduce "
-        "write overhead at the cost of memory.",
-        bufferSize, "40960");
-    programArgs.add("buffer_count", "Maximum staging buffers (default 1000); must exceed worker threads. "
-        "The pool maximum is not a process memory limit.", bufferCount, "1000");
+    programArgs.add("threads", "Number of worker threads to use. 0 uses the number of hardware "
+        "threads available.", options.numThreads);
+    programArgs.add("buffer_size", "Staging buffer size in bytes.", options.bufferSize,
+        (size_t)40960);
+    programArgs.add("buffer_count", "Maximum number staging of buffers.", options.bufferCount,
+        (size_t)1000);
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
     programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
-    programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always "
-        "loaded.", options.dimNames);
+    programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always loaded.",
+        options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
         options.stats);
-    programArgs.add("a_srs", "Assign output SRS",
-        options.a_srs, "");
-    programArgs.add("metadata", "Write PDAL metadata to VLR output",
-        options.metadata, false);
-    programArgs.add("no_srs", "PDAL readers.las.nosrs passthrough.",
-        options.no_srs, false);
+    programArgs.add("a_srs", "Assign output SRS", options.a_srs, "");
+    programArgs.add("metadata", "Write PDAL metadata to VLR output", options.metadata, false);
+    programArgs.add("no_srs", "PDAL readers.las.nosrs passthrough.", options.no_srs, false);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)
@@ -92,48 +85,23 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
         if (help)
         {
-            std::cout << "Usage: untwine output file <options>\n";
+            std::cout << "Usage: untwine <output file> <input> [options]\n";
             programArgs.dump(std::cout, 2, 80);
-            std::cout << "Example: untwine output.copc.laz input.laz "
-                "--buffer_size=1048576 --buffer_count=4096\n";
         }
         if (help || version)
             return false;
 
         programArgs.parse(arglist);
 
-        // Parse decimal strings explicitly: unsigned parsers may accept negative values.
-        auto parseBufferValue = [](const std::string& text, const std::string& name)
+        if (options.numThreads == 0) // Use hardware concurrency if available.
         {
-            size_t value = 0;
-            for (char c : text)
-            {
-                if (c < '0' || c > '9' ||
-                    value > ((std::numeric_limits<size_t>::max)() - (c - '0')) / 10)
-                    throw FatalError("Invalid --" + name + ": expected a positive integer within size_t range.");
-                value = value * 10 + (c - '0');
-            }
-            if (!value)
-                throw FatalError("Invalid --" + name + ": expected a positive integer.");
-            return value;
-        };
-        options.bufferSize = parseBufferValue(bufferSize, "buffer_size");
-        options.bufferCount = parseBufferValue(bufferCount, "buffer_count");
-        if (options.bufferSize > epf::DataVec().max_size() ||
-            options.bufferCount > (std::numeric_limits<size_t>::max)() / options.bufferSize)
-            throw FatalError("Invalid --buffer_size/--buffer_count: buffer allocation size overflow.");
-
-        // 0 means "use the hardware concurrency". The pools take an unsigned count, so a
-        // non-positive value must never escape here.
-        if (options.numThreads <= 0)
             options.numThreads = (int)std::thread::hardware_concurrency();
-        if (options.numThreads <= 0)
-            options.numThreads = 8;
-        if (options.numThreads > MaxThreads)
-            options.numThreads = MaxThreads;
+            if (options.numThreads == 0)
+                options.numThreads = 8;
+        }
 
         if (options.bufferCount <= static_cast<size_t>(options.numThreads))
-            throw FatalError("--buffer_count must exceed the resolved number of worker threads.");
+            throw FatalError("--buffer_count must exceed the number of worker threads.");
 
         // Make sure the output file can be opened so that we can provide an early error if
         // there's a problem.

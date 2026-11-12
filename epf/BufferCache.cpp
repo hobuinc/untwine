@@ -24,10 +24,10 @@ namespace epf
 // If nonblock is true and there are no available buffers, return null.
 DataVecPtr BufferCache::fetch(std::unique_lock<std::mutex>& lock, bool nonblock)
 {
-    if (nonblock && m_buffers.empty() && m_count >= MaxBuffers)
+    if (nonblock && m_buffers.empty() && m_count >= m_bufferCount)
         return nullptr;
 
-    m_cv.wait(lock, [this](){ return m_buffers.size() || m_count < MaxBuffers; });
+    m_cv.wait(lock, [this](){ return m_buffers.size() || m_count < m_bufferCount; });
     if (m_buffers.size())
     {
         DataVecPtr buf(std::move(m_buffers.back()));
@@ -35,10 +35,10 @@ DataVecPtr BufferCache::fetch(std::unique_lock<std::mutex>& lock, bool nonblock)
         return buf;
     }
 
-    // m_count tracks the number of created buffers. We only create MaxBuffers buffers.
+    // m_count tracks the number of created buffers. We only create m_bufferCount buffers.
     // If we've created that many, we wait until one is available.
     m_count++;
-    return DataVecPtr(new DataVec(BufSize));
+    return DataVecPtr(new DataVec(m_bufferSize));
 }
 
 // Put a buffer back in the cache.
@@ -46,7 +46,7 @@ void BufferCache::replace(DataVecPtr&& buf)
 {
     m_buffers.push_back(std::move(buf));
 
-    if (m_count == MaxBuffers)
+    if (m_count == m_bufferCount)
         m_cv.notify_one();
 }
 

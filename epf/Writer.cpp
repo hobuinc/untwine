@@ -29,8 +29,10 @@ namespace untwine
 namespace epf
 {
 
-Writer::Writer(const std::string& directory, int numThreads, size_t pointSize) :
-    m_directory(directory), m_pool(numThreads), m_stop(false), m_pointSize(pointSize)
+Writer::Writer(const std::string& directory, int numThreads, size_t pointSize,
+    size_t bufferSize, size_t bufferCount) :
+    m_directory(directory), m_pool(numThreads), m_bufferCache(bufferSize, bufferCount),
+    m_stop(false), m_pointSize(pointSize)
 {
     m_pool.trap(true);
     std::function<void()> f = std::bind(&Writer::run, this);

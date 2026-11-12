@@ -15,6 +15,7 @@
 #include <pdal/util/ProgramArgs.hpp>
 
 #include <regex>
+#include <limits>
 #include <thread>
 
 #include "Common.hpp"
@@ -24,6 +25,7 @@
 
 #include "bu/BuPyramid.hpp"
 #include "epf/Epf.hpp"
+#include "epf/EpfTypes.hpp"
 #include "prep/FilePrep.hpp"
 
 #include <dirlist.hpp>    // untwine/os
@@ -32,10 +34,8 @@
 namespace untwine
 {
 
-// Must stay below epf::MaxBuffers so a processor can always claim a buffer.
-const int MaxThreads = 512;
-
-void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg)
+void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &tempArg,
+    std::string& bufferSize, std::string& bufferCount)
 {
     programArgs.add("output_dir,o", "Output filename", options.outputName).setPositional();
     programArgs.addSynonym("output_dir", "output_file");
@@ -47,21 +47,22 @@ void addArgs(pdal::ProgramArgs& programArgs, Options& options, pdal::Arg * &temp
         options.level, -1);
     programArgs.add("file_limit", "Only load 'file_limit' files, even if more exist",
         options.fileLimit, (size_t)10000000);
-    programArgs.add("threads", "Number of worker threads to use. 0 uses the number of "
-        "hardware threads available.", options.numThreads, 0);
+    programArgs.add("threads", "Number of worker threads to use. 0 uses the number of hardware "
+        "threads available.", options.numThreads);
+    programArgs.add("buffer_size", "Staging buffer size in bytes.", options.bufferSize,
+        (size_t)40960);
+    programArgs.add("buffer_count", "Maximum number staging of buffers.", options.bufferCount,
+        (size_t)1000);
     programArgs.add("progress_fd", "File descriptor on which to write progress messages.",
         options.progressFd, -1);
     programArgs.add("progress_debug", "Send progress info to stdout.", options.progressDebug);
-    programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always "
-        "loaded.", options.dimNames);
+    programArgs.add("dims", "Dimensions to load. Note that X, Y and Z are always loaded.",
+        options.dimNames);
     programArgs.add("stats", "Generate statistics for dimensions in the manner of Entwine.",
         options.stats);
-    programArgs.add("a_srs", "Assign output SRS",
-        options.a_srs, "");
-    programArgs.add("metadata", "Write PDAL metadata to VLR output",
-        options.metadata, false);
-    programArgs.add("no_srs", "PDAL readers.las.nosrs passthrough.",
-        options.no_srs, false);
+    programArgs.add("a_srs", "Assign output SRS", options.a_srs, "");
+    programArgs.add("metadata", "Write PDAL metadata to VLR output", options.metadata, false);
+    programArgs.add("no_srs", "PDAL readers.las.nosrs passthrough.", options.no_srs, false);
 }
 
 bool handleOptions(pdal::StringList& arglist, Options& options)
@@ -69,7 +70,8 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
     pdal::ProgramArgs programArgs;
     pdal::Arg *tempArg;
 
-    addArgs(programArgs, options, tempArg);
+    std::string bufferSize, bufferCount;
+    addArgs(programArgs, options, tempArg, bufferSize, bufferCount);
     try
     {
         bool version;
@@ -83,13 +85,23 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             std::cout << "untwine version (" << UNTWINE_VERSION << ")\n";
         if (help)
         {
-            std::cout << "Usage: untwine output file <options>\n";
+            std::cout << "Usage: untwine <output file> <input> [options]\n";
             programArgs.dump(std::cout, 2, 80);
         }
         if (help || version)
             return false;
 
         programArgs.parse(arglist);
+
+        if (options.numThreads == 0) // Use hardware concurrency if available.
+        {
+            options.numThreads = (int)std::thread::hardware_concurrency();
+            if (options.numThreads == 0)
+                options.numThreads = 8;
+        }
+
+        if (options.bufferCount <= static_cast<size_t>(options.numThreads))
+            throw FatalError("--buffer_count must exceed the number of worker threads.");
 
         // Make sure the output file can be opened so that we can provide an early error if
         // there's a problem.
@@ -104,15 +116,6 @@ bool handleOptions(pdal::StringList& arglist, Options& options)
             options.tempDir = options.outputName + "_tmp";
         }
         options.stats = true;
-
-        // 0 means "use the hardware concurrency". The pools take an unsigned count, so a
-        // non-positive value must never escape here.
-        if (options.numThreads <= 0)
-            options.numThreads = (int)std::thread::hardware_concurrency();
-        if (options.numThreads <= 0)
-            options.numThreads = 8;
-        if (options.numThreads > MaxThreads)
-            options.numThreads = MaxThreads;
 
         if (options.progressFd == 1 && options.progressDebug)
         {
@@ -186,6 +189,10 @@ int main(int argc, char *argv[])
 
         prep::FilePrep filePrep(common);
         std::vector<FileInfo> fileInfos = filePrep.run();
+
+        if (options.bufferSize < common.pointSize)
+            throw FatalError("--buffer_size must hold at least one internal point record (" +
+                std::to_string(common.pointSize) + " bytes).");
 
         epf::Epf preflight(common);
         preflight.run(progress, fileInfos);

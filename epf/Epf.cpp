@@ -22,7 +22,6 @@ namespace untwine
 namespace epf
 {
 
-static_assert(MaxBuffers > NumFileProcessors, "MaxBuffers must be greater than NumFileProcessors.");
 Epf::Epf(BaseInfo& common) :
     m_b(common), m_grid(m_b.bounds, m_b.numPoints, m_b.opts.level, m_b.opts.doCube),
     m_pool(m_b.opts.numThreads)
@@ -43,7 +42,8 @@ void Epf::run(ProgressWriter& progress, std::vector<FileInfo>& fileInfos)
         { return f1.numPoints > f2.numPoints; });
 
     // Make a writer with NumWriters threads.
-    m_writer.reset(new Writer(m_b.opts.tempDir, NumWriters, m_b.pointSize));
+    m_writer.reset(new Writer(m_b.opts.tempDir, NumWriters, m_b.pointSize,
+        m_b.opts.bufferSize, m_b.opts.bufferCount));
 
     progress.setPointIncrementer(m_b.numPoints, 40);
 
@@ -83,7 +83,8 @@ void Epf::run(ProgressWriter& progress, std::vector<FileInfo>& fileInfos)
 
     // Make a new writer since we stopped the old one. Could restart, but why bother with
     // extra code...
-    m_writer.reset(new Writer(m_b.opts.tempDir, 4, m_b.pointSize));
+    m_writer.reset(new Writer(m_b.opts.tempDir, 4, m_b.pointSize,
+        m_b.opts.bufferSize, m_b.opts.bufferCount));
     m_pool.trap(true, "Unknown error in Reprocessor");
     for (auto& t : totals)
     {

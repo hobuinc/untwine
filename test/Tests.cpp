@@ -2,6 +2,8 @@
 #include <pdal/util/Utils.hpp>
 #include <gtest/gtest.h>
 #include <filesystem>
+#include <fstream>
+#include <lazperf/writers.hpp>
 
 #include <lazperf/readers.hpp>
 #include <lazperf/las.hpp>
@@ -51,10 +53,13 @@ std::filesystem::path outfile(const std::string& path = {})
 }
 
 
-int runUntwine(const std::filesystem::path& in, const std::filesystem::path& out)
+int runUntwine(const std::filesystem::path& in, const std::filesystem::path& out,
+    const std::string& args = "")
 {
     std::string cmd = binpath("untwine").generic_string() +
         " --files=" + in.generic_string() + " " + out.generic_string();
+    if (args.size())
+        cmd += " " + args;
 
     std::string output;
     return pdal::Utils::run_shell_command(cmd, output);
@@ -370,6 +375,14 @@ TEST(Untwine, t2)
     f1.close();
     f2.close();
 
+    std::filesystem::remove(outfile());
+}
+
+TEST(Untwine, large_buffer_size)
+{
+    std::filesystem::path filename = datapath("eb.laz");
+    runUntwine(filename, outfile(), "--buffer_size=1048577 --buffer_count=4096");
+    verifyStats(filename, outfile());
     std::filesystem::remove(outfile());
 }
 

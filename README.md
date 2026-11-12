@@ -104,6 +104,16 @@ Options
   Number of worker threads used for tiling and sampling. Memory use scales with the thread
   count. [Default: 0, meaning the number of hardware threads]
 
+- `--buffer_size`
+
+  Capacity of each [staging buffer](#staging-buffers) in bytes. Must
+  be at least as large as the expanded data for a single point.  [Default: 40960]
+
+- `--buffer_count`
+
+  Maximum number of [staging buffers](#staging-buffers). Must exceed the
+  resolved worker thread count. (see[Default: 1000]
+
 - `--stats`
 
   Generate summary statistics in 'ept.json' similar to those produced by Entwine for EPT output
@@ -124,3 +134,13 @@ Options
 
   **Deprecated and ingored.** Generate a LAZ file with spatially arranged data and hierarchy information
   [(COPC)](https://github.com/copcio/copcio.github.io). [Default: false]
+
+### Staging buffers
+
+Staging buffers hold points belonging to a specific voxel before being
+written to a temporary data file. When a buffer becomes full, it is written
+to a temporary output file. Larger buffers can reduce
+the number of data writes. More buffers can allow data from a larger number
+of voxels to be stored before a write is required.  Increasing buffer size or
+count increases memory use.
+

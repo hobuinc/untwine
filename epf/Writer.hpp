@@ -68,7 +68,8 @@ class Writer
     };
 
 public:
-    Writer(const std::string& directory, int numThreads, size_t pointSize);
+    Writer(const std::string& directory, int numThreads, size_t pointSize,
+        size_t bufferSize, size_t bufferCount);
 
     void replace(DataVecPtr data);
     void enqueue(const VoxelKey& key, DataVecPtr data, size_t dataSize);
